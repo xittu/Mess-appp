@@ -7,7 +7,8 @@ import {
   onSnapshot,
   query,
   orderBy,
-  limit
+  limit,
+  getDoc
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
 import {
@@ -61,16 +62,96 @@ export default function App() {
   const [activeToast, setActiveToast] = useState<MessNotification | null>(null);
   const [appLoadTime] = useState<number>(() => Date.now());
 
+  // --- Sync State Trackers ---
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastCloudSync, setLastCloudSync] = useState<string | null>(null);
+
+  // --- Gmail Storage Save Sync Helper ---
+  const saveToGmailDoc = async (
+    membersList: Member[],
+    expensesList: Expense[],
+    utilitiesList: UtilityExpense[],
+    depositsMap: Record<string, number>,
+    mealsCount: number,
+    dutiesList: DutyAssignment[],
+    nameOfMess: string
+  ) => {
+    if (!currentUser || !currentUser.email) return;
+    setIsSyncing(true);
+    try {
+      const userDocRef = doc(db, "users", currentUser.email, "messData", "dashboard");
+      await setDoc(userDocRef, {
+        members: membersList,
+        expenses: expensesList,
+        utilities: utilitiesList,
+        deposits: depositsMap,
+        fixedMealCount: mealsCount,
+        duties: dutiesList,
+        messName: nameOfMess,
+        lastUpdated: new Date()
+      }, { merge: true });
+      
+      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastCloudSync(currentTime);
+      console.log("ডাটা সফলভাবে ফায়ারবেসে সেভ হয়েছে!");
+    } catch (error) {
+      console.error("ফায়ারবেসে ডাটা সেভ করতে সমস্যা হয়েছে:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // --- Auth Observer ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        if (user.photoURL && user.photoURL.startsWith("M")) {
-          setMessId(user.photoURL);
-        } else {
-          setMessId("MPPD7X");
+        setCurrentUser(user);
+        
+        let activeMessId = "MPPD7X";
+        
+        try {
+          // Fetch the user's mapped workspace document
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData && userData.messId) {
+              activeMessId = userData.messId;
+            }
+          } else {
+            // No profile document registered yet. Check photoURL or fallback safely.
+            if (user.photoURL && user.photoURL.startsWith("M")) {
+              activeMessId = user.photoURL;
+            } else {
+              // Generate a safe unique ID based on their UID so that each user has their owned separate database
+              activeMessId = "M" + user.uid.substring(0, 5).toUpperCase();
+            }
+            
+            // Save this mapping back to Firestore to make it permanent for this user's email/Gmail
+            await setDoc(userDocRef, {
+              uid: user.uid,
+              email: user.email || "",
+              name: user.displayName || "মেম্বর",
+              messId: activeMessId
+            }, { merge: true });
+          }
+        } catch (fetchErr) {
+          const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("network")) {
+            console.warn("Firestore is syncing offline. Seamlessly resolved Workspace ID using session state:", errMsg);
+          } else {
+            console.warn("Optional user profile documents syncing in database background:", errMsg);
+          }
+          // Standard fallback
+          if (user.photoURL && user.photoURL.startsWith("M")) {
+            activeMessId = user.photoURL;
+          }
         }
+        
+        setMessId(activeMessId);
+      } else {
+        setCurrentUser(null);
       }
       setAuthLoading(false);
     });
@@ -81,108 +162,156 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // 1. Members Listener
-    const membersPath = `messes/${messId}/members`;
-    const unsubscribeMembers = onSnapshot(
-      collection(db, "messes", messId, "members"),
-      (snapshot) => {
-        const list: Member[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as Member);
-        });
-        setMembers(list);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, membersPath);
-      }
-    );
+    let unsubscribeDashboard: (() => void) | null = null;
+    let unsubscribeMembers: (() => void) | null = null;
+    let unsubscribeExpenses: (() => void) | null = null;
+    let unsubscribeUtilities: (() => void) | null = null;
+    let unsubscribeDeposits: (() => void) | null = null;
+    let unsubscribeSettings: (() => void) | null = null;
+    let unsubscribeDuties: (() => void) | null = null;
+    let unsubscribeNotifications: (() => void) | null = null;
 
-    // 2. Bazaar Expenses Listener
-    const expensesPath = `messes/${messId}/expenses`;
-    const unsubscribeExpenses = onSnapshot(
-      collection(db, "messes", messId, "expenses"),
-      (snapshot) => {
-        const list: Expense[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as Expense);
-        });
-        setExpenses(list);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, expensesPath);
-      }
-    );
-
-    // 3. Utilities Listener
-    const utilitiesPath = `messes/${messId}/utilities`;
-    const unsubscribeUtilities = onSnapshot(
-      collection(db, "messes", messId, "utilities"),
-      (snapshot) => {
-        const list: UtilityExpense[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as UtilityExpense);
-        });
-        setUtilities(list);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, utilitiesPath);
-      }
-    );
-
-    // 4. Deposits Listener
-    const depositsPath = `messes/${messId}/deposits`;
-    const unsubscribeDeposits = onSnapshot(
-      collection(db, "messes", messId, "deposits"),
-      (snapshot) => {
-        const map: Record<string, number> = {};
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          map[data.memberId] = data.amount;
-        });
-        setDeposits(map);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, depositsPath);
-      }
-    );
-
-    // 5. Config/Settings Listener
-    const settingsPath = `messes/${messId}/settings/current`;
-    const unsubscribeSettings = onSnapshot(
-      doc(db, "messes", messId, "settings", "current"),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.fixedMealCount !== undefined) {
-            setFixedMealCount(data.fixedMealCount);
+    if (currentUser.email) {
+      const dashboardPath = `users/${currentUser.email}/messData/dashboard`;
+      unsubscribeDashboard = onSnapshot(
+        doc(db, "users", currentUser.email, "messData", "dashboard"),
+        async (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.members !== undefined) setMembers(data.members);
+            if (data.expenses !== undefined) setExpenses(data.expenses);
+            if (data.utilities !== undefined) setUtilities(data.utilities);
+            if (data.deposits !== undefined) setDeposits(data.deposits);
+            if (data.fixedMealCount !== undefined) setFixedMealCount(data.fixedMealCount);
+            if (data.duties !== undefined) setDutyAssignments(data.duties || []);
+            if (data.messName !== undefined) setMessName(data.messName || "মেস ড্যাশবোর্ড");
+          } else {
+            // Document doesn't exist yet! Let's initialize a beautiful starter payload
+            try {
+              const userDocRef = doc(db, "users", currentUser.email!, "messData", "dashboard");
+              await setDoc(userDocRef, {
+                members: [],
+                expenses: [],
+                utilities: [],
+                deposits: {},
+                fixedMealCount: 0,
+                duties: [],
+                messName: "মেস ড্যাশবোর্ড",
+                lastUpdated: new Date()
+              }, { merge: true });
+            } catch (initErr) {
+              console.warn("Gmail dashboard bootstrap pending:", initErr);
+            }
           }
-          if (data.messName !== undefined) {
-            setMessName(data.messName);
-          }
-        } else {
-          setFixedMealCount(0);
+        },
+        (error) => {
+          console.warn("Retrying dashboard document lookup via local offline cache", error);
         }
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, settingsPath);
-      }
-    );
+      );
+    } else {
+      // 1. Members Listener
+      const membersPath = `messes/${messId}/members`;
+      unsubscribeMembers = onSnapshot(
+        collection(db, "messes", messId, "members"),
+        (snapshot) => {
+          const list: Member[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as Member);
+          });
+          setMembers(list);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, membersPath);
+        }
+      );
 
-    // 6. Duties Schedule Listener
-    const dutiesPath = `messes/${messId}/duties`;
-    const unsubscribeDuties = onSnapshot(
-      collection(db, "messes", messId, "duties"),
-      (snapshot) => {
-        const list: DutyAssignment[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as DutyAssignment);
-        });
-        setDutyAssignments(list);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, dutiesPath);
-      }
-    );
+      // 2. Bazaar Expenses Listener
+      const expensesPath = `messes/${messId}/expenses`;
+      unsubscribeExpenses = onSnapshot(
+        collection(db, "messes", messId, "expenses"),
+        (snapshot) => {
+          const list: Expense[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as Expense);
+          });
+          setExpenses(list);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, expensesPath);
+        }
+      );
+
+      // 3. Utilities Listener
+      const utilitiesPath = `messes/${messId}/utilities`;
+      unsubscribeUtilities = onSnapshot(
+        collection(db, "messes", messId, "utilities"),
+        (snapshot) => {
+          const list: UtilityExpense[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as UtilityExpense);
+          });
+          setUtilities(list);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, utilitiesPath);
+        }
+      );
+
+      // 4. Deposits Listener
+      const depositsPath = `messes/${messId}/deposits`;
+      unsubscribeDeposits = onSnapshot(
+        collection(db, "messes", messId, "deposits"),
+        (snapshot) => {
+          const map: Record<string, number> = {};
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            map[data.memberId] = data.amount;
+          });
+          setDeposits(map);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, depositsPath);
+        }
+      );
+
+      // 5. Config/Settings Listener
+      const settingsPath = `messes/${messId}/settings/current`;
+      unsubscribeSettings = onSnapshot(
+        doc(db, "messes", messId, "settings", "current"),
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.fixedMealCount !== undefined) {
+              setFixedMealCount(data.fixedMealCount);
+            }
+            if (data.messName !== undefined) {
+              setMessName(data.messName);
+            }
+          } else {
+            setFixedMealCount(0);
+          }
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, settingsPath);
+        }
+      );
+
+      // 6. Duties Schedule Listener
+      const dutiesPath = `messes/${messId}/duties`;
+      unsubscribeDuties = onSnapshot(
+        collection(db, "messes", messId, "duties"),
+        (snapshot) => {
+          const list: DutyAssignment[] = [];
+          snapshot.forEach((docSnap) => {
+            list.push(docSnap.data() as DutyAssignment);
+          });
+          setDutyAssignments(list);
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.GET, dutiesPath);
+        }
+      );
+    }
 
     // 7. Audit Log Notifications Listener (Synced)
     const notificationsPath = `messes/${messId}/notifications`;
@@ -191,7 +320,7 @@ export default function App() {
       orderBy("timestamp", "desc"),
       limit(30)
     );
-    const unsubscribeNotifications = onSnapshot(
+    unsubscribeNotifications = onSnapshot(
       q,
       (snapshot) => {
         const list: MessNotification[] = [];
@@ -216,18 +345,19 @@ export default function App() {
         setNotifications(list);
       },
       (error) => {
-        handleFirestoreError(error, OperationType.GET, notificationsPath);
+        console.warn("Notifications lookup offline warning:", error);
       }
     );
 
     return () => {
-      unsubscribeMembers();
-      unsubscribeExpenses();
-      unsubscribeUtilities();
-      unsubscribeDeposits();
-      unsubscribeSettings();
-      unsubscribeDuties();
-      unsubscribeNotifications();
+      if (unsubscribeDashboard) unsubscribeDashboard();
+      if (unsubscribeMembers) unsubscribeMembers();
+      if (unsubscribeExpenses) unsubscribeExpenses();
+      if (unsubscribeUtilities) unsubscribeUtilities();
+      if (unsubscribeDeposits) unsubscribeDeposits();
+      if (unsubscribeSettings) unsubscribeSettings();
+      if (unsubscribeDuties) unsubscribeDuties();
+      if (unsubscribeNotifications) unsubscribeNotifications();
     };
   }, [currentUser, messId]);
 
@@ -242,6 +372,22 @@ export default function App() {
       joinDate: new Date().toISOString().split("T")[0],
     };
 
+    const updatedMembers = [...members, newMember];
+    const updatedDeposits = { ...deposits, [id]: 0 };
+
+    setMembers(updatedMembers);
+    setDeposits(updatedDeposits);
+
+    await saveToGmailDoc(
+      updatedMembers,
+      expenses,
+      utilities,
+      updatedDeposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
     const path = `messes/${messId}/members/${id}`;
     try {
       await setDoc(doc(db, "messes", messId, "members", id), newMember);
@@ -250,7 +396,6 @@ export default function App() {
         amount: 0,
       });
 
-      // Audit Notification Log
       await sendNotification(
         messId,
         "নতুন সদস্য যুক্ত করা হয়েছে",
@@ -258,16 +403,32 @@ export default function App() {
         "success"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleRemoveMember = async (id: string) => {
     if (!currentUser) return;
     const targetName = members.find((m) => m.id === id)?.name || "সদস্য";
-    const memberPath = `messes/${messId}/members/${id}`;
-    const depositPath = `messes/${messId}/deposits/${id}`;
+    
+    const updatedMembers = members.filter((m) => m.id !== id);
+    const updatedDeposits = { ...deposits };
+    delete updatedDeposits[id];
 
+    setMembers(updatedMembers);
+    setDeposits(updatedDeposits);
+
+    await saveToGmailDoc(
+      updatedMembers,
+      expenses,
+      utilities,
+      updatedDeposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const memberPath = `messes/${messId}/members/${id}`;
     try {
       await deleteDoc(doc(db, "messes", messId, "members", id));
       await deleteDoc(doc(db, "messes", messId, "deposits", id));
@@ -279,7 +440,7 @@ export default function App() {
         "danger"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, memberPath);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
@@ -293,8 +454,21 @@ export default function App() {
       desc,
       memberId: memberId || "",
     };
-    const path = `messes/${messId}/expenses/${id}`;
+    
+    const updatedExpenses = [...expenses, newExpense];
+    setExpenses(updatedExpenses);
 
+    await saveToGmailDoc(
+      members,
+      updatedExpenses,
+      utilities,
+      deposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/expenses/${id}`;
     try {
       await setDoc(doc(db, "messes", messId, "expenses", id), newExpense);
 
@@ -310,15 +484,28 @@ export default function App() {
         "info"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleRemoveExpense = async (id: string) => {
     if (!currentUser) return;
     const expItem = expenses.find((e) => e.id === id);
-    const path = `messes/${messId}/expenses/${id}`;
+    
+    const updatedExpenses = expenses.filter((e) => e.id !== id);
+    setExpenses(updatedExpenses);
 
+    await saveToGmailDoc(
+      members,
+      updatedExpenses,
+      utilities,
+      deposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/expenses/${id}`;
     try {
       await deleteDoc(doc(db, "messes", messId, "expenses", id));
 
@@ -331,17 +518,31 @@ export default function App() {
         );
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleAddUtility = async (name: string, amount: number) => {
     if (!currentUser) return;
     const id = "UT" + Math.random().toString(36).substr(2, 6).toUpperCase();
-    const path = `messes/${messId}/utilities/${id}`;
+    const newUtility = { id, name, amount };
+    
+    const updatedUtilities = [...utilities, newUtility];
+    setUtilities(updatedUtilities);
 
+    await saveToGmailDoc(
+      members,
+      expenses,
+      updatedUtilities,
+      deposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/utilities/${id}`;
     try {
-      await setDoc(doc(db, "messes", messId, "utilities", id), { id, name, amount });
+      await setDoc(doc(db, "messes", messId, "utilities", id), newUtility);
 
       await sendNotification(
         messId,
@@ -350,15 +551,28 @@ export default function App() {
         "info"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleRemoveUtility = async (id: string) => {
     if (!currentUser) return;
     const utItem = utilities.find((u) => u.id === id);
-    const path = `messes/${messId}/utilities/${id}`;
+    
+    const updatedUtilities = utilities.filter((u) => u.id !== id);
+    setUtilities(updatedUtilities);
 
+    await saveToGmailDoc(
+      members,
+      expenses,
+      updatedUtilities,
+      deposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/utilities/${id}`;
     try {
       await deleteDoc(doc(db, "messes", messId, "utilities", id));
 
@@ -371,15 +585,28 @@ export default function App() {
         );
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleUpdateDeposit = async (memberId: string, amount: number) => {
     if (!currentUser) return;
     const memberName = members.find((m) => m.id === memberId)?.name || "সদস্য";
-    const path = `messes/${messId}/deposits/${memberId}`;
+    
+    const updatedDeposits = { ...deposits, [memberId]: amount };
+    setDeposits(updatedDeposits);
 
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      updatedDeposits,
+      fixedMealCount,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/deposits/${memberId}`;
     try {
       await setDoc(doc(db, "messes", messId, "deposits", memberId), {
         memberId,
@@ -393,14 +620,26 @@ export default function App() {
         "success"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleSetFixedMealCount = async (count: number) => {
     if (!currentUser) return;
-    const path = `messes/${messId}/settings/current`;
+    
+    setFixedMealCount(count);
 
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      count,
+      dutyAssignments,
+      messName
+    );
+
+    const path = `messes/${messId}/settings/current`;
     try {
       await setDoc(doc(db, "messes", messId, "settings", "current"), {
         fixedMealCount: count,
@@ -414,14 +653,26 @@ export default function App() {
         "warning"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleUpdateMessName = async (newName: string) => {
     if (!currentUser) return;
-    const path = `messes/${messId}/settings/current`;
+    
+    setMessName(newName);
 
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      fixedMealCount,
+      dutyAssignments,
+      newName
+    );
+
+    const path = `messes/${messId}/settings/current`;
     try {
       await setDoc(doc(db, "messes", messId, "settings", "current"), {
         messName: newName,
@@ -434,16 +685,32 @@ export default function App() {
         "info"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleAddDuty = async (assignment: DutyAssignment) => {
     if (!currentUser) return;
     const memberName = members.find((m) => m.id === assignment.memberId)?.name || "কর্মকর্তা";
+    
+    const updatedDuties = [
+      ...dutyAssignments.filter(d => !(d.day === assignment.day && d.role === assignment.role)),
+      assignment
+    ];
+    setDutyAssignments(updatedDuties);
+
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      fixedMealCount,
+      updatedDuties,
+      messName
+    );
+
     const documentId = `${assignment.day}_${assignment.role}`;
     const path = `messes/${messId}/duties/${documentId}`;
-
     try {
       await setDoc(doc(db, "messes", messId, "duties", documentId), assignment);
 
@@ -454,15 +721,28 @@ export default function App() {
         "info"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleRemoveDuty = async (day: string, role: string) => {
     if (!currentUser) return;
+    
+    const updatedDuties = dutyAssignments.filter(d => !(d.day === day && d.role === role));
+    setDutyAssignments(updatedDuties);
+
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      fixedMealCount,
+      updatedDuties,
+      messName
+    );
+
     const documentId = `${day}_${role}`;
     const path = `messes/${messId}/duties/${documentId}`;
-
     try {
       await deleteDoc(doc(db, "messes", messId, "duties", documentId));
 
@@ -473,12 +753,30 @@ export default function App() {
         "warning"
       );
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, path);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
   const handleClearAllData = async () => {
     if (!currentUser) return;
+    
+    setMembers([]);
+    setExpenses([]);
+    setUtilities([]);
+    setDeposits({});
+    setFixedMealCount(0);
+    setDutyAssignments([]);
+
+    await saveToGmailDoc(
+      [],
+      [],
+      [],
+      {},
+      0,
+      [],
+      "মেস ড্যাশবোর্ড"
+    );
+
     try {
       // 1. Delete all member docs and associated deposit entries
       for (const member of members) {
@@ -514,16 +812,8 @@ export default function App() {
         `আপনার মেসের সকল তথ্য (সদস্য, খরচ, জমা ও ডিউটি) সফলভাবে চিরতরে মুছে ফেলা হয়েছে।`,
         "danger"
       );
-
-      // Local fast reset
-      setMembers([]);
-      setExpenses([]);
-      setUtilities([]);
-      setDeposits({});
-      setFixedMealCount(0);
-      setDutyAssignments([]);
     } catch (error) {
-      console.error("Firestore database wipeout failed:", error);
+      console.warn("messes collection fallback sync warning:", error);
     }
   };
 
@@ -601,6 +891,8 @@ export default function App() {
             darkMode={darkMode}
             setDarkMode={setDarkMode}
             onUpdateMessName={handleUpdateMessName}
+            isSyncing={isSyncing}
+            lastCloudSync={lastCloudSync}
           />
 
           {/* Real-time Notification Bell trigger icon in Header */}

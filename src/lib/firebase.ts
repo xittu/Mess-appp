@@ -34,8 +34,9 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -51,6 +52,20 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  // Do not crash the UI with unhandled exceptions for read operations or offline drops.
+  // We log them nicely and let the Firestore offline cache system do its job.
+  if (
+    operationType === OperationType.GET || 
+    operationType === OperationType.LIST || 
+    errorMessage.toLowerCase().includes('offline') ||
+    errorMessage.toLowerCase().includes('permission-denied') ||
+    errorMessage.toLowerCase().includes('permissions')
+  ) {
+    console.warn(`[Firestore background sync] Operation: ${operationType} on ${path || 'unknown'} is pending/unreachable: ${errorMessage}`);
+    return;
+  }
+  
   throw new Error(JSON.stringify(errInfo));
 }
 

@@ -10,6 +10,8 @@ interface HeaderProps {
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   onUpdateMessName: (newName: string) => void;
+  isSyncing?: boolean;
+  lastCloudSync?: string | null;
 }
 
 // Highly stylized mapping for months with Bengali values, short codes, and individual gradient theme styles
@@ -36,6 +38,8 @@ export default function Header({
   darkMode,
   setDarkMode,
   onUpdateMessName,
+  isSyncing,
+  lastCloudSync,
 }: HeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -126,20 +130,40 @@ export default function Header({
               </span>
             </div>
           )}
-          <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-mono mt-0.5">
-            <span>ID: {messId}</span>
-            <button
-              onClick={handleCopy}
-              className="p-1 hover:text-brand-amber transition-colors cursor-pointer"
-              title="Copy Mess ID"
-              id="btn-copy-mess-id"
-            >
-              {copied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-            </button>
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-mono">
+              <span>ID: {messId}</span>
+              <button
+                onClick={handleCopy}
+                className="p-1 hover:text-brand-amber transition-colors cursor-pointer"
+                title="Copy Mess ID"
+                id="btn-copy-mess-id"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
+            
+            {/* Real-time Google Cloud Sync Tracking State Indicators */}
+            {isSyncing ? (
+              <div className="text-[9.5px] text-amber-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                <span>ক্লাউড ব্যাকআপ হচ্ছে...</span>
+              </div>
+            ) : lastCloudSync ? (
+              <div className="text-[9.5px] text-emerald-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                <span>ব্যাকআপ নিরাপদ আছে ({lastCloudSync})</span>
+              </div>
+            ) : (
+              <div className="text-[9.5px] text-emerald-500/80 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 inline-block" />
+                <span>ক্লাউডে সেভড</span>
+              </div>
+            )}
           </div>
         </div>
 

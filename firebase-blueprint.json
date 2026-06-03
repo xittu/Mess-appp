@@ -1,5 +1,17 @@
 {
   "entities": {
+    "userProfile": {
+      "title": "User Profile",
+      "description": "Information linking a registered Firebase user to their Mess workspace",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The Firebase Authentication user UID" },
+        "email": { "type": "string", "description": "The user's registered email address" },
+        "name": { "type": "string", "description": "The user's display name" },
+        "messId": { "type": "string", "description": "The assigned 6-character Mess workspace ID" }
+      },
+      "required": ["uid", "email", "name", "messId"]
+    },
     "member": {
       "title": "Member",
       "description": "Details of a registered mess member",
@@ -81,6 +93,10 @@
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": "userProfile",
+      "description": "User accounts metadata linking users to their active Mess database workspace"
+    },
     "/messes/{messId}/members/{memberId}": {
       "schema": "member",
       "description": "The active roster of registered members under this mess entity"

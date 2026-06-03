@@ -114,6 +114,18 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           displayName: name.trim(),
           photoURL: generatedMessId,
         });
+
+        // Initialize user profile in Firestore
+        try {
+          await setDoc(doc(db, "users", userCred.user.uid), {
+            uid: userCred.user.uid,
+            email: email.trim().toLowerCase(),
+            name: name.trim(),
+            messId: generatedMessId
+          });
+        } catch (profileError) {
+          console.error("Failed to write user profile:", profileError);
+        }
         
         // Save user-specified messName in Firestore settings under their unique messId
         try {

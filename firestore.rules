@@ -67,7 +67,24 @@ service cloud.firestore {
           && data.timestamp is number;
     }
 
+    function isValidUserProfile(data) {
+      return data.uid is string && data.uid.size() <= 128
+          && data.email is string && data.email.size() <= 200
+          && data.name is string && data.name.size() <= 150
+          && data.messId is string && data.messId.size() <= 32;
+    }
+
     // Database Resources & Multi-User Partitioning
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || (request.auth.token.email != null && request.auth.token.email == userId));
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || (request.auth.token.email != null && request.auth.token.email == userId));
+      allow delete: if isSignedIn() && (request.auth.uid == userId || (request.auth.token.email != null && request.auth.token.email == userId));
+
+      match /messData/{document} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || (request.auth.token.email != null && request.auth.token.email == userId));
+      }
+    }
+
     match /messes/{messId} {
       allow read, write: if isSignedIn() && isValidId(messId);
 
