@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "member": {
+      "title": "Member",
+      "description": "Details of a registered mess member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique auto-generated member ID" },
+        "name": { "type": "string", "description": "Display name of the mess member" },
+        "joinDate": { "type": "string", "format": "date", "description": "The date when member joined the mess" }
+      },
+      "required": ["id", "name", "joinDate"]
+    },
+    "expense": {
+      "title": "Expense",
+      "description": "Daily bazaar and food expenses in the mess",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique expense record identifier" },
+        "date": { "type": "string", "format": "date", "description": "The date of the bazaar purchase" },
+        "amount": { "type": "number", "description": "The expense amount in Taka" },
+        "desc": { "type": "string", "description": "Details or list of item purchased" },
+        "createdBy": { "type": "string", "description": "User UID who recorded the expense" }
+      },
+      "required": ["id", "date", "amount", "desc"]
+    },
+    "utility": {
+      "title": "Utility",
+      "description": "Utility bills like electricity, gas, water",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique utility entity identifier" },
+        "name": { "type": "string", "description": "Utility description (e.g., electricity bill)" },
+        "amount": { "type": "number", "description": "The bill amount in Taka" }
+      },
+      "required": ["id", "name", "amount"]
+    },
+    "deposit": {
+      "title": "Deposit",
+      "description": "Cash balance paid by a member to the mess ledger",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string", "description": "Referenced ID of the member who deposited cash" },
+        "amount": { "type": "number", "description": "Amount deposited in Taka" }
+      },
+      "required": ["memberId", "amount"]
+    },
+    "duty": {
+      "title": "Duty",
+      "description": "Sweekly bazaar duty and manager scheduling",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string", "description": "Bengali weekday from Saturday to Friday" },
+        "memberId": { "type": "string", "description": "Assigned member ID" },
+        "role": { "type": "string", "description": "Active role (e.g., bazaar duty, cleaner)" }
+      },
+      "required": ["day", "memberId", "role"]
+    },
+    "messSettings": {
+      "title": "Mess Settings",
+      "description": "Specific preferences and state of the overall mess",
+      "type": "object",
+      "properties": {
+        "fixedMealCount": { "type": "number", "description": "Fixed meals target per member" },
+        "messName": { "type": "string", "description": "Dynamic custom mess name" }
+      },
+      "required": ["fixedMealCount", "messName"]
+    },
+    "messNotification": {
+      "title": "Mess Notification",
+      "description": "Real-time audit log of system events like expense logs or member updates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique notification identifier" },
+        "title": { "type": "string", "description": "Brief notification heading" },
+        "message": { "type": "string", "description": "Descriptive message matching Bengali or English" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "danger"], "description": "Notification category" },
+        "timestamp": { "type": "number", "description": "Epoch timestamp of when event occurred" }
+      },
+      "required": ["id", "title", "message", "type", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/messes/{messId}/members/{memberId}": {
+      "schema": "member",
+      "description": "The active roster of registered members under this mess entity"
+    },
+    "/messes/{messId}/expenses/{expenseId}": {
+      "schema": "expense",
+      "description": "Daily bazaar list ledger for the specific mess"
+    },
+    "/messes/{messId}/utilities/{utilityId}": {
+      "schema": "utility",
+      "description": "Sub-costs for shared utilities division"
+    },
+    "/messes/{messId}/deposits/{memberId}": {
+      "schema": "deposit",
+      "description": "Paid-in member balance documents indexed by individual identifiers"
+    },
+    "/messes/{messId}/duties/{day}": {
+      "schema": "duty",
+      "description": "Weekly Duty assignment calendars"
+    },
+    "/messes/{messId}/settings/current": {
+      "schema": "messSettings",
+      "description": "System state including custom fixed meal ratios"
+    },
+    "/messes/{messId}/notifications/{logId}": {
+      "schema": "messNotification",
+      "description": "Audit trails for real-time notifications pushes of recent operations"
+    }
+  }
+}

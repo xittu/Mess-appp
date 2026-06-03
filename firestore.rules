@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Secure Global Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Type and Attribute Structural Assertions
+    function isValidMember(data) {
+      return data.id is string && data.id.size() <= 64
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.joinDate is string && data.joinDate.size() <= 32;
+    }
+
+    function isValidExpense(data) {
+      return data.id is string && data.id.size() <= 64
+          && data.date is string && data.date.size() <= 32
+          && data.amount is number && data.amount >= 0
+          && data.desc is string && data.desc.size() <= 300;
+    }
+
+    function isValidUtility(data) {
+      return data.id is string && data.id.size() <= 64
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 150
+          && data.amount is number && data.amount >= 0;
+    }
+
+    function isValidDeposit(data) {
+      return data.memberId is string && data.memberId.size() <= 64
+          && data.amount is number && data.amount >= 0;
+    }
+
+    function isValidDuty(data) {
+      return data.day is string && data.day.size() <= 32
+          && data.memberId is string && data.memberId.size() <= 64
+          && data.role is string && data.role.size() <= 100;
+    }
+
+    function isValidSetting(data) {
+      return data.fixedMealCount is number && data.fixedMealCount >= 0
+          && data.messName is string && data.messName.size() <= 100;
+    }
+
+    function isValidNotification(data) {
+      return data.id is string && data.id.size() <= 64
+          && data.title is string && data.title.size() <= 150
+          && data.message is string && data.message.size() <= 400
+          && data.type is string && (data.type == 'info' || data.type == 'success' || data.type == 'warning' || data.type == 'danger')
+          && data.timestamp is number;
+    }
+
+    // Database Resources & Multi-User Partitioning
+    match /messes/{messId} {
+      allow read, write: if isSignedIn() && isValidId(messId);
+
+      match /members/{memberId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(memberId) && isValidMember(incoming());
+        allow delete: if isSignedIn() && isValidId(memberId);
+      }
+
+      match /expenses/{expenseId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming());
+        allow delete: if isSignedIn() && isValidId(expenseId);
+      }
+
+      match /utilities/{utilityId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(utilityId) && isValidUtility(incoming());
+        allow delete: if isSignedIn() && isValidId(utilityId);
+      }
+
+      match /deposits/{memberId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(memberId) && isValidDeposit(incoming());
+        allow delete: if isSignedIn() && isValidId(memberId);
+      }
+
+      match /duties/{day} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(day) && isValidDuty(incoming());
+        allow delete: if isSignedIn() && isValidId(day);
+      }
+
+      match /settings/{current} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(current) && isValidSetting(incoming());
+        allow delete: if isSignedIn() && isValidId(current);
+      }
+
+      match /notifications/{logId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidId(logId) && isValidNotification(incoming());
+        allow delete: if isSignedIn() && isValidId(logId);
+      }
+    }
+  }
+}
