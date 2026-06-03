@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
-  getDoc
-} from "firebase/firestore";
-import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
-import {
   Users,
   ReceiptText,
   UtensilsCrossed,
@@ -24,7 +12,25 @@ import {
   Info,
   CheckCircle2
 } from "lucide-react";
-import { db, auth, handleFirestoreError, OperationType } from "./lib/firebase";
+import {
+  db,
+  auth,
+  handleFirestoreError,
+  OperationType,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  limit,
+  getDoc,
+  onAuthStateChanged,
+  signOut,
+  MockUser as FirebaseUser
+} from "./lib/firebase";
+import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
 import { sendNotification, MessNotification } from "./lib/notifications";
 import Header from "./components/Header";
 import MembersTab from "./components/MembersTab";
@@ -41,12 +47,54 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   // --- Real-Time State Data ---
-  const [members, setMembers] = useState<Member[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [utilities, setUtilities] = useState<UtilityExpense[]>([]);
-  const [deposits, setDeposits] = useState<Record<string, number>>({});
-  const [fixedMealCount, setFixedMealCount] = useState<number>(0);
-  const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>([]);
+  const [members, setMembers] = useState<Member[]>(() => {
+    try {
+      const stored = localStorage.getItem("mess_members");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const stored = localStorage.getItem("mess_expenses");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [utilities, setUtilities] = useState<UtilityExpense[]>(() => {
+    try {
+      const stored = localStorage.getItem("mess_utilities");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [deposits, setDeposits] = useState<Record<string, number>>(() => {
+    try {
+      const stored = localStorage.getItem("mess_deposits");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [fixedMealCount, setFixedMealCount] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem("mess_meals");
+      return stored ? Number(JSON.parse(stored)) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>(() => {
+    try {
+      const stored = localStorage.getItem("mess_duties");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
@@ -54,7 +102,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [isMoreOpen, setIsMoreOpen] = useState<boolean>(false);
   const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
-  const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
+  const [messName, setMessName] = useState<string>(() => {
+    try {
+      return localStorage.getItem("mess_name") || "মেস ড্যাশবোর্ড";
+    } catch {
+      return "মেস ড্যাশবোর্ড";
+    }
+  });
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -76,8 +130,24 @@ export default function App() {
     dutiesList: DutyAssignment[],
     nameOfMess: string
   ) => {
+    // ১. আগের মতো লোকাল স্টোরেজে সেভ হবে (Local storage cache auto-saving)
+    try {
+      localStorage.setItem("mess_members", JSON.stringify(membersList));
+      localStorage.setItem("mess_expenses", JSON.stringify(expensesList));
+      localStorage.setItem("mess_meals", JSON.stringify(mealsCount));
+      localStorage.setItem("mess_utilities", JSON.stringify(utilitiesList));
+      localStorage.setItem("mess_deposits", JSON.stringify(depositsMap));
+      localStorage.setItem("mess_duties", JSON.stringify(dutiesList));
+      localStorage.setItem("mess_name", nameOfMess);
+      console.log("ডাটা সফলভাবে লোকাল স্টোরেজে (localStorage) সেভ হয়েছে!");
+    } catch (localErr) {
+      console.warn("Failed to write to localStorage:", localErr);
+    }
+
     if (!currentUser || !currentUser.email) return;
     setIsSyncing(true);
+    
+    // 1. Firebase Firestore write
     try {
       const userDocRef = doc(db, "users", currentUser.email, "messData", "dashboard");
       await setDoc(userDocRef, {
@@ -96,9 +166,188 @@ export default function App() {
       console.log("ডাটা সফলভাবে ফায়ারবেসে সেভ হয়েছে!");
     } catch (error) {
       console.error("ফায়ারবেসে ডাটা সেভ করতে সমস্যা হয়েছে:", error);
-    } finally {
-      setIsSyncing(false);
     }
+
+    // 2. Dual-save to Supabase if credentials are provided in browser settings
+    const sClient = getSupabaseClient();
+    if (sClient) {
+      try {
+        console.log("সুপাবেজ ব্যাকআপে ডাটা সেভ হচ্ছে...");
+
+        // Prepare the nested jsonb meals object to store fixedMealCount, utilities, deposits, duties, and messName.
+        // This is perfectly aligned with the user table schema having user_email (text), members (jsonb), expenses (jsonb), and meals (jsonb).
+        const mealsJsonbPayload = {
+          fixedMealCount: mealsCount,
+          utilities: utilitiesList,
+          deposits: depositsMap,
+          duties: dutiesList,
+          messName: nameOfMess,
+          lastUpdated: new Date().toISOString()
+        };
+
+        const { error: sError } = await sClient
+          .from("mess_data")
+          .upsert({
+            user_email: currentUser.email,
+            members: membersList,
+            expenses: expensesList,
+            meals: mealsJsonbPayload
+          }, { onConflict: "user_email" });
+
+        if (sError) {
+          console.error("Supabase standard schema upsert error:", sError);
+          // Standard fallback to prevent fails
+          const { error: fallbackError } = await sClient
+            .from("mess_data")
+            .upsert({
+              user_email: currentUser.email,
+              members: membersList,
+              expenses: expensesList
+            }, { onConflict: "user_email" });
+
+          if (fallbackError) {
+            console.error("Supabase fallback upsert failed as well:", fallbackError);
+          } else {
+            console.log("ডাটা সফলভাবে সুপাবেজে (মিনিমালিস্ট মোড) নিরাপদে সেভ হয়েছে!");
+          }
+        } else {
+          console.log("ডাটা সফলভাবে সুপাবেজে (মেম্বারস, বাজার ও মিলস্ সম্পূর্ণ JSONB স্কিমা) সেভ হয়েছে!");
+        }
+      } catch (sErr) {
+        console.error("Supabase Database sync background exception:", sErr);
+      }
+    }
+
+    setIsSyncing(false);
+  };
+
+  // --- Supabase Cloud Restore/Download Handler ---
+  const loadDataFromSupabase = async (): Promise<boolean> => {
+    if (!currentUser || !currentUser.email) return false;
+    const sClient = getSupabaseClient();
+    if (!sClient) return false;
+
+    setIsSyncing(true);
+    try {
+      console.log("সুপাবেজ থেকে লাইভ রিস্টোর করা হচ্ছে...");
+      const { data, error } = await sClient
+        .from("mess_data")
+        .select("*")
+        .eq("user_email", currentUser.email)
+        .maybeSingle();
+
+      if (error) {
+        console.error("সুপাবেজ থেকে ডাটা লোড করতে সমস্যা হয়েছে:", error);
+        setIsSyncing(false);
+        return false;
+      }
+
+      if (data) {
+        console.log("সুপাবেজ থেকে পাওয়া ডাটা সফলভাবে লোড হয়েছে:", data);
+        if (data.members !== undefined && Array.isArray(data.members)) {
+          setMembers(data.members);
+          try { localStorage.setItem("mess_members", JSON.stringify(data.members)); } catch(e){}
+        }
+        if (data.expenses !== undefined && Array.isArray(data.expenses)) {
+          setExpenses(data.expenses);
+          try { localStorage.setItem("mess_expenses", JSON.stringify(data.expenses)); } catch(e){}
+        }
+
+        // Unpack meals column if it's stored as JSONB with our nested fields
+        if (data.meals !== undefined && data.meals !== null) {
+          if (typeof data.meals === "object" && !Array.isArray(data.meals)) {
+            const mealsObj = data.meals as any;
+            if (mealsObj.fixedMealCount !== undefined) {
+              setFixedMealCount(Number(mealsObj.fixedMealCount) || 0);
+              try { localStorage.setItem("mess_meals", JSON.stringify(Number(mealsObj.fixedMealCount) || 0)); } catch(e){}
+            }
+            if (mealsObj.utilities !== undefined && Array.isArray(mealsObj.utilities)) {
+              setUtilities(mealsObj.utilities);
+              try { localStorage.setItem("mess_utilities", JSON.stringify(mealsObj.utilities)); } catch(e){}
+            }
+            if (mealsObj.deposits !== undefined && typeof mealsObj.deposits === "object") {
+              setDeposits(mealsObj.deposits);
+              try { localStorage.setItem("mess_deposits", JSON.stringify(mealsObj.deposits)); } catch(e){}
+            }
+            if (mealsObj.duties !== undefined && Array.isArray(mealsObj.duties)) {
+              setDutyAssignments(mealsObj.duties);
+              try { localStorage.setItem("mess_duties", JSON.stringify(mealsObj.duties)); } catch(e){}
+            }
+            if (mealsObj.messName !== undefined && mealsObj.messName) {
+              setMessName(mealsObj.messName);
+              try { localStorage.setItem("mess_name", mealsObj.messName); } catch(e){}
+            }
+          } else {
+            // It's a primitive number/string in legacy schema
+            setFixedMealCount(Number(data.meals) || 0);
+            try { localStorage.setItem("mess_meals", JSON.stringify(Number(data.meals) || 0)); } catch(e){}
+
+            // Try loading from other columns if they are physically there as a fallback
+            if (data.utilities !== undefined && Array.isArray(data.utilities)) {
+              setUtilities(data.utilities);
+              try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
+            }
+            if (data.deposits !== undefined && typeof data.deposits === "object" && data.deposits !== null) {
+              setDeposits(data.deposits as Record<string, number>);
+              try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
+            }
+            if (data.duties !== undefined && Array.isArray(data.duties)) {
+              setDutyAssignments(data.duties);
+              try { localStorage.setItem("mess_duties", JSON.stringify(data.duties)); } catch(e){}
+            }
+            if (data.mess_name !== undefined && data.mess_name) {
+              setMessName(data.mess_name);
+              try { localStorage.setItem("mess_name", data.mess_name); } catch(e){}
+            } else if (data.messName !== undefined && data.messName) {
+              setMessName(data.messName);
+              try { localStorage.setItem("mess_name", data.messName); } catch(e){}
+            }
+          }
+        } else {
+          // If meals column is empty, look at legacy columns directly
+          if (data.utilities !== undefined && Array.isArray(data.utilities)) {
+            setUtilities(data.utilities);
+            try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
+          }
+          if (data.deposits !== undefined && typeof data.deposits === "object" && data.deposits !== null) {
+            setDeposits(data.deposits as Record<string, number>);
+            try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
+          }
+          if (data.duties !== undefined && Array.isArray(data.duties)) {
+            setDutyAssignments(data.duties);
+            try { localStorage.setItem("mess_duties", JSON.stringify(data.duties)); } catch(e){}
+          }
+          if (data.mess_name !== undefined && data.mess_name) {
+            setMessName(data.mess_name);
+            try { localStorage.setItem("mess_name", data.mess_name); } catch(e){}
+          } else if (data.messName !== undefined && data.messName) {
+            setMessName(data.messName);
+            try { localStorage.setItem("mess_name", data.messName); } catch(e){}
+          }
+          if (data.fixedMealCount !== undefined) {
+            setFixedMealCount(Number(data.fixedMealCount) || 0);
+            try { localStorage.setItem("mess_meals", JSON.stringify(Number(data.fixedMealCount) || 0)); } catch(e){}
+          }
+        }
+        
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastCloudSync(currentTime);
+        
+        await sendNotification(
+          messId,
+          "সুপাবেজ ডাটা রিস্টোর সম্পন্ন",
+          `সুপাবেজ ক্লাউড ডাটাবেজ থেকে আপনার মেসের সকল তথ্য সফলভাবে রিস্টোর করা হয়েছে।`,
+          "success"
+        );
+        
+        setIsSyncing(false);
+        return true;
+      }
+    } catch (e) {
+      console.error("Supabase fetch runtime error:", e);
+    }
+    setIsSyncing(false);
+    return false;
   };
 
   // --- Auth Observer ---
@@ -107,53 +356,58 @@ export default function App() {
       if (user) {
         setCurrentUser(user);
         
-        let activeMessId = "MPPD7X";
-        
-        try {
-          // Fetch the user's mapped workspace document
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
+        // Execute the workspace mapping logic asynchronously with a strict timeout fallback 
+        // to prevent the loading screen from freezing if Firestore is unreachable or misconfigured.
+        (async () => {
+          let activeMessId = "M" + user.uid.substring(0, 5).toUpperCase();
           
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            if (userData && userData.messId) {
-              activeMessId = userData.messId;
+          try {
+            const userDocRef = doc(db, "users", user.uid);
+            
+            // Limit firestore get to 2 seconds
+            const userDocSnap = await Promise.race([
+              getDoc(userDocRef),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+            ]);
+            
+            if (userDocSnap && userDocSnap.exists()) {
+              const userData = userDocSnap.data();
+              if (userData && userData.messId) {
+                activeMessId = userData.messId;
+              }
+            } else {
+              // No profile document registered yet. Check photoURL or fallback safely.
+              if (user.photoURL && user.photoURL.startsWith("M")) {
+                activeMessId = user.photoURL;
+              }
+              
+              // Run background save mapping with a 2-second limit
+              await Promise.race([
+                setDoc(userDocRef, {
+                  uid: user.uid,
+                  email: user.email || "",
+                  name: user.displayName || "মেম্বর",
+                  messId: activeMessId
+                }, { merge: true }),
+                new Promise<void>((resolve) => setTimeout(resolve, 2000))
+              ]);
             }
-          } else {
-            // No profile document registered yet. Check photoURL or fallback safely.
+          } catch (fetchErr) {
+            const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+            console.warn("User workspace resolver running on backup/offline state:", errMsg);
+            
             if (user.photoURL && user.photoURL.startsWith("M")) {
               activeMessId = user.photoURL;
-            } else {
-              // Generate a safe unique ID based on their UID so that each user has their owned separate database
-              activeMessId = "M" + user.uid.substring(0, 5).toUpperCase();
             }
-            
-            // Save this mapping back to Firestore to make it permanent for this user's email/Gmail
-            await setDoc(userDocRef, {
-              uid: user.uid,
-              email: user.email || "",
-              name: user.displayName || "মেম্বর",
-              messId: activeMessId
-            }, { merge: true });
+          } finally {
+            setMessId(activeMessId);
+            setAuthLoading(false);
           }
-        } catch (fetchErr) {
-          const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
-          if (errMsg.toLowerCase().includes("offline") || errMsg.toLowerCase().includes("network")) {
-            console.warn("Firestore is syncing offline. Seamlessly resolved Workspace ID using session state:", errMsg);
-          } else {
-            console.warn("Optional user profile documents syncing in database background:", errMsg);
-          }
-          // Standard fallback
-          if (user.photoURL && user.photoURL.startsWith("M")) {
-            activeMessId = user.photoURL;
-          }
-        }
-        
-        setMessId(activeMessId);
+        })();
       } else {
         setCurrentUser(null);
+        setAuthLoading(false);
       }
-      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -178,13 +432,34 @@ export default function App() {
         async (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data.members !== undefined) setMembers(data.members);
-            if (data.expenses !== undefined) setExpenses(data.expenses);
-            if (data.utilities !== undefined) setUtilities(data.utilities);
-            if (data.deposits !== undefined) setDeposits(data.deposits);
-            if (data.fixedMealCount !== undefined) setFixedMealCount(data.fixedMealCount);
-            if (data.duties !== undefined) setDutyAssignments(data.duties || []);
-            if (data.messName !== undefined) setMessName(data.messName || "মেস ড্যাশবোর্ড");
+            if (data.members !== undefined) {
+              setMembers(data.members);
+              try { localStorage.setItem("mess_members", JSON.stringify(data.members)); } catch(e){}
+            }
+            if (data.expenses !== undefined) {
+              setExpenses(data.expenses);
+              try { localStorage.setItem("mess_expenses", JSON.stringify(data.expenses)); } catch(e){}
+            }
+            if (data.utilities !== undefined) {
+              setUtilities(data.utilities);
+              try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
+            }
+            if (data.deposits !== undefined) {
+              setDeposits(data.deposits);
+              try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
+            }
+            if (data.fixedMealCount !== undefined) {
+              setFixedMealCount(data.fixedMealCount);
+              try { localStorage.setItem("mess_meals", JSON.stringify(data.fixedMealCount)); } catch(e){}
+            }
+            if (data.duties !== undefined) {
+              setDutyAssignments(data.duties || []);
+              try { localStorage.setItem("mess_duties", JSON.stringify(data.duties || [])); } catch(e){}
+            }
+            if (data.messName !== undefined) {
+              setMessName(data.messName || "মেস ড্যাশবোর্ড");
+              try { localStorage.setItem("mess_name", data.messName || "মেস ড্যাশবোর্ড"); } catch(e){}
+            }
           } else {
             // Document doesn't exist yet! Let's initialize a beautiful starter payload
             try {
@@ -388,23 +663,21 @@ export default function App() {
       messName
     );
 
+    // 2. Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/members/${id}`;
-    try {
-      await setDoc(doc(db, "messes", messId, "members", id), newMember);
-      await setDoc(doc(db, "messes", messId, "deposits", id), {
+    setDoc(doc(db, "messes", messId, "members", id), newMember)
+      .then(() => setDoc(doc(db, "messes", messId, "deposits", id), {
         memberId: id,
         amount: 0,
-      });
+      }))
+      .catch((error) => console.warn("messes collection fallback sync warning:", error));
 
-      await sendNotification(
-        messId,
-        "নতুন সদস্য যুক্ত করা হয়েছে",
-        `মেস তালিকায় নতুন সদস্য হিসাবে "${name}" কে রেজিস্টার করা হয়েছে।`,
-        "success"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "নতুন সদস্য যুক্ত করা হয়েছে",
+      `মেস তালিকায় নতুন সদস্য হিসাবে "${name}" কে রেজিস্টার করা হয়েছে।`,
+      "success"
+    ).catch(console.error);
   };
 
   const handleRemoveMember = async (id: string) => {
@@ -428,20 +701,18 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const memberPath = `messes/${messId}/members/${id}`;
-    try {
-      await deleteDoc(doc(db, "messes", messId, "members", id));
-      await deleteDoc(doc(db, "messes", messId, "deposits", id));
+    deleteDoc(doc(db, "messes", messId, "members", id))
+      .then(() => deleteDoc(doc(db, "messes", messId, "deposits", id)))
+      .catch((error) => console.warn("messes collection fallback sync warning:", error));
 
-      await sendNotification(
-        messId,
-        "মেম্বার রিমুভ করা হয়েছে",
-        `সদস্য তালিকা থেকে "${targetName}" (ID: ${id}) কে সফলভাবে বাদ দেওয়া হয়েছে।`,
-        "danger"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "মেম্বার রিমুভ করা হয়েছে",
+      `সদস্য তালিকা থেকে "${targetName}" (ID: ${id}) কে সফলভাবে বাদ দেওয়া হয়েছে।`,
+      "danger"
+    ).catch(console.error);
   };
 
   const handleAddExpense = async (date: string, amount: number, desc: string, memberId?: string) => {
@@ -468,24 +739,23 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/expenses/${id}`;
-    try {
-      await setDoc(doc(db, "messes", messId, "expenses", id), newExpense);
+    setDoc(doc(db, "messes", messId, "expenses", id), newExpense).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
-      const msg = buyerName
-        ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
-        : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`;
+    const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
+    const msg = buyerName
+      ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
+      : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`;
 
-      await sendNotification(
-        messId,
-        "বাজার খরচ যোগ হয়েছে",
-        msg,
-        "info"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "বাজার খরচ যোগ হয়েছে",
+      msg,
+      "info"
+    ).catch(console.error);
   };
 
   const handleRemoveExpense = async (id: string) => {
@@ -505,20 +775,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/expenses/${id}`;
-    try {
-      await deleteDoc(doc(db, "messes", messId, "expenses", id));
+    deleteDoc(doc(db, "messes", messId, "expenses", id)).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      if (expItem) {
-        await sendNotification(
-          messId,
-          "বাজার খরচ বাদ দেওয়া হয়েছে",
-          `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ৳${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
-          "warning"
-        );
-      }
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
+    if (expItem) {
+      sendNotification(
+        messId,
+        "বাজার খরচ বাদ দেওয়া হয়েছে",
+        `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ৳${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
+        "warning"
+      ).catch(console.error);
     }
   };
 
@@ -540,19 +809,18 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/utilities/${id}`;
-    try {
-      await setDoc(doc(db, "messes", messId, "utilities", id), newUtility);
+    setDoc(doc(db, "messes", messId, "utilities", id), newUtility).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      await sendNotification(
-        messId,
-        "ইউটিলিটি ও অন্যান্য বিল",
-        `একটি নতুন সাব-বিল "${name}" মূল্য ৳${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
-        "info"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "ইউটিলিটি ও অন্যান্য বিল",
+      `একটি নতুন সাব-বিল "${name}" মূল্য ৳${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
+      "info"
+    ).catch(console.error);
   };
 
   const handleRemoveUtility = async (id: string) => {
@@ -572,20 +840,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/utilities/${id}`;
-    try {
-      await deleteDoc(doc(db, "messes", messId, "utilities", id));
+    deleteDoc(doc(db, "messes", messId, "utilities", id)).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      if (utItem) {
-        await sendNotification(
-          messId,
-          "ইউটিলিটি বিল বাদ দেওয়া হয়েছে",
-          `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ৳${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
-          "warning"
-        );
-      }
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
+    if (utItem) {
+      sendNotification(
+        messId,
+        "ইউটিলিটি বিল বাদ দেওয়া হয়েছে",
+        `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ৳${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
+        "warning"
+      ).catch(console.error);
     }
   };
 
@@ -606,22 +873,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/deposits/${memberId}`;
-    try {
-      await setDoc(doc(db, "messes", messId, "deposits", memberId), {
-        memberId,
-        amount,
-      });
+    setDoc(doc(db, "messes", messId, "deposits", memberId), {
+      memberId,
+      amount,
+    }).catch((error) => console.warn("messes collection fallback sync warning:", error));
 
-      await sendNotification(
-        messId,
-        "সদস্য তহবিল জমা আপডেট",
-        `সদস্য "${memberName}" এর সর্বমোট জমা ফান্ড পরিবর্তন করে ৳${amount} টাকা সেট করা হয়েছে।`,
-        "success"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "সদস্য তহবিল জমা আপডেট",
+      `সদস্য "${memberName}" এর সর্বমোট জমা ফান্ড পরিবর্তন করে ৳${amount} টাকা সেট করা হয়েছে।`,
+      "success"
+    ).catch(console.error);
   };
 
   const handleSetFixedMealCount = async (count: number) => {
@@ -639,22 +903,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/settings/current`;
-    try {
-      await setDoc(doc(db, "messes", messId, "settings", "current"), {
-        fixedMealCount: count,
-        messName: messName,
-      });
+    setDoc(doc(db, "messes", messId, "settings", "current"), {
+      fixedMealCount: count,
+      messName: messName,
+    }).catch((error) => console.warn("messes collection fallback sync warning:", error));
 
-      await sendNotification(
-        messId,
-        "নির্ধারিত মিল সেট পরিবর্তন",
-        `এই মেস সেশনে চলমান মেম্বারদের জন্য নির্ধারিত মাসিক মিল রেট সংখ্যা "${count} টি" এ পরিবর্তন করা হয়েছে।`,
-        "warning"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "নির্ধারিত মিল সেট পরিবর্তন",
+      `এই মেস সেশনে চলমান মেম্বারদের জন্য নির্ধারিত মাসিক মিল রেট সংখ্যা "${count} টি" এ পরিবর্তন করা হয়েছে।`,
+      "warning"
+    ).catch(console.error);
   };
 
   const handleUpdateMessName = async (newName: string) => {
@@ -672,21 +933,20 @@ export default function App() {
       newName
     );
 
+    // Non-blocking background sync for messes collection replica
     const path = `messes/${messId}/settings/current`;
-    try {
-      await setDoc(doc(db, "messes", messId, "settings", "current"), {
-        messName: newName,
-      }, { merge: true });
+    setDoc(doc(db, "messes", messId, "settings", "current"), {
+      messName: newName,
+    }, { merge: true }).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      await sendNotification(
-        messId,
-        "মেসের নাম পরিবর্তন",
-        `মেসের নাম পরিবর্তন করে "${newName}" সেট করা হয়েছে।`,
-        "info"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "মেসের নাম পরিবর্তন",
+      `মেসের নাম পরিবর্তন করে "${newName}" সেট করা হয়েছে।`,
+      "info"
+    ).catch(console.error);
   };
 
   const handleAddDuty = async (assignment: DutyAssignment) => {
@@ -709,20 +969,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const documentId = `${assignment.day}_${assignment.role}`;
     const path = `messes/${messId}/duties/${documentId}`;
-    try {
-      await setDoc(doc(db, "messes", messId, "duties", documentId), assignment);
+    setDoc(doc(db, "messes", messId, "duties", documentId), assignment).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      await sendNotification(
-        messId,
-        "মেস ডিউটি আপডেট",
-        `সাপ্তাহিক রুটিনানুযায়ী "${assignment.day}" এর জন্য "${memberName}" কে "${assignment.role}" এ নিয়োজিত করা হয়েছে।`,
-        "info"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "মেস ডিউটি আপডেট",
+      `সাপ্তাহিক রুটিনানুযায়ী "${assignment.day}" এর জন্য "${memberName}" কে "${assignment.role}" এ নিয়োজিত করা হয়েছে।`,
+      "info"
+    ).catch(console.error);
   };
 
   const handleRemoveDuty = async (day: string, role: string) => {
@@ -741,20 +1000,19 @@ export default function App() {
       messName
     );
 
+    // Non-blocking background sync for messes collection replica
     const documentId = `${day}_${role}`;
     const path = `messes/${messId}/duties/${documentId}`;
-    try {
-      await deleteDoc(doc(db, "messes", messId, "duties", documentId));
+    deleteDoc(doc(db, "messes", messId, "duties", documentId)).catch((error) =>
+      console.warn("messes collection fallback sync warning:", error)
+    );
 
-      await sendNotification(
-        messId,
-        "মেস ডিউটি বাতিল",
-        `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
-        "warning"
-      );
-    } catch (error) {
-      console.warn("messes collection fallback sync warning:", error);
-    }
+    sendNotification(
+      messId,
+      "মেস ডিউটি বাতিল",
+      `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
+      "warning"
+    ).catch(console.error);
   };
 
   const handleClearAllData = async () => {
@@ -1110,6 +1368,8 @@ export default function App() {
             setIsMoreOpen(false);
           }}
           messId={messId}
+          onLoadFromSupabase={loadDataFromSupabase}
+          onSaveToSupabase={() => saveToGmailDoc(members, expenses, utilities, deposits, fixedMealCount, dutyAssignments, messName)}
         />
       </div>
     </div>

@@ -1,5 +1,4 @@
-import { collection, doc, setDoc } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType } from "./firebase";
+import { db, doc, setDoc, handleFirestoreError, OperationType } from "./firebase";
 
 export interface MessNotification {
   id: string;

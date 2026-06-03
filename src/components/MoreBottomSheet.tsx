@@ -36,6 +36,8 @@ interface MoreBottomSheetProps {
   onLogOut: () => void;
   onTabChange: (tabIdx: number) => void;
   messId: string;
+  onLoadFromSupabase?: () => Promise<boolean>;
+  onSaveToSupabase?: () => void;
 }
 
 export default function MoreBottomSheet({
@@ -53,9 +55,18 @@ export default function MoreBottomSheet({
   onLogOut,
   onTabChange,
   messId,
+  onLoadFromSupabase,
+  onSaveToSupabase,
 }: MoreBottomSheetProps) {
-  const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | null>(null);
+  const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | "supabase" | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Supabase states
+  const [dbUrl, setDbUrl] = useState(() => localStorage.getItem("supabase_url") || "");
+  const [dbKey, setDbKey] = useState(() => localStorage.getItem("supabase_key") || "");
+  const [sbStatus, setSbStatus] = useState<string>("");
+  const [sbStatusType, setSbStatusType] = useState<"success" | "error" | "">("");
+  const [sbLoading, setSbLoading] = useState(false);
 
   // Duty Form States
   const [selectedDay, setSelectedDay] = useState("শনিবার");
@@ -516,6 +527,26 @@ export default function MoreBottomSheet({
                   </div>
                 </div>
               </button>
+
+              {/* Supabase Action */}
+              <button
+                onClick={() => {
+                  setSbStatus("");
+                  setActiveModal("supabase");
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-purple-950/10 hover:bg-purple-950/20 border border-purple-900/35 hover:border-purple-500/40 transition-all text-left cursor-pointer group animate-fade-in"
+                id="btn-menu-supabase"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-lg bg-teal-500/10 text-teal-400 group-hover:scale-105 transition-transform font-sans">
+                    <Sparkles className="w-5 h-5 text-teal-400" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-teal-300 block font-sans">সুপাবেজ ডাটাবেজ ব্যাকআপ (Supabase Backup)</span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">কাস্টম সুপাবেজ এপিআই কনফিগার করুন এবং ডাটা ব্যাকআপ বা রিস্টোর করুন</span>
+                  </div>
+                </div>
+              </button>
             </div>
 
             <div className="space-y-2 border-t border-zinc-900/40 pt-3">
@@ -556,7 +587,7 @@ export default function MoreBottomSheet({
                 ← মূল মেনু ফিরে যান
               </button>
               <span className="text-xs font-extrabold font-mono uppercase tracking-widest text-brand-amber">
-                {activeModal === "ledger" ? "চূড়ান্ত হিসাব" : "মেস ডিউটি ও দায়িত্ব"}
+                {activeModal === "ledger" ? "চূড়ান্ত হিসাব" : activeModal === "supabase" ? "সুপাবেজ সিঙ্ক" : "মেস ডিউটি ও দায়িত্ব"}
               </span>
             </div>
 
@@ -881,6 +912,157 @@ export default function MoreBottomSheet({
                       })}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Supabase Sub Modal */}
+            {activeModal === "supabase" && (
+              <div className="space-y-4 flex-1 flex flex-col min-h-0 text-left">
+                <div className="bg-teal-950/20 border border-teal-500/20 rounded-xl p-3 flex gap-2">
+                  <Sparkles className="w-4 h-4 text-teal-400 shrink-0 mt-0.5 text-glow" />
+                  <p className="text-[10px] text-zinc-300 leading-normal">
+                    সুপাবেজ (Supabase) একটি সুপারফাস্ট ক্লাউড ডাটাবেজ সার্ভিস। এখানে আপনার জিমেইল সাপেক্ষে মেসের যাবতীয় তথ্য রিয়েল-টাইম ব্যাকআপ এবং যেকোনো ডিভাইসে সরাসরি রিস্টোর করতে পারবেন।
+                  </p>
+                </div>
+
+                {sbStatus && (
+                  <div className={`p-2.5 border rounded-xl text-xs font-semibold ${
+                    sbStatusType === "success" 
+                      ? "bg-emerald-950/25 border-emerald-500/35 text-emerald-405" 
+                      : "bg-rose-950/25 border-rose-500/35 text-rose-405"
+                  }`}>
+                    {sbStatus}
+                  </div>
+                )}
+
+                <div className="space-y-3.5 bg-zinc-900/60 border border-purple-950/10 p-4 rounded-2xl">
+                  <div>
+                    <label className="block text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mb-1.5">
+                      Supabase Project URL
+                    </label>
+                    <input
+                      type="text"
+                      value={dbUrl}
+                      onChange={(e) => setDbUrl(e.target.value)}
+                      placeholder="https://xxxxxx.supabase.co"
+                      className="w-full text-xs py-2 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-teal-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mb-1.5">
+                      Supabase Anon Key (API Key)
+                    </label>
+                    <input
+                      type="password"
+                      value={dbKey}
+                      onChange={(e) => setDbKey(e.target.value)}
+                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC..."
+                      className="w-full text-xs py-2 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-teal-500 font-mono"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!dbUrl.trim() || !dbKey.trim()) {
+                        setSbStatus("অনুগ্রহ করে সঠীকভাবে URL এবং API কী দিন!");
+                        setSbStatusType("error");
+                        return;
+                      }
+                      if (!dbUrl.startsWith("https://")) {
+                        setSbStatus("সুপাবেজ URL অবশ্যই https:// দিয়ে শুরু হতে হবে!");
+                        setSbStatusType("error");
+                        return;
+                      }
+
+                      localStorage.setItem("supabase_url", dbUrl.trim());
+                      localStorage.setItem("supabase_key", dbKey.trim());
+                      setSbStatus("সুপাবেজ এপিআই কনফিগারেশন ব্রাউজারে সংরক্ষিত হয়েছে এবং কানেক্টেড!");
+                      setSbStatusType("success");
+                    }}
+                    className="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-[11px] font-bold cursor-pointer transition-all active:scale-95 text-center font-sans"
+                  >
+                    সেটিংস সংরক্ষণ ও কানেক্ট করুন
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 shrink-0 pt-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = localStorage.getItem("supabase_url");
+                      if (!url) {
+                        setSbStatus("অনুগ্রহ করে প্রথমে সেটিংস সংরক্ষণ করে কানেক্ট করুন!");
+                        setSbStatusType("error");
+                        return;
+                      }
+                      setSbLoading(true);
+                      setSbStatus("সুপাবেজ ক্লাউড থেকে ডাটা রিস্টোর হচ্ছে...");
+                      setSbStatusType("success");
+                      try {
+                        if (onLoadFromSupabase) {
+                          const result = await onLoadFromSupabase();
+                          if (result) {
+                            setSbStatus("ক্লাউড ডাটা সফলভাবে ডাউনলোড ও রিস্টোর করা হয়েছে!");
+                            setSbStatusType("success");
+                          } else {
+                            setSbStatus("রিস্টোর ব্যর্থ! নিশ্চিত করুন সুপাবেজে 'mess_data' টেবিলটি সঠিক স্কিমায় তৈরি আছে অথবা জিমেইলের অনুকূলে পূর্বের ব্যাকআপ ডাটা রানিং আছে।");
+                            setSbStatusType("error");
+                          }
+                        }
+                      } catch (err: any) {
+                        setSbStatus("ত্রুটি: " + (err.message || String(err)));
+                        setSbStatusType("error");
+                      } finally {
+                        setSbLoading(false);
+                      }
+                    }}
+                    disabled={sbLoading}
+                    className="flex flex-col items-center justify-center p-3.5 bg-indigo-950/20 hover:bg-indigo-950/40 border border-indigo-900/30 hover:border-indigo-500/40 rounded-xl transition-all text-center cursor-pointer disabled:opacity-50 active:scale-95"
+                  >
+                    <Download className={`w-5 h-5 text-indigo-400 mb-1.5 ${sbLoading ? "animate-bounce" : ""}`} />
+                    <span className="text-xs font-bold text-zinc-200">ক্লাউড থেকে রিস্টোর</span>
+                    <span className="text-[9px] text-zinc-400 mt-1 font-sans">ক্লাউড ডাটা অ্যাপে ডাউনলোড করুন</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = localStorage.getItem("supabase_url");
+                      if (!url) {
+                        setSbStatus("অনুগ্রহ করে প্রথমে সেটিংস সংরক্ষণ করে কানেক্ট করুন!");
+                        setSbStatusType("error");
+                        return;
+                      }
+                      setSbLoading(true);
+                      setSbStatus("সুপাবেজ ক্লাউডে ব্যাকআপ সেভ হচ্ছে...");
+                      setSbStatusType("success");
+                      try {
+                        if (onSaveToSupabase) {
+                          onSaveToSupabase();
+                          setSbStatus("ডাটা সফলভাবে সুপাবেজ ক্লাউড সিস্টেমে ব্যাকআপ হিসেবে সেভ করা হয়েছে!");
+                          setSbStatusType("success");
+                        }
+                      } catch (err: any) {
+                        setSbStatus("ব্যাকআপ ব্যর্থ: " + (err.message || String(err)));
+                        setSbStatusType("error");
+                      } finally {
+                        setSbLoading(false);
+                      }
+                    }}
+                    disabled={sbLoading}
+                    className="flex flex-col items-center justify-center p-3.5 bg-emerald-950/20 hover:bg-emerald-950/40 border border-emerald-900/30 hover:border-emerald-500/40 rounded-xl transition-all text-center cursor-pointer disabled:opacity-50 active:scale-95"
+                  >
+                    <Sparkles className={`w-5 h-5 text-emerald-400 mb-1.5 ${sbLoading ? "animate-pulse" : ""}`} />
+                    <span className="text-xs font-bold text-zinc-200">ক্লাউডে ব্যাকআপ দিন</span>
+                    <span className="text-[9px] text-zinc-405 mt-1 font-sans">রানিং সকল ডাটা ক্লাউডে সেভ করুন</span>
+                  </button>
+                </div>
+
+                <div className="mt-auto pt-3 border-t border-purple-950/10 text-zinc-500 text-[9px] leading-relaxed text-center font-sans">
+                  * আপনার সুপাবেজ ব্যাকআপে অবশ্যই <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">mess_data</code> নামক টেবিল থাকতে হবে যার প্রাইমারী কী বা ইউনিক কলাম <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">user_email</code>।
                 </div>
               </div>
             )}

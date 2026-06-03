@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import {
+  auth,
+  db,
+  doc,
+  setDoc,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile
-} from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "../lib/firebase";
+} from "../lib/firebase";
 import { AlertCircle, Eye, EyeOff, Sparkles, LogIn, UserPlus } from "lucide-react";
 
 interface AuthScreenProps {
