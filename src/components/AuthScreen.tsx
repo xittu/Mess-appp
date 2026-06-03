@@ -157,6 +157,11 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
         {/* Dynamic Headings matching screenshot */}
         <div className="text-center mb-4 relative z-10">
+          <div className="mb-2">
+            <span className="inline-block text-[9px] uppercase tracking-widest font-semibold font-sans text-purple-400 bg-purple-950/40 border border-[#2B1F43]/80 px-2.5 py-0.5 rounded-full select-none">
+              Developed by Zi Tu
+            </span>
+          </div>
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">
             {isRegisterMode ? "Create Account" : "Sign In"}
           </h2>
