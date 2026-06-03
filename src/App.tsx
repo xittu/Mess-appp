@@ -283,7 +283,7 @@ export default function App() {
     }
   };
 
-  const handleAddExpense = async (date: string, amount: number, desc: string) => {
+  const handleAddExpense = async (date: string, amount: number, desc: string, memberId?: string) => {
     if (!currentUser) return;
     const id = "EX" + Math.random().toString(36).substr(2, 6).toUpperCase();
     const newExpense: Expense = {
@@ -291,16 +291,22 @@ export default function App() {
       date,
       amount,
       desc,
+      memberId: memberId || "",
     };
     const path = `messes/${messId}/expenses/${id}`;
 
     try {
       await setDoc(doc(db, "messes", messId, "expenses", id), newExpense);
 
+      const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
+      const msg = buyerName
+        ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
+        : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`;
+
       await sendNotification(
         messId,
         "বাজার খরচ যোগ হয়েছে",
-        `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`,
+        msg,
         "info"
       );
     } catch (error) {
@@ -435,19 +441,39 @@ export default function App() {
   const handleAddDuty = async (assignment: DutyAssignment) => {
     if (!currentUser) return;
     const memberName = members.find((m) => m.id === assignment.memberId)?.name || "কর্মকর্তা";
-    const path = `messes/${messId}/duties/${assignment.day}`;
+    const documentId = `${assignment.day}_${assignment.role}`;
+    const path = `messes/${messId}/duties/${documentId}`;
 
     try {
-      await setDoc(doc(db, "messes", messId, "duties", assignment.day), assignment);
+      await setDoc(doc(db, "messes", messId, "duties", documentId), assignment);
 
       await sendNotification(
         messId,
-        "বাজার ডিউটি আপডেট",
+        "মেস ডিউটি আপডেট",
         `সাপ্তাহিক রুটিনানুযায়ী "${assignment.day}" এর জন্য "${memberName}" কে "${assignment.role}" এ নিয়োজিত করা হয়েছে।`,
         "info"
       );
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, path);
+    }
+  };
+
+  const handleRemoveDuty = async (day: string, role: string) => {
+    if (!currentUser) return;
+    const documentId = `${day}_${role}`;
+    const path = `messes/${messId}/duties/${documentId}`;
+
+    try {
+      await deleteDoc(doc(db, "messes", messId, "duties", documentId));
+
+      await sendNotification(
+        messId,
+        "মেস ডিউটি বাতিল",
+        `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
+        "warning"
+      );
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, path);
     }
   };
 
@@ -470,9 +496,9 @@ export default function App() {
         await deleteDoc(doc(db, "messes", messId, "utilities", ut.id));
       }
 
-      // 4. Delete all duty schedule days
+      // 4. Delete all duty schedule days using the unique key
       for (const duty of dutyAssignments) {
-        await deleteDoc(doc(db, "messes", messId, "duties", duty.day));
+        await deleteDoc(doc(db, "messes", messId, "duties", `${duty.day}_${duty.role}`));
       }
 
       // 5. Reset settings to default
@@ -660,6 +686,7 @@ export default function App() {
               utilities={utilities}
               onAddUtility={handleAddUtility}
               onRemoveUtility={handleRemoveUtility}
+              members={members}
             />
           )}
 
@@ -783,6 +810,7 @@ export default function App() {
           fixedMealCount={fixedMealCount}
           dutyAssignments={dutyAssignments}
           onAddDuty={handleAddDuty}
+          onRemoveDuty={handleRemoveDuty}
           onClearAllData={handleClearAllData}
           onLogOut={handleLogOut}
           onTabChange={(tabIdx) => {

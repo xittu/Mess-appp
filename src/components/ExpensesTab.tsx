@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { ShoppingCart, LayoutGrid, Calendar, LogIn, Trash2, ShieldAlert, Sparkles, DollarSign } from "lucide-react";
-import { Expense, UtilityExpense } from "../types";
+import { ShoppingCart, LayoutGrid, Calendar, LogIn, Trash2, ShieldAlert, ChevronDown } from "lucide-react";
+import { Member, Expense, UtilityExpense } from "../types";
 
 interface ExpensesTabProps {
   expenses: Expense[];
-  onAddExpense: (date: string, amount: number, desc: string) => void;
+  onAddExpense: (date: string, amount: number, desc: string, memberId?: string) => void;
   onRemoveExpense: (id: string) => void;
   utilities: UtilityExpense[];
   onAddUtility: (name: string, amount: number) => void;
   onRemoveUtility: (id: string) => void;
+  members: Member[];
 }
 
 export default function ExpensesTab({
@@ -18,6 +19,7 @@ export default function ExpensesTab({
   utilities,
   onAddUtility,
   onRemoveUtility,
+  members,
 }: ExpensesTabProps) {
   // Bazaar Form States
   const [bazaarDate, setBazaarDate] = useState(() => {
@@ -26,6 +28,8 @@ export default function ExpensesTab({
   });
   const [bazaarAmount, setBazaarAmount] = useState<string>("0");
   const [bazaarDesc, setBazaarDesc] = useState("");
+  const [selectedBuyerId, setSelectedBuyerId] = useState<string>("");
+  const [isBuyerSelectOpen, setIsBuyerSelectOpen] = useState(false);
 
   // Utility Form States
   const [utilityName, setUtilityName] = useState("");
@@ -35,9 +39,10 @@ export default function ExpensesTab({
     e.preventDefault();
     const parsedAmount = parseFloat(bazaarAmount);
     if (!bazaarDate || isNaN(parsedAmount) || parsedAmount <= 0) return;
-    onAddExpense(bazaarDate, parsedAmount, bazaarDesc.trim());
+    onAddExpense(bazaarDate, parsedAmount, bazaarDesc.trim(), selectedBuyerId);
     setBazaarAmount("0");
     setBazaarDesc("");
+    setSelectedBuyerId("");
   };
 
   const handleUtilitySubmit = (e: React.FormEvent) => {
@@ -112,6 +117,61 @@ export default function ExpensesTab({
             </div>
           </div>
 
+          {/* Buyer Selector Custom Dropdown */}
+          <div className="relative">
+            <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+              বাজারকারী নির্বাচন করুন (কে খরচ করেছেন?)
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsBuyerSelectOpen(!isBuyerSelectOpen)}
+              className="w-full flex items-center justify-between text-xs font-bold py-2.5 px-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-850/80 border border-zinc-800 text-zinc-200 transition-all text-left cursor-pointer"
+            >
+              <span className="truncate">
+                {selectedBuyerId
+                  ? members.find((m) => m.id === selectedBuyerId)?.name || "সদস্য"
+                  : "সাধারণ / মেস ফান্ড (কেউ ব্যক্তিগতভাবে দেয়নি)"}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`} />
+            </button>
+
+            {isBuyerSelectOpen && (
+              <div className="absolute z-45 mt-1.5 w-full bg-[#18142c] border border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBuyerId("");
+                    setIsBuyerSelectOpen(false);
+                  }}
+                  className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
+                    selectedBuyerId === ""
+                      ? "bg-brand-accent/25 text-brand-amber font-bold"
+                      : "text-zinc-300 hover:bg-zinc-850/50"
+                  }`}
+                >
+                  সাধারণ / মেস ফান্ড (কেউ ব্যক্তিগতভাবে দেয়নি)
+                </button>
+                {members.map((member) => (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedBuyerId(member.id);
+                      setIsBuyerSelectOpen(false);
+                    }}
+                    className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
+                      selectedBuyerId === member.id
+                        ? "bg-brand-accent/25 text-brand-amber font-bold"
+                        : "text-zinc-300 hover:bg-zinc-850/50"
+                    }`}
+                  >
+                    {member.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
               বাজার বিবরণ (ঐচ্ছিক)
@@ -155,7 +215,7 @@ export default function ExpensesTab({
                 value={utilityName}
                 onChange={(e) => setUtilityName(e.target.value)}
                 placeholder="যেমন: বিদ্যুৎ বিল, পানি বিল"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
                 id="utility-name-input"
               />
             </div>
@@ -172,7 +232,7 @@ export default function ExpensesTab({
                 onClick={() => utilityAmount === "0" && setUtilityAmount("")}
                 onBlur={() => utilityAmount === "" && setUtilityAmount("0")}
                 placeholder="0"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
                 id="utility-amount-input"
               />
             </div>
@@ -208,13 +268,18 @@ export default function ExpensesTab({
                 key={item.id}
                 className="flex items-center justify-between bg-brand-card border border-purple-950/20 p-3 rounded-xl shadow-sm"
               >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-zinc-100 font-sans">
+                <div className="flex flex-col max-w-[70%]">
+                  <div className="flex items-start flex-col gap-1">
+                    <span className="text-sm font-bold text-zinc-100 font-sans leading-tight">
                       {item.desc || "টুকটাক বাজার খরচ"}
                     </span>
+                    {item.memberId && (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-sans tracking-wide">
+                        ক্রেতা: {members.find((m) => m.id === item.memberId)?.name || "সদস্য"}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">{item.date}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-1">{item.date}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-amber font-mono">

@@ -114,7 +114,7 @@ export default function DepositsTab({
       <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex items-start gap-2.5">
         <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
         <p className="text-[10px] text-zinc-400 leading-relaxed">
-          সকল ট্রানজেকশন ডেটা আপনার ব্রাউজার লোকাল স্টোরেজে স্বয়ংক্রিয়ভাবে সেভ হচ্ছে। কোনো মেস মেম্বারের জমা পেমেন্ট পরিবর্তন করলে তাৎক্ষণিকভাবে মেসের ফান্ড ক্যালকুলেশনে তা যুক্ত হয়ে যাবে।
+          সকল ট্রানজেকশন ডেটা আপনার ফায়ারবেস ক্লাউড ডাটাবেজে (Firebase Cloud Database) স্বয়ংক্রিয়ভাবে সেভ ও রিয়েল-টাইম সিঙ্ক হচ্ছে। যেকোনো আপডেট সাথে সাথে মেস ফান্ডের হিসাব-নিকাশে গণনা করা হবে।
         </p>
       </div>
     </div>

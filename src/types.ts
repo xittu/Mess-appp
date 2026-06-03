@@ -9,6 +9,7 @@ export interface Expense {
   date: string;
   amount: number;
   desc: string;
+  memberId?: string; // Optional ID of the member who went to bazaar
 }
 
 export interface UtilityExpense {

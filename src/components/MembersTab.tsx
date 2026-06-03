@@ -43,7 +43,7 @@ export default function MembersTab({
               type="text"
               value={memberName}
               onChange={(e) => setMemberName(e.target.value)}
-              placeholder="সদস্যের নাম (যেমন: Zitu, Nur, Talha)"
+              placeholder="সদস্যের নাম (যেমন: Zitu, Shahadat, Sagor)"
               className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-all font-sans"
               id="input-member-name"
             />
