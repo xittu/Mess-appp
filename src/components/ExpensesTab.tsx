@@ -10,6 +10,7 @@ interface ExpensesTabProps {
   onAddUtility: (name: string, amount: number) => void;
   onRemoveUtility: (id: string) => void;
   members: Member[];
+  dueMemberIds?: string[];
 }
 
 export default function ExpensesTab({
@@ -20,27 +21,28 @@ export default function ExpensesTab({
   onAddUtility,
   onRemoveUtility,
   members,
+  dueMemberIds,
 }: ExpensesTabProps) {
   // Bazaar Form States
   const [bazaarDate, setBazaarDate] = useState(() => {
     const d = new Date();
     return d.toISOString().split("T")[0]; // YYYY-MM-DD
   });
-  const [bazaarAmount, setBazaarAmount] = useState<string>("0");
+  const [bazaarAmount, setBazaarAmount] = useState<string>("");
   const [bazaarDesc, setBazaarDesc] = useState("");
   const [selectedBuyerId, setSelectedBuyerId] = useState<string>("");
   const [isBuyerSelectOpen, setIsBuyerSelectOpen] = useState(false);
 
   // Utility Form States
   const [utilityName, setUtilityName] = useState("");
-  const [utilityAmount, setUtilityAmount] = useState<string>("0");
+  const [utilityAmount, setUtilityAmount] = useState<string>("");
 
   const handleBazaarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(bazaarAmount);
     if (!bazaarDate || isNaN(parsedAmount) || parsedAmount <= 0) return;
     onAddExpense(bazaarDate, parsedAmount, bazaarDesc.trim(), selectedBuyerId);
-    setBazaarAmount("0");
+    setBazaarAmount("");
     setBazaarDesc("");
     setSelectedBuyerId("");
   };
@@ -51,7 +53,7 @@ export default function ExpensesTab({
     if (!utilityName.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
     onAddUtility(utilityName.trim(), parsedAmount);
     setUtilityName("");
-    setUtilityAmount("0");
+    setUtilityAmount("");
   };
 
   const totalBazaar = expenses.reduce((sum, item) => sum + item.amount, 0);
@@ -109,7 +111,6 @@ export default function ExpensesTab({
                 value={bazaarAmount}
                 onChange={(e) => setBazaarAmount(e.target.value)}
                 onClick={() => bazaarAmount === "0" && setBazaarAmount("")}
-                onBlur={() => bazaarAmount === "" && setBazaarAmount("0")}
                 placeholder="0"
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
                 id="bazaar-amount-input"
@@ -166,6 +167,9 @@ export default function ExpensesTab({
                     }`}
                   >
                     {member.name}
+                    {dueMemberIds?.includes(member.id) && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -230,7 +234,6 @@ export default function ExpensesTab({
                 value={utilityAmount}
                 onChange={(e) => setUtilityAmount(e.target.value)}
                 onClick={() => utilityAmount === "0" && setUtilityAmount("")}
-                onBlur={() => utilityAmount === "" && setUtilityAmount("0")}
                 placeholder="0"
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
                 id="utility-amount-input"
@@ -276,6 +279,9 @@ export default function ExpensesTab({
                     {item.memberId && (
                       <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-sans tracking-wide">
                         ক্রেতা: {members.find((m) => m.id === item.memberId)?.name || "সদস্য"}
+                        {dueMemberIds?.includes(item.memberId) && (
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                        )}
                       </span>
                     )}
                   </div>

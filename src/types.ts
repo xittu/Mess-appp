@@ -19,8 +19,10 @@ export interface UtilityExpense {
 }
 
 export interface Deposit {
-  id: string; // memberId
+  id: string; // unique
+  memberId: string;
   amount: number;
+  date: string;
 }
 
 export interface DutyAssignment {

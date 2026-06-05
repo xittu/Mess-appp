@@ -1,46 +1,63 @@
 import React, { useState } from "react";
-import { HandCoins, Sparkles, UserCheck, ShieldCheck } from "lucide-react";
-import { Member } from "../types";
+import { HandCoins, Sparkles, UserCheck, ShieldCheck, Pen, Trash2, CalendarCheck, Clock, CheckCircle } from "lucide-react";
+import { Member, Deposit } from "../types";
 
 interface DepositsTabProps {
   members: Member[];
   deposits: Record<string, number>;
-  onUpdateDeposit: (memberId: string, amount: number) => void;
+  depositHistory?: Deposit[];
+  onAddDeposit: (memberId: string, amount: number, date: string) => void;
+  onEditDeposit: (id: string, amount: number) => void;
+  onDeleteDeposit: (id: string, amount: number, memberId: string) => void;
+  dueMemberIds?: string[];
 }
 
 export default function DepositsTab({
   members,
   deposits,
-  onUpdateDeposit,
+  depositHistory = [],
+  onAddDeposit,
+  onEditDeposit,
+  onDeleteDeposit,
+  dueMemberIds
 }: DepositsTabProps) {
-  // We can track local string states to allow typing decimals or clears without instantly parsing nan
-  const [localAmounts, setLocalAmounts] = useState<Record<string, string>>({});
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositDate, setDepositDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState<string>("");
 
-  const handleAmountChange = (memberId: string, val: string) => {
-    setLocalAmounts((prev) => ({ ...prev, [memberId]: val }));
-    const parsed = parseFloat(val);
+  const handleDepositSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMemberId) return;
+    const parsedAmount = parseFloat(depositAmount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
+    
+    onAddDeposit(selectedMemberId, parsedAmount, depositDate);
+    
+    // Reset form nicely
+    setDepositAmount("");
+    setSelectedMemberId("");
+    setDepositDate(new Date().toISOString().split("T")[0]);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editingId) return;
+    const parsed = parseFloat(editAmount);
     if (!isNaN(parsed) && parsed >= 0) {
-      onUpdateDeposit(memberId, parsed);
-    } else if (val === "") {
-      onUpdateDeposit(memberId, 0);
+      onEditDeposit(editingId, parsed);
     }
+    setEditingId(null);
+    setEditAmount("");
   };
 
-  const getAmountValue = (memberId: string) => {
-    if (localAmounts[memberId] !== undefined) {
-      return localAmounts[memberId];
-    }
-    return deposits[memberId]?.toString() || "0";
-  };
+  const safeDeposits = deposits || {};
+  const totalDeposits = Object.values(safeDeposits).reduce((sum: number, item: any) => sum + (typeof item === 'number' ? item : 0), 0);
 
-  const handleBlur = (memberId: string) => {
-    const val = localAmounts[memberId];
-    if (val === undefined || val === "" || isNaN(parseFloat(val))) {
-      setLocalAmounts((prev) => ({ ...prev, [memberId]: (deposits[memberId] || 0).toString() }));
-    }
-  };
-
-  const totalDeposits = Object.values(deposits).reduce((sum, item) => sum + item, 0);
+  const safeDepositHistory = Array.isArray(depositHistory) ? depositHistory : [];
 
   return (
     <div className="space-y-4 px-4 pb-20">
@@ -61,8 +78,7 @@ export default function DepositsTab({
 
       {/* Grid instruction header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-200">সদস্যভিত্তিক জমা ক্যাশ</h3>
-        <span className="text-xs text-zinc-400">ব্যক্তিগত ফান্ড আপডেট</span>
+        <h3 className="text-sm font-semibold text-zinc-200">সদস্যদের সর্বমোট জমা</h3>
       </div>
 
       {members.length === 0 ? (
@@ -70,39 +86,28 @@ export default function DepositsTab({
           <p className="text-sm text-zinc-400">মেসে জমা আপডেট করার জন্য প্রথমে সদস্য যোগ করুন।</p>
         </div>
       ) : (
-        /* Grid Layout */
+        /* Status Board of Total Deposits */
         <div className="grid grid-cols-2 gap-3" id="deposits-grid">
           {members.map((member) => {
-            const amount = getAmountValue(member.id);
+            const amount = safeDeposits[member.id] || 0;
             return (
               <div
-                key={member.id}
+                key={`summary-${member.id}`}
                 className="bg-brand-card/90 border border-purple-950/20 rounded-xl p-3 flex flex-col justify-between hover:border-brand-accent/30 transition-all shadow-sm"
               >
-                <div className="flex items-center gap-1.5 mb-2.5">
+                <div className="flex items-center gap-1.5 mb-1.5">
                   <div className="w-5 h-5 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center">
                     <UserCheck className="w-3 h-3 text-zinc-400" />
                   </div>
                   <span className="text-xs font-bold text-zinc-200 truncate font-sans">
                     {member.name}
+                    {dueMemberIds?.includes(member.id) && (
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                    )}
                   </span>
                 </div>
-
-                <div className="space-y-1">
-                  <span className="text-[10px] text-zinc-500 font-semibold uppercase block">জমার পরিমাণ</span>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-2.5 text-xs text-zinc-400 font-medium">৳</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={amount}
-                      onChange={(e) => handleAmountChange(member.id, e.target.value)}
-                      onBlur={() => handleBlur(member.id)}
-                      className="w-full pl-6 pr-2.5 py-1.5 text-xs rounded-lg bg-zinc-900 text-zinc-100 font-mono text-right font-bold focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent border border-zinc-805"
-                      id={`deposit-input-${member.id}`}
-                    />
-                  </div>
+                <div className="text-lg font-mono font-bold text-emerald-400 text-right">
+                  ৳ {amount.toLocaleString()}
                 </div>
               </div>
             );
@@ -110,11 +115,153 @@ export default function DepositsTab({
         </div>
       )}
 
+      {members.length > 0 && (
+        <React.Fragment>
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold text-zinc-200 mb-3 flex items-center gap-2">
+              <span className="bg-emerald-500/20 p-1 rounded-md border border-emerald-500/30">
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+              </span>
+              নতুন জমা কনফার্ম করুন
+            </h3>
+            <form onSubmit={handleDepositSubmit} className="bg-brand-card border border-zinc-800 rounded-xl p-3.5 space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-zinc-400 font-semibold uppercase">কার জমার এন্ট্রি?</label>
+                  <select
+                    value={selectedMemberId}
+                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500"
+                    required
+                  >
+                    <option value="" disabled>সদস্য বাছাই করুন</option>
+                    {members.map((m) => (
+                      <option key={`opt-${m.id}`} value={m.id}>{m.name}{dueMemberIds?.includes(m.id) ? " 🔴" : ""}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-zinc-400 font-semibold uppercase">জমার তারিখ</label>
+                  <div className="relative">
+                    <CalendarCheck className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="date"
+                      value={depositDate}
+                      onChange={(e) => setDepositDate(e.target.value)}
+                      className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-emerald-500 font-mono"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">৳</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="any"
+                    placeholder="হিসাব দিন..."
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="w-full pl-7 pr-3 py-2.5 text-sm rounded-lg bg-emerald-950/20 border border-emerald-900/40 text-zinc-100 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-semibold text-xs rounded-lg shadow-md whitespace-nowrap font-sans"
+                >
+                  জমা দিন
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="pt-2">
+             <h3 className="text-sm font-semibold text-zinc-200 mb-3 flex items-center gap-2">
+                <span className="bg-indigo-500/20 p-1 rounded-md border border-indigo-500/30">
+                  <Clock className="w-4 h-4 text-indigo-400" />
+                </span>
+                জমার রেকর্ডস
+              </h3>
+              {safeDepositHistory.length === 0 ? (
+                <div className="bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl p-5 text-center">
+                  <p className="text-[11px] text-zinc-500">এখনো কোনো জমার ট্রানজেকশন নেই</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {safeDepositHistory.slice().reverse().map(entry => {
+                    const memberName = members.find(m => m.id === entry.memberId)?.name || 'Unknown';
+                    const isEditing = editingId === entry.id;
+
+                    return (
+                      <div key={entry.id} className="bg-brand-card border border-zinc-800/80 rounded-xl p-3 hover:border-zinc-700 transition-colors flex items-center gap-3">
+                         <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                           <HandCoins className="w-4 h-4 text-emerald-400" />
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs font-bold text-zinc-200 truncate">
+                                {memberName}
+                                {dueMemberIds?.includes(entry.memberId) && (
+                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                )}
+                              </span>
+                              {isEditing ? (
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    value={editAmount}
+                                    onChange={(e) => setEditAmount(e.target.value)}
+                                    className="w-20 px-2 py-1 text-xs bg-zinc-950 border border-zinc-700 rounded text-right font-mono"
+                                  />
+                                  <button onClick={handleEditSubmit} className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-bold text-white">সেভ</button>
+                                  <button onClick={() => setEditingId(null)} className="text-[10px] bg-zinc-700 px-2 py-1 rounded font-bold text-white">বাতিল</button>
+                                </div>
+                              ) : (
+                                <span className="text-sm font-mono font-bold text-emerald-400 shrink-0">৳ {entry.amount}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+                               <span>{new Date(entry.date).toLocaleDateString("bn-BD", { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                               {!isEditing && (
+                                 <div className="flex gap-2">
+                                   <button 
+                                      onClick={() => {
+                                        setEditingId(entry.id);
+                                        setEditAmount(entry.amount.toString());
+                                      }}
+                                      className="hover:text-emerald-400 transition-colors flex items-center gap-1"
+                                    >
+                                      <Pen className="w-3 h-3" /> এডিট
+                                   </button>
+                                   <button 
+                                      onClick={() => onDeleteDeposit(entry.id, entry.amount, entry.memberId)}
+                                      className="hover:text-rose-400 transition-colors"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                   </button>
+                                 </div>
+                               )}
+                            </div>
+                         </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+          </div>
+        </React.Fragment>
+      )}
+
       {/* Security alert footer notice */}
-      <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex items-start gap-2.5">
+      <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex items-start gap-2.5 mt-8">
         <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
         <p className="text-[10px] text-zinc-400 leading-relaxed">
-          সকল ট্রানজেকশন ডেটা আপনার ফায়ারবেস ক্লাউড ডাটাবেজে (Firebase Cloud Database) স্বয়ংক্রিয়ভাবে সেভ ও রিয়েল-টাইম সিঙ্ক হচ্ছে। যেকোনো আপডেট সাথে সাথে মেস ফান্ডের হিসাব-নিকাশে গণনা করা হবে।
+          সকল ট্রানজেকশন ডেটা আপনার ফায়ারবেস ক্লাউড ডাটাবেজে (Firebase Cloud Database) স্বয়ংক্রিয়ভাবে সেভ ও রিয়েল-টাইম সিঙ্ক হচ্ছে।
         </p>
       </div>
     </div>

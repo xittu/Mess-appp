@@ -38,6 +38,7 @@ interface MoreBottomSheetProps {
   messId: string;
   onLoadFromSupabase?: () => Promise<boolean>;
   onSaveToSupabase?: () => void;
+  dueMemberIds?: string[];
 }
 
 export default function MoreBottomSheet({
@@ -57,13 +58,12 @@ export default function MoreBottomSheet({
   messId,
   onLoadFromSupabase,
   onSaveToSupabase,
+  dueMemberIds
 }: MoreBottomSheetProps) {
   const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | "supabase" | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Supabase states
-  const [dbUrl, setDbUrl] = useState(() => localStorage.getItem("supabase_url") || "");
-  const [dbKey, setDbKey] = useState(() => localStorage.getItem("supabase_key") || "");
   const [sbStatus, setSbStatus] = useState<string>("");
   const [sbStatusType, setSbStatusType] = useState<"success" | "error" | "">("");
   const [sbLoading, setSbLoading] = useState(false);
@@ -135,7 +135,7 @@ export default function MoreBottomSheet({
       const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
       const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
       const isDue = balance < 0;
-      const statusText = isDue ? `বকেয়া (দিতে হবে): ৳${Math.abs(balance)}` : `উদ্বৃত্ত (ফেরত পাবে): ৳${balance}`;
+      const statusText = isDue ? `ব্যালেন্স: - ৳${Math.abs(balance)}` : `ব্যালেন্স: ৳${balance}`;
       const statusColor = isDue ? "color: #e11d48; font-weight: bold;" : "color: #059669; font-weight: bold;";
 
       return `
@@ -511,23 +511,6 @@ export default function MoreBottomSheet({
                 </div>
               </div>
 
-              {/* Export PDF Action */}
-              <button
-                onClick={handleExportPDF}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-950/10 hover:bg-emerald-950/20 border border-emerald-900/35 hover:border-emerald-500/40 transition-all text-left cursor-pointer group"
-                id="btn-menu-export-pdf"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform">
-                    <Download className="w-5 h-5 animate-pulse" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-emerald-300 block font-sans">পিডিএফ হিসাব এক্সপোর্ট (PDF Export)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">মেস বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী ডাউনলোড করুন</span>
-                  </div>
-                </div>
-              </button>
-
               {/* Supabase Action */}
               <button
                 onClick={() => {
@@ -544,6 +527,23 @@ export default function MoreBottomSheet({
                   <div>
                     <span className="text-sm font-bold text-teal-300 block font-sans">সুপাবেজ ডাটাবেজ ব্যাকআপ (Supabase Backup)</span>
                     <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">কাস্টম সুপাবেজ এপিআই কনফিগার করুন এবং ডাটা ব্যাকআপ বা রিস্টোর করুন</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Export PDF Action */}
+              <button
+                onClick={handleExportPDF}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-950/10 hover:bg-emerald-950/20 border border-emerald-900/35 hover:border-emerald-500/40 transition-all text-left cursor-pointer group"
+                id="btn-menu-export-pdf"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform">
+                    <Download className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-emerald-300 block font-sans">পিডিএফ হিসাব এক্সপোর্ট (PDF Export)</span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">মেস বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী ডাউনলোড করুন</span>
                   </div>
                 </div>
               </button>
@@ -656,16 +656,19 @@ export default function MoreBottomSheet({
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-extrabold text-zinc-100 font-sans">
                                 {member.name}
+                                {dueMemberIds?.includes(member.id) && (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                )}
                               </span>
-                              {isDue ? (
+                              {balance < 0 ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400">
                                   <TrendingDown className="w-3.5 h-3.5" />
-                                  বকেয়া (দিতে হবে): ৳{Math.abs(balance)}
+                                  ব্যালেন্স: - ৳{Math.abs(balance)}
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                                   <TrendingUp className="w-3.5 h-3.5" />
-                                  উদ্বৃত্ত (ফেরত পাবে): ৳{balance}
+                                  ব্যালেন্স: ৳{balance}
                                 </span>
                               )}
                             </div>
@@ -794,6 +797,9 @@ export default function MoreBottomSheet({
                                 }`}
                               >
                                 {member.name}
+                                {dueMemberIds?.includes(member.id) && (
+                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                )}
                               </button>
                             ))
                           )}
@@ -884,6 +890,9 @@ export default function MoreBottomSheet({
                                 </span>
                                 <span className="text-xs font-bold text-zinc-200 block mt-0.5 leading-tight truncate">
                                   {personnel}
+                                  {dueMemberIds?.includes(duty.memberId) && (
+                                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                  )}
                                 </span>
                               </div>
                               <button
@@ -937,67 +946,16 @@ export default function MoreBottomSheet({
                 )}
 
                 <div className="space-y-3.5 bg-zinc-900/60 border border-purple-950/10 p-4 rounded-2xl">
-                  <div>
-                    <label className="block text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mb-1.5">
-                      Supabase Project URL
-                    </label>
-                    <input
-                      type="text"
-                      value={dbUrl}
-                      onChange={(e) => setDbUrl(e.target.value)}
-                      placeholder="https://xxxxxx.supabase.co"
-                      className="w-full text-xs py-2 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-teal-500 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mb-1.5">
-                      Supabase Anon Key (API Key)
-                    </label>
-                    <input
-                      type="password"
-                      value={dbKey}
-                      onChange={(e) => setDbKey(e.target.value)}
-                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC..."
-                      className="w-full text-xs py-2 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-teal-500 font-mono"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!dbUrl.trim() || !dbKey.trim()) {
-                        setSbStatus("অনুগ্রহ করে সঠীকভাবে URL এবং API কী দিন!");
-                        setSbStatusType("error");
-                        return;
-                      }
-                      if (!dbUrl.startsWith("https://")) {
-                        setSbStatus("সুপাবেজ URL অবশ্যই https:// দিয়ে শুরু হতে হবে!");
-                        setSbStatusType("error");
-                        return;
-                      }
-
-                      localStorage.setItem("supabase_url", dbUrl.trim());
-                      localStorage.setItem("supabase_key", dbKey.trim());
-                      setSbStatus("সুপাবেজ এপিআই কনফিগারেশন ব্রাউজারে সংরক্ষিত হয়েছে এবং কানেক্টেড!");
-                      setSbStatusType("success");
-                    }}
-                    className="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-[11px] font-bold cursor-pointer transition-all active:scale-95 text-center font-sans"
-                  >
-                    সেটিংস সংরক্ষণ ও কানেক্ট করুন
-                  </button>
+                    <p className="text-xs text-zinc-300 font-semibold mb-2">সুপাবেজ এখন পার্মানেন্টলি আপনার প্রজেক্টের সাথে কানেক্ট করা আছে।</p>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed mb-1">
+                      আপনার প্রদানকৃত <span className="text-brand-amber font-mono font-bold">Mess-appp</span> প্রজেক্টটি এখন ডিফল্টভাবে সংযুক্ত। মেসের ডাটা এই ক্লাউডে এক ক্লিকে ব্যাকআপ বা রিস্টোর করতে পারেন।
+                    </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 shrink-0 pt-1">
                   <button
                     type="button"
                     onClick={async () => {
-                      const url = localStorage.getItem("supabase_url");
-                      if (!url) {
-                        setSbStatus("অনুগ্রহ করে প্রথমে সেটিংস সংরক্ষণ করে কানেক্ট করুন!");
-                        setSbStatusType("error");
-                        return;
-                      }
                       setSbLoading(true);
                       setSbStatus("সুপাবেজ ক্লাউড থেকে ডাটা রিস্টোর হচ্ছে...");
                       setSbStatusType("success");
@@ -1008,7 +966,7 @@ export default function MoreBottomSheet({
                             setSbStatus("ক্লাউড ডাটা সফলভাবে ডাউনলোড ও রিস্টোর করা হয়েছে!");
                             setSbStatusType("success");
                           } else {
-                            setSbStatus("রিস্টোর ব্যর্থ! নিশ্চিত করুন সুপাবেজে 'mess_data' টেবিলটি সঠিক স্কিমায় তৈরি আছে অথবা জিমেইলের অনুকূলে পূর্বের ব্যাকআপ ডাটা রানিং আছে।");
+                            setSbStatus(`রিস্টোর ব্যর্থ! নিশ্চিত করুন সুপাবেজে 'Mess-appp' টেবিলটি সঠিক স্কিমায় তৈরি আছে অথবা জিমেইলের অনুকূলে পূর্বের ব্যাকআপ ডাটা রানিং আছে।`);
                             setSbStatusType("error");
                           }
                         }
@@ -1030,12 +988,6 @@ export default function MoreBottomSheet({
                   <button
                     type="button"
                     onClick={() => {
-                      const url = localStorage.getItem("supabase_url");
-                      if (!url) {
-                        setSbStatus("অনুগ্রহ করে প্রথমে সেটিংস সংরক্ষণ করে কানেক্ট করুন!");
-                        setSbStatusType("error");
-                        return;
-                      }
                       setSbLoading(true);
                       setSbStatus("সুপাবেজ ক্লাউডে ব্যাকআপ সেভ হচ্ছে...");
                       setSbStatusType("success");
@@ -1062,7 +1014,7 @@ export default function MoreBottomSheet({
                 </div>
 
                 <div className="mt-auto pt-3 border-t border-purple-950/10 text-zinc-500 text-[9px] leading-relaxed text-center font-sans">
-                  * আপনার সুপাবেজ ব্যাকআপে অবশ্যই <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">mess_data</code> নামক টেবিল থাকতে হবে যার প্রাইমারী কী বা ইউনিক কলাম <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">user_email</code>।
+                  * আপনার সুপাবেজ ব্যাকআপে অবশ্যই <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">Mess-appp</code> নামক টেবিল থাকতে হবে যার প্রাইমারী কী বা ইউনিক কলাম <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">user_email</code>।
                 </div>
               </div>
             )}

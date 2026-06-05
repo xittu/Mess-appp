@@ -30,7 +30,7 @@ import {
   signOut,
   MockUser as FirebaseUser
 } from "./lib/firebase";
-import { getSupabaseClient, isSupabaseConfigured } from "./lib/supabase";
+import { getSupabaseClient, isSupabaseConfigured, getSupabaseTableName } from "./lib/supabase";
 import { sendNotification, MessNotification } from "./lib/notifications";
 import Header from "./components/Header";
 import MembersTab from "./components/MembersTab";
@@ -39,7 +39,7 @@ import MealsTab from "./components/MealsTab";
 import DepositsTab from "./components/DepositsTab";
 import MoreBottomSheet from "./components/MoreBottomSheet";
 import AuthScreen from "./components/AuthScreen";
-import { Member, Expense, UtilityExpense, DutyAssignment } from "./types";
+import { Member, Expense, UtilityExpense, DutyAssignment, Deposit } from "./types";
 
 export default function App() {
   // --- Auth Session States ---
@@ -77,6 +77,18 @@ export default function App() {
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
+    }
+  });
+  const [depositTransactions, setDepositTransactions] = useState<Deposit[]>(() => {
+    try {
+      const stored = localStorage.getItem("mess_deposit_history");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return [];
+    } catch {
+      return [];
     }
   });
   const [fixedMealCount, setFixedMealCount] = useState<number>(() => {
@@ -126,6 +138,7 @@ export default function App() {
     expensesList: Expense[],
     utilitiesList: UtilityExpense[],
     depositsMap: Record<string, number>,
+    depositTxList: Deposit[],
     mealsCount: number,
     dutiesList: DutyAssignment[],
     nameOfMess: string
@@ -137,6 +150,7 @@ export default function App() {
       localStorage.setItem("mess_meals", JSON.stringify(mealsCount));
       localStorage.setItem("mess_utilities", JSON.stringify(utilitiesList));
       localStorage.setItem("mess_deposits", JSON.stringify(depositsMap));
+      localStorage.setItem("mess_deposit_history", JSON.stringify(depositTxList));
       localStorage.setItem("mess_duties", JSON.stringify(dutiesList));
       localStorage.setItem("mess_name", nameOfMess);
       console.log("ডাটা সফলভাবে লোকাল স্টোরেজে (localStorage) সেভ হয়েছে!");
@@ -155,6 +169,7 @@ export default function App() {
         expenses: expensesList,
         utilities: utilitiesList,
         deposits: depositsMap,
+        depositHistory: depositTxList,
         fixedMealCount: mealsCount,
         duties: dutiesList,
         messName: nameOfMess,
@@ -180,13 +195,14 @@ export default function App() {
           fixedMealCount: mealsCount,
           utilities: utilitiesList,
           deposits: depositsMap,
+          depositHistory: depositTxList,
           duties: dutiesList,
           messName: nameOfMess,
           lastUpdated: new Date().toISOString()
         };
 
         const { error: sError } = await sClient
-          .from("mess_data")
+          .from(getSupabaseTableName())
           .upsert({
             user_email: currentUser.email,
             members: membersList,
@@ -198,7 +214,7 @@ export default function App() {
           console.error("Supabase standard schema upsert error:", sError);
           // Standard fallback to prevent fails
           const { error: fallbackError } = await sClient
-            .from("mess_data")
+            .from(getSupabaseTableName())
             .upsert({
               user_email: currentUser.email,
               members: membersList,
@@ -231,7 +247,7 @@ export default function App() {
     try {
       console.log("সুপাবেজ থেকে লাইভ রিস্টোর করা হচ্ছে...");
       const { data, error } = await sClient
-        .from("mess_data")
+        .from(getSupabaseTableName())
         .select("*")
         .eq("user_email", currentUser.email)
         .maybeSingle();
@@ -269,6 +285,10 @@ export default function App() {
               setDeposits(mealsObj.deposits);
               try { localStorage.setItem("mess_deposits", JSON.stringify(mealsObj.deposits)); } catch(e){}
             }
+            if (mealsObj.depositHistory !== undefined && Array.isArray(mealsObj.depositHistory)) {
+              setDepositTransactions(mealsObj.depositHistory);
+              try { localStorage.setItem("mess_deposit_history", JSON.stringify(mealsObj.depositHistory)); } catch(e){}
+            }
             if (mealsObj.duties !== undefined && Array.isArray(mealsObj.duties)) {
               setDutyAssignments(mealsObj.duties);
               try { localStorage.setItem("mess_duties", JSON.stringify(mealsObj.duties)); } catch(e){}
@@ -291,6 +311,10 @@ export default function App() {
               setDeposits(data.deposits as Record<string, number>);
               try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
             }
+            if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
+              setDepositTransactions(data.depositHistory);
+              try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
+            }
             if (data.duties !== undefined && Array.isArray(data.duties)) {
               setDutyAssignments(data.duties);
               try { localStorage.setItem("mess_duties", JSON.stringify(data.duties)); } catch(e){}
@@ -312,6 +336,10 @@ export default function App() {
           if (data.deposits !== undefined && typeof data.deposits === "object" && data.deposits !== null) {
             setDeposits(data.deposits as Record<string, number>);
             try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
+          }
+          if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
+            setDepositTransactions(data.depositHistory);
+            try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
           }
           if (data.duties !== undefined && Array.isArray(data.duties)) {
             setDutyAssignments(data.duties);
@@ -447,6 +475,10 @@ export default function App() {
             if (data.deposits !== undefined) {
               setDeposits(data.deposits);
               try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
+            }
+            if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
+              setDepositTransactions(data.depositHistory);
+              try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
             }
             if (data.fixedMealCount !== undefined) {
               setFixedMealCount(data.fixedMealCount);
@@ -658,6 +690,7 @@ export default function App() {
       expenses,
       utilities,
       updatedDeposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -696,6 +729,7 @@ export default function App() {
       expenses,
       utilities,
       updatedDeposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -734,6 +768,7 @@ export default function App() {
       updatedExpenses,
       utilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -770,6 +805,7 @@ export default function App() {
       updatedExpenses,
       utilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -804,6 +840,7 @@ export default function App() {
       expenses,
       updatedUtilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -835,6 +872,7 @@ export default function App() {
       expenses,
       updatedUtilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -856,11 +894,22 @@ export default function App() {
     }
   };
 
-  const handleUpdateDeposit = async (memberId: string, amount: number) => {
+  const handleAddDeposit = async (memberId: string, amount: number, date: string) => {
     if (!currentUser) return;
     const memberName = members.find((m) => m.id === memberId)?.name || "সদস্য";
     
-    const updatedDeposits = { ...deposits, [memberId]: amount };
+    const newTx: Deposit = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      memberId,
+      amount,
+      date
+    };
+    const updatedTx = [...depositTransactions, newTx];
+    setDepositTransactions(updatedTx);
+
+    const currentTotal = deposits[memberId] || 0;
+    const newTotal = currentTotal + amount;
+    const updatedDeposits = { ...deposits, [memberId]: newTotal };
     setDeposits(updatedDeposits);
 
     await saveToGmailDoc(
@@ -868,6 +917,7 @@ export default function App() {
       expenses,
       utilities,
       updatedDeposits,
+      updatedTx,
       fixedMealCount,
       dutyAssignments,
       messName
@@ -877,15 +927,55 @@ export default function App() {
     const path = `messes/${messId}/deposits/${memberId}`;
     setDoc(doc(db, "messes", messId, "deposits", memberId), {
       memberId,
-      amount,
+      amount: newTotal,
     }).catch((error) => console.warn("messes collection fallback sync warning:", error));
 
     sendNotification(
       messId,
-      "সদস্য তহবিল জমা আপডেট",
-      `সদস্য "${memberName}" এর সর্বমোট জমা ফান্ড পরিবর্তন করে ৳${amount} টাকা সেট করা হয়েছে।`,
+      "নতুন জমা কনফার্ম",
+      `সদস্য "${memberName}" নতুন ৳${amount} টাকা ফান্ডে জমা দিয়েছেন।`,
       "success"
     ).catch(console.error);
+  };
+
+  const handleEditDeposit = async (id: string, amount: number) => {
+    if (!currentUser) return;
+    const existingTx = depositTransactions.find(d => d.id === id);
+    if (!existingTx) return;
+
+    const diff = amount - existingTx.amount;
+    const updatedTx = depositTransactions.map(d => d.id === id ? { ...d, amount } : d);
+    setDepositTransactions(updatedTx);
+
+    const currentTotal = deposits[existingTx.memberId] || 0;
+    const newTotal = Math.max(0, currentTotal + diff); // basic protection
+    const updatedDeposits = { ...deposits, [existingTx.memberId]: newTotal };
+    setDeposits(updatedDeposits);
+
+    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
+    
+    setDoc(doc(db, "messes", messId, "deposits", existingTx.memberId), {
+      memberId: existingTx.memberId,
+      amount: newTotal,
+    }).catch(console.warn);
+  };
+
+  const handleDeleteDeposit = async (id: string, amount: number, memberId: string) => {
+    if (!currentUser) return;
+    const updatedTx = depositTransactions.filter(d => d.id !== id);
+    setDepositTransactions(updatedTx);
+
+    const currentTotal = deposits[memberId] || 0;
+    const newTotal = Math.max(0, currentTotal - amount);
+    const updatedDeposits = { ...deposits, [memberId]: newTotal };
+    setDeposits(updatedDeposits);
+
+    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
+
+    setDoc(doc(db, "messes", messId, "deposits", memberId), {
+      memberId,
+      amount: newTotal,
+    }).catch(console.warn);
   };
 
   const handleSetFixedMealCount = async (count: number) => {
@@ -898,6 +988,7 @@ export default function App() {
       expenses,
       utilities,
       deposits,
+      depositTransactions,
       count,
       dutyAssignments,
       messName
@@ -928,6 +1019,7 @@ export default function App() {
       expenses,
       utilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       dutyAssignments,
       newName
@@ -964,6 +1056,7 @@ export default function App() {
       expenses,
       utilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       updatedDuties,
       messName
@@ -995,6 +1088,7 @@ export default function App() {
       expenses,
       utilities,
       deposits,
+      depositTransactions,
       fixedMealCount,
       updatedDuties,
       messName
@@ -1030,6 +1124,7 @@ export default function App() {
       [],
       [],
       {},
+      [],
       0,
       [],
       "মেস ড্যাশবোর্ড"
@@ -1082,6 +1177,30 @@ export default function App() {
       console.error("Authentication signout failed:", err);
     }
   };
+
+  // --- Derived Calculations ---
+  const safeExpenses = Array.isArray(expenses) ? expenses : [];
+  const safeMembers = Array.isArray(members) ? members : [];
+  const safeUtilities = Array.isArray(utilities) ? utilities : [];
+  const safeDeposits = deposits || {};
+
+  const totalBazaarCost = safeExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const mealRate = safeMembers.length > 0 && fixedMealCount > 0 ? totalBazaarCost / (safeMembers.length * fixedMealCount) : 0;
+  const totalUtilityCost = safeUtilities.reduce((sum, u) => sum + (u.amount || 0), 0);
+  const utilitySharePerMember = safeMembers.length > 0 ? totalUtilityCost / safeMembers.length : 0;
+
+  const dueMemberIds = safeMembers.filter(member => {
+    const deposit = safeDeposits[member.id] || 0;
+    const memberBazaarSpent = safeExpenses
+      .filter((e) => e.memberId === member.id)
+      .reduce((sum, item) => sum + (item.amount || 0), 0);
+    const totalContribution = deposit + memberBazaarSpent;
+    const bazaarCost = parseFloat((fixedMealCount * mealRate).toFixed(2));
+    const utilityCost = parseFloat(utilitySharePerMember.toFixed(2));
+    const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
+    const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
+    return balance < 0;
+  }).map(m => m.id);
 
   // --- Render Loading Interface ---
   if (authLoading) {
@@ -1222,37 +1341,44 @@ export default function App() {
         <main className="flex-1 mt-2">
           {activeTab === 0 && (
             <MembersTab
-              members={members}
+              members={safeMembers}
               onAddMember={handleAddMember}
               onRemoveMember={handleRemoveMember}
+              dueMemberIds={dueMemberIds}
             />
           )}
 
           {activeTab === 1 && (
             <ExpensesTab
-              expenses={expenses}
+              expenses={safeExpenses}
               onAddExpense={handleAddExpense}
               onRemoveExpense={handleRemoveExpense}
-              utilities={utilities}
+              utilities={safeUtilities}
               onAddUtility={handleAddUtility}
               onRemoveUtility={handleRemoveUtility}
-              members={members}
+              members={safeMembers}
+              dueMemberIds={dueMemberIds}
             />
           )}
 
           {activeTab === 2 && (
             <MealsTab
-              members={members}
+              members={safeMembers}
               fixedMealCount={fixedMealCount}
               onSetFixedMealCount={handleSetFixedMealCount}
+              dueMemberIds={dueMemberIds}
             />
           )}
 
           {activeTab === 3 && (
             <DepositsTab
-              members={members}
-              deposits={deposits}
-              onUpdateDeposit={handleUpdateDeposit}
+              members={safeMembers}
+              deposits={safeDeposits}
+              depositHistory={depositTransactions}
+              onAddDeposit={handleAddDeposit}
+              onEditDeposit={handleEditDeposit}
+              onDeleteDeposit={handleDeleteDeposit}
+              dueMemberIds={dueMemberIds}
             />
           )}
         </main>
@@ -1353,12 +1479,12 @@ export default function App() {
         <MoreBottomSheet
           isOpen={isMoreOpen}
           onClose={() => setIsMoreOpen(false)}
-          members={members}
-          expenses={expenses}
-          utilities={utilities}
-          deposits={deposits}
+          members={safeMembers}
+          expenses={safeExpenses}
+          utilities={safeUtilities}
+          deposits={safeDeposits}
           fixedMealCount={fixedMealCount}
-          dutyAssignments={dutyAssignments}
+          dutyAssignments={Array.isArray(dutyAssignments) ? dutyAssignments : []}
           onAddDuty={handleAddDuty}
           onRemoveDuty={handleRemoveDuty}
           onClearAllData={handleClearAllData}
@@ -1369,7 +1495,8 @@ export default function App() {
           }}
           messId={messId}
           onLoadFromSupabase={loadDataFromSupabase}
-          onSaveToSupabase={() => saveToGmailDoc(members, expenses, utilities, deposits, fixedMealCount, dutyAssignments, messName)}
+          onSaveToSupabase={() => saveToGmailDoc(safeMembers, safeExpenses, safeUtilities, safeDeposits, depositTransactions, fixedMealCount, dutyAssignments, messName)}
+          dueMemberIds={dueMemberIds}
         />
       </div>
     </div>

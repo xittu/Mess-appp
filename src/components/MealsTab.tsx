@@ -6,14 +6,16 @@ interface MealsTabProps {
   members: Member[];
   fixedMealCount: number;
   onSetFixedMealCount: (count: number) => void;
+  dueMemberIds?: string[];
 }
 
 export default function MealsTab({
   members,
   fixedMealCount,
   onSetFixedMealCount,
+  dueMemberIds,
 }: MealsTabProps) {
-  const [mealInput, setMealInput] = useState<string>(fixedMealCount ? fixedMealCount.toString() : "0");
+  const [mealInput, setMealInput] = useState<string>(fixedMealCount ? fixedMealCount.toString() : "");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,10 +87,10 @@ export default function MealsTab({
                   type="number"
                   step="any"
                   min="0"
+                  placeholder="0"
                   value={mealInput}
                   onChange={(e) => setMealInput(e.target.value)}
                   onClick={() => mealInput === "0" && setMealInput("")}
-                  onBlur={() => mealInput === "" && setMealInput("0")}
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono text-center text-lg focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
                   id="fixed-meals-input"
                 />
@@ -149,6 +151,9 @@ export default function MealsTab({
                   <div>
                     <span className="text-xs font-bold text-zinc-200 block font-sans">
                       {member.name}
+                      {dueMemberIds?.includes(member.id) && (
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                      )}
                     </span>
                     <span className="text-[10px] text-zinc-500 block font-mono">ID: {member.id}</span>
                   </div>
