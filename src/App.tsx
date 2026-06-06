@@ -39,6 +39,7 @@ import MealsTab from "./components/MealsTab";
 import DepositsTab from "./components/DepositsTab";
 import MoreBottomSheet from "./components/MoreBottomSheet";
 import AuthScreen from "./components/AuthScreen";
+import HistoryModal from "./components/HistoryModal";
 import { Member, Expense, UtilityExpense, DutyAssignment, Deposit } from "./types";
 
 export default function App() {
@@ -47,80 +48,22 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   // --- Real-Time State Data ---
-  const [members, setMembers] = useState<Member[]>(() => {
-    try {
-      const stored = localStorage.getItem("mess_members");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [expenses, setExpenses] = useState<Expense[]>(() => {
-    try {
-      const stored = localStorage.getItem("mess_expenses");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [utilities, setUtilities] = useState<UtilityExpense[]>(() => {
-    try {
-      const stored = localStorage.getItem("mess_utilities");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [deposits, setDeposits] = useState<Record<string, number>>(() => {
-    try {
-      const stored = localStorage.getItem("mess_deposits");
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
-  const [depositTransactions, setDepositTransactions] = useState<Deposit[]>(() => {
-    try {
-      const stored = localStorage.getItem("mess_deposit_history");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed : [];
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  });
-  const [fixedMealCount, setFixedMealCount] = useState<number>(() => {
-    try {
-      const stored = localStorage.getItem("mess_meals");
-      return stored ? Number(JSON.parse(stored)) || 0 : 0;
-    } catch {
-      return 0;
-    }
-  });
-  const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>(() => {
-    try {
-      const stored = localStorage.getItem("mess_duties");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [members, setMembers] = useState<Member[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [utilities, setUtilities] = useState<UtilityExpense[]>([]);
+  const [deposits, setDeposits] = useState<Record<string, number>>({});
+  const [depositTransactions, setDepositTransactions] = useState<Deposit[]>([]);
+  const [fixedMealCount, setFixedMealCount] = useState<number>(0);
+  const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>([]);
 
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [isMoreOpen, setIsMoreOpen] = useState<boolean>(false);
+  const [showHistory, setShowHistory] = useState<boolean>(false);
   const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
-  const [messName, setMessName] = useState<string>(() => {
-    try {
-      return localStorage.getItem("mess_name") || "মেস ড্যাশবোর্ড";
-    } catch {
-      return "মেস ড্যাশবোর্ড";
-    }
-  });
+  const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -201,28 +144,61 @@ export default function App() {
           lastUpdated: new Date().toISOString()
         };
 
-        const { error: sError } = await sClient
+        const { data: existingRecord } = await sClient
           .from(getSupabaseTableName())
-          .upsert({
-            user_email: currentUser.email,
-            members: membersList,
-            expenses: expensesList,
-            meals: mealsJsonbPayload
-          }, { onConflict: "user_email" });
+          .select("user_email")
+          .eq("user_email", currentUser.email)
+          .maybeSingle();
 
-        if (sError) {
-          console.error("Supabase standard schema upsert error:", sError);
-          // Standard fallback to prevent fails
-          const { error: fallbackError } = await sClient
+        let sError;
+        if (existingRecord) {
+          const { error } = await sClient
             .from(getSupabaseTableName())
-            .upsert({
+            .update({
+              members: membersList,
+              expenses: expensesList,
+              meals: mealsJsonbPayload
+            })
+            .eq("user_email", currentUser.email);
+          sError = error;
+        } else {
+          const { error } = await sClient
+            .from(getSupabaseTableName())
+            .insert({
               user_email: currentUser.email,
               members: membersList,
-              expenses: expensesList
-            }, { onConflict: "user_email" });
+              expenses: expensesList,
+              meals: mealsJsonbPayload
+            });
+          sError = error;
+        }
+
+        if (sError) {
+          console.error("Supabase standard schema error:", sError);
+          // Standard fallback to prevent fails
+          let fallbackError;
+          if (existingRecord) {
+            const { error: fErr } = await sClient
+              .from(getSupabaseTableName())
+              .update({
+                members: membersList,
+                expenses: expensesList
+              })
+              .eq("user_email", currentUser.email);
+            fallbackError = fErr;
+          } else {
+            const { error: fErr } = await sClient
+              .from(getSupabaseTableName())
+              .insert({
+                user_email: currentUser.email,
+                members: membersList,
+                expenses: expensesList
+              });
+            fallbackError = fErr;
+          }
 
           if (fallbackError) {
-            console.error("Supabase fallback upsert failed as well:", fallbackError);
+            console.error("Supabase fallback failed as well:", fallbackError);
           } else {
             console.log("ডাটা সফলভাবে সুপাবেজে (মিনিমালিস্ট মোড) নিরাপদে সেভ হয়েছে!");
           }
@@ -429,6 +405,7 @@ export default function App() {
             }
           } finally {
             setMessId(activeMessId);
+            await loadDataFromSupabase();
             setAuthLoading(false);
           }
         })();
@@ -460,49 +437,90 @@ export default function App() {
         async (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            if (data.members !== undefined) {
-              setMembers(data.members);
-              try { localStorage.setItem("mess_members", JSON.stringify(data.members)); } catch(e){}
-            }
-            if (data.expenses !== undefined) {
-              setExpenses(data.expenses);
-              try { localStorage.setItem("mess_expenses", JSON.stringify(data.expenses)); } catch(e){}
-            }
-            if (data.utilities !== undefined) {
-              setUtilities(data.utilities);
-              try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
-            }
-            if (data.deposits !== undefined) {
-              setDeposits(data.deposits);
-              try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
-            }
-            if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
-              setDepositTransactions(data.depositHistory);
-              try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
-            }
-            if (data.fixedMealCount !== undefined) {
-              setFixedMealCount(data.fixedMealCount);
-              try { localStorage.setItem("mess_meals", JSON.stringify(data.fixedMealCount)); } catch(e){}
-            }
-            if (data.duties !== undefined) {
-              setDutyAssignments(data.duties || []);
-              try { localStorage.setItem("mess_duties", JSON.stringify(data.duties || [])); } catch(e){}
-            }
-            if (data.messName !== undefined) {
-              setMessName(data.messName || "মেস ড্যাশবোর্ড");
-              try { localStorage.setItem("mess_name", data.messName || "মেস ড্যাশবোর্ড"); } catch(e){}
+
+            // Auto Data Deletion (90 days check)
+            const sessionStart = data.sessionStartDate ? new Date(data.sessionStartDate).getTime() : Date.now();
+            const daysPassed = (Date.now() - sessionStart) / (1000 * 60 * 60 * 24);
+            
+            if (daysPassed >= 90) {
+              // 3 Months passed, wipe everything except members' detail
+              console.log("3 Months passed. Resetting data for new cycle.");
+              setExpenses([]);
+              setUtilities([]);
+              setDeposits({});
+              setDepositTransactions([]);
+              setFixedMealCount(0);
+              setDutyAssignments([]);
+              try {
+                // Initialize the new session on firestore immediately without wiping members array
+                await setDoc(doc(db, "users", currentUser.email, "messData", "dashboard"), {
+                  sessionStartDate: new Date().toISOString(),
+                  expenses: [],
+                  utilities: [],
+                  deposits: {},
+                  depositHistory: [],
+                  fixedMealCount: 0,
+                  duties: [],
+                }, { merge: true });
+
+                const sClient = getSupabaseClient();
+                if (sClient) {
+                  const { data: exRecord } = await sClient.from(getSupabaseTableName()).select("user_email").eq("user_email", currentUser.email).maybeSingle();
+                  const newPayload = {
+                    user_email: currentUser.email,
+                    members: data.members || [],
+                    expenses: [],
+                    meals: {
+                      fixedMealCount: 0,
+                      utilities: [],
+                      deposits: {},
+                      depositHistory: [],
+                      duties: [],
+                      messName: data.messName || "মেস ড্যাশবোর্ড",
+                      lastUpdated: new Date().toISOString()
+                    }
+                  };
+                  if (exRecord) {
+                    await sClient.from(getSupabaseTableName()).update(newPayload).eq("user_email", currentUser.email);
+                  } else {
+                    await sClient.from(getSupabaseTableName()).insert(newPayload);
+                  }
+                  console.log("Supabase reset completed successfully!");
+                }
+              } catch (e) {
+                console.error("Failed to execute 90 days wipe script:", e);
+              }
+            } else {
+              if (data.members !== undefined) {
+                setMembers(data.members);
+              }
+              if (data.expenses !== undefined) {
+                setExpenses(data.expenses);
+              }
+              if (data.utilities !== undefined) {
+                setUtilities(data.utilities);
+              }
+              if (data.deposits !== undefined) {
+                setDeposits(data.deposits);
+              }
+              if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
+                setDepositTransactions(data.depositHistory);
+              }
+              if (data.fixedMealCount !== undefined) {
+                setFixedMealCount(data.fixedMealCount);
+              }
+              if (data.duties !== undefined) {
+                setDutyAssignments(data.duties || []);
+              }
+              if (data.messName !== undefined) {
+                setMessName(data.messName || "মেস ড্যাশবোর্ড");
+              }
             }
           } else {
-            // Document doesn't exist yet! Let's initialize a beautiful starter payload
+            // Document doesn't exist in mocked Firestore initially
             try {
               const userDocRef = doc(db, "users", currentUser.email!, "messData", "dashboard");
               await setDoc(userDocRef, {
-                members: [],
-                expenses: [],
-                utilities: [],
-                deposits: {},
-                fixedMealCount: 0,
-                duties: [],
                 messName: "মেস ড্যাশবোর্ড",
                 lastUpdated: new Date()
               }, { merge: true });
@@ -1173,6 +1191,15 @@ export default function App() {
   const handleLogOut = async () => {
     try {
       await signOut(auth);
+      localStorage.clear();
+      setMembers([]);
+      setExpenses([]);
+      setUtilities([]);
+      setDeposits({});
+      setDepositTransactions([]);
+      setDutyAssignments([]);
+      setFixedMealCount(0);
+      setMessName("মেস ড্যাশবোর্ড");
     } catch (err) {
       console.error("Authentication signout failed:", err);
     }
@@ -1270,6 +1297,7 @@ export default function App() {
             onUpdateMessName={handleUpdateMessName}
             isSyncing={isSyncing}
             lastCloudSync={lastCloudSync}
+            onShowHistory={() => setShowHistory(true)}
           />
 
           {/* Real-time Notification Bell trigger icon in Header */}
@@ -1497,6 +1525,19 @@ export default function App() {
           onLoadFromSupabase={loadDataFromSupabase}
           onSaveToSupabase={() => saveToGmailDoc(safeMembers, safeExpenses, safeUtilities, safeDeposits, depositTransactions, fixedMealCount, dutyAssignments, messName)}
           dueMemberIds={dueMemberIds}
+        />
+
+        <HistoryModal
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+          members={safeMembers}
+          expenses={safeExpenses}
+          utilities={safeUtilities}
+          deposits={safeDeposits}
+          depositHistory={depositTransactions}
+          fixedMealCount={fixedMealCount}
+          dutyAssignments={dutyAssignments}
+          messName={messName}
         />
       </div>
     </div>

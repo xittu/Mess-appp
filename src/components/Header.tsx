@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Copy, Check, Sun, Moon, Calendar, Sparkles, Edit2, X, ChevronDown, CalendarDays } from "lucide-react";
+import { Copy, Check, Sun, Moon, Calendar, Sparkles, Edit2, X, ChevronDown, CalendarDays, History } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ interface HeaderProps {
   onUpdateMessName: (newName: string) => void;
   isSyncing?: boolean;
   lastCloudSync?: string | null;
+  onShowHistory: () => void;
 }
 
 // Highly stylized mapping for months with Bengali values, short codes, and individual gradient theme styles
@@ -40,6 +41,7 @@ export default function Header({
   onUpdateMessName,
   isSyncing,
   lastCloudSync,
+  onShowHistory,
 }: HeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -261,6 +263,15 @@ export default function Header({
             </AnimatePresence>
           </div>
 
+          {/* History Button */}
+          <button
+            onClick={onShowHistory}
+            className="p-2 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+            title="৩ মাসের হিস্টোরি ও পিডিএফ"
+          >
+            <History className="w-4 h-4" />
+          </button>
+          
           {/* Theme Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}

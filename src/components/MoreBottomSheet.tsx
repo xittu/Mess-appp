@@ -945,13 +945,6 @@ export default function MoreBottomSheet({
                   </div>
                 )}
 
-                <div className="space-y-3.5 bg-zinc-900/60 border border-purple-950/10 p-4 rounded-2xl">
-                    <p className="text-xs text-zinc-300 font-semibold mb-2">সুপাবেজ এখন পার্মানেন্টলি আপনার প্রজেক্টের সাথে কানেক্ট করা আছে।</p>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed mb-1">
-                      আপনার প্রদানকৃত <span className="text-brand-amber font-mono font-bold">Mess-appp</span> প্রজেক্টটি এখন ডিফল্টভাবে সংযুক্ত। মেসের ডাটা এই ক্লাউডে এক ক্লিকে ব্যাকআপ বা রিস্টোর করতে পারেন।
-                    </p>
-                </div>
-
                 <div className="grid grid-cols-2 gap-3 shrink-0 pt-1">
                   <button
                     type="button"
