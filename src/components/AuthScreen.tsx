@@ -151,7 +151,8 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
       onAuthSuccess();
     } catch (err: any) {
-      console.error("Auth error:", err);
+      // console.error("Auth error:", err); // Keep silent to avoid AI Studio intercepting user-facing expected auth errors
+      console.log("Auth event:", err.message);
       if (err.message?.toLowerCase().includes("rate limit") || err.code === "over_email_send_rate_limit") {
         setErrorMsg("অতিরিক্ত বার চেষ্টা করা হয়েছে, অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন (Rate Limited)।");
       } else if (err.message?.includes("already registered") || err.code === "user_already_exists") {
