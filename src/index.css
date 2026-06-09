@@ -12,7 +12,18 @@
 
 /* Global Font Application and Anti-aliasing */
 html,
-body,
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: var(--color-brand-bg);
+  color: #fff;
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+}
+
 button,
 input,
 select,

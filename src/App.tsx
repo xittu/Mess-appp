@@ -12,25 +12,8 @@ import {
   Info,
   CheckCircle2
 } from "lucide-react";
-import {
-  db,
-  auth,
-  handleFirestoreError,
-  OperationType,
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
-  getDoc,
-  onAuthStateChanged,
-  signOut,
-  MockUser as FirebaseUser
-} from "./lib/firebase";
-import { getSupabaseClient, isSupabaseConfigured, getSupabaseTableName } from "./lib/supabase";
+import { supabase } from "./lib/supabase";
+import { User } from "@supabase/supabase-js";
 import { sendNotification, MessNotification } from "./lib/notifications";
 import Header from "./components/Header";
 import MembersTab from "./components/MembersTab";
@@ -40,11 +23,12 @@ import DepositsTab from "./components/DepositsTab";
 import MoreBottomSheet from "./components/MoreBottomSheet";
 import AuthScreen from "./components/AuthScreen";
 import HistoryModal from "./components/HistoryModal";
+import AdminPanel from "./components/AdminPanel";
 import { Member, Expense, UtilityExpense, DutyAssignment, Deposit } from "./types";
 
 export default function App() {
   // --- Auth Session States ---
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   // --- Real-Time State Data ---
@@ -64,6 +48,7 @@ export default function App() {
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
+  const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -74,6 +59,94 @@ export default function App() {
   // --- Sync State Trackers ---
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastCloudSync, setLastCloudSync] = useState<string | null>(null);
+
+  // --- Supabase load function ---
+  const loadDataFromSupabase = async (userEmail: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('mess_data') // আপনার টেবিল নাম
+        .select('*')
+        .eq('user_email', userEmail)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error("ডাটা লোড করতে সমস্যা:", error.message);
+      } else if (data) {
+        // ডাটাবেজ থেকে এনে রিয়্যাক্ট স্টেট আপডেট
+        if (data.members) setMembers(data.members);
+        
+        if (data.expenses && !Array.isArray(data.expenses)) {
+          setExpenses(data.expenses.bazaar || []);
+          setUtilities(data.expenses.utilities || []);
+        } else if (data.expenses) {
+          setExpenses(data.expenses);
+        }
+
+        if (data.meals && data.meals.fixedMealCount !== undefined) {
+          setFixedMealCount(data.meals.fixedMealCount);
+        }
+        
+        if (data.deposits && !Array.isArray(data.deposits)) {
+          setDeposits(data.deposits.balances || {});
+          setDepositTransactions(data.deposits.history || []);
+        } else if (data.deposits) {
+          setDeposits(data.deposits);
+        }
+        
+        if (data.duties) setDutyAssignments(data.duties);
+        
+        if (data.meals && data.meals.messName) {
+           setMessName(data.meals.messName);
+        }
+        
+        setLastCloudSync(new Date().toLocaleTimeString());
+      }
+    } catch (err) {
+      console.error("ডাটা লোড করতে সমস্যা:", err);
+    } finally {
+      // Once loaded, setup is complete
+      setAuthLoading(false);
+    }
+  };
+
+  // --- Supabase upsert function ---
+  async function saveAllDataToSupabase(
+    membersList: Member[],
+    expensesList: Expense[],
+    utilitiesList: UtilityExpense[],
+    depositsMap: Record<string, number>,
+    depositTxList: Deposit[],
+    mealsCount: number,
+    dutiesList: DutyAssignment[],
+    nameOfMess: string
+  ) {
+    if (!currentUser || !currentUser.email) {
+      console.error("ইউজার লগইন করা নেই! ডাটা সেভ করা যাবে না।");
+      return;
+    }
+  
+    const messPayload = {
+      user_email: currentUser.email, // মেইন কী
+      members: membersList || [], 
+      expenses: { bazaar: expensesList, utilities: utilitiesList },
+      meals: { fixedMealCount: mealsCount, messName: nameOfMess },
+      deposits: { balances: depositsMap, history: depositTxList },
+      duties: dutiesList || [],
+      last_updated: new Date()
+    };
+  
+    // সুপাবেজের 'mess_data' টেবিলে ডাটা পাঠানো হচ্ছে
+    const { data, error } = await supabase
+      .from('mess_data')
+      .upsert(messPayload, { onConflict: 'user_email' }); 
+  
+    if (error) {
+      console.error("সুপাবেজে ডাটা সেভ করতে এরর:", error.message);
+    } else {
+      console.log("অভিনন্দন! সকল ডাটা জিমেইল অনুযায়ী সুপাবেজে সেভ হয়েছে।");
+      setLastCloudSync(new Date().toLocaleTimeString());
+    }
+  }
 
   // --- Gmail Storage Save Sync Helper ---
   const saveToGmailDoc = async (
@@ -86,605 +159,107 @@ export default function App() {
     dutiesList: DutyAssignment[],
     nameOfMess: string
   ) => {
-    // ১. আগের মতো লোকাল স্টোরেজে সেভ হবে (Local storage cache auto-saving)
-    try {
-      localStorage.setItem("mess_members", JSON.stringify(membersList));
-      localStorage.setItem("mess_expenses", JSON.stringify(expensesList));
-      localStorage.setItem("mess_meals", JSON.stringify(mealsCount));
-      localStorage.setItem("mess_utilities", JSON.stringify(utilitiesList));
-      localStorage.setItem("mess_deposits", JSON.stringify(depositsMap));
-      localStorage.setItem("mess_deposit_history", JSON.stringify(depositTxList));
-      localStorage.setItem("mess_duties", JSON.stringify(dutiesList));
-      localStorage.setItem("mess_name", nameOfMess);
-      console.log("ডাটা সফলভাবে লোকাল স্টোরেজে (localStorage) সেভ হয়েছে!");
-    } catch (localErr) {
-      console.warn("Failed to write to localStorage:", localErr);
-    }
-
     if (!currentUser || !currentUser.email) return;
     setIsSyncing(true);
     
-    // 1. Firebase Firestore write
-    try {
-      const userDocRef = doc(db, "users", currentUser.email, "messData", "dashboard");
-      await setDoc(userDocRef, {
-        members: membersList,
-        expenses: expensesList,
-        utilities: utilitiesList,
-        deposits: depositsMap,
-        depositHistory: depositTxList,
-        fixedMealCount: mealsCount,
-        duties: dutiesList,
-        messName: nameOfMess,
-        lastUpdated: new Date()
-      }, { merge: true });
-      
-      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      setLastCloudSync(currentTime);
-      console.log("ডাটা সফলভাবে ফায়ারবেসে সেভ হয়েছে!");
-    } catch (error) {
-      console.error("ফায়ারবেসে ডাটা সেভ করতে সমস্যা হয়েছে:", error);
-    }
-
-    // 2. Dual-save to Supabase if credentials are provided in browser settings
-    const sClient = getSupabaseClient();
-    if (sClient) {
-      try {
-        console.log("সুপাবেজ ব্যাকআপে ডাটা সেভ হচ্ছে...");
-
-        // Prepare the nested jsonb meals object to store fixedMealCount, utilities, deposits, duties, and messName.
-        // This is perfectly aligned with the user table schema having user_email (text), members (jsonb), expenses (jsonb), and meals (jsonb).
-        const mealsJsonbPayload = {
-          fixedMealCount: mealsCount,
-          utilities: utilitiesList,
-          deposits: depositsMap,
-          depositHistory: depositTxList,
-          duties: dutiesList,
-          messName: nameOfMess,
-          lastUpdated: new Date().toISOString()
-        };
-
-        const { data: existingRecord } = await sClient
-          .from(getSupabaseTableName())
-          .select("user_email")
-          .eq("user_email", currentUser.email)
-          .maybeSingle();
-
-        let sError;
-        if (existingRecord) {
-          const { error } = await sClient
-            .from(getSupabaseTableName())
-            .update({
-              members: membersList,
-              expenses: expensesList,
-              meals: mealsJsonbPayload
-            })
-            .eq("user_email", currentUser.email);
-          sError = error;
-        } else {
-          const { error } = await sClient
-            .from(getSupabaseTableName())
-            .insert({
-              user_email: currentUser.email,
-              members: membersList,
-              expenses: expensesList,
-              meals: mealsJsonbPayload
-            });
-          sError = error;
-        }
-
-        if (sError) {
-          console.error("Supabase standard schema error:", sError);
-          // Standard fallback to prevent fails
-          let fallbackError;
-          if (existingRecord) {
-            const { error: fErr } = await sClient
-              .from(getSupabaseTableName())
-              .update({
-                members: membersList,
-                expenses: expensesList
-              })
-              .eq("user_email", currentUser.email);
-            fallbackError = fErr;
-          } else {
-            const { error: fErr } = await sClient
-              .from(getSupabaseTableName())
-              .insert({
-                user_email: currentUser.email,
-                members: membersList,
-                expenses: expensesList
-              });
-            fallbackError = fErr;
-          }
-
-          if (fallbackError) {
-            console.error("Supabase fallback failed as well:", fallbackError);
-          } else {
-            console.log("ডাটা সফলভাবে সুপাবেজে (মিনিমালিস্ট মোড) নিরাপদে সেভ হয়েছে!");
-          }
-        } else {
-          console.log("ডাটা সফলভাবে সুপাবেজে (মেম্বারস, বাজার ও মিলস্ সম্পূর্ণ JSONB স্কিমা) সেভ হয়েছে!");
-        }
-      } catch (sErr) {
-        console.error("Supabase Database sync background exception:", sErr);
-      }
-    }
-
+    await saveAllDataToSupabase(
+      membersList,
+      expensesList,
+      utilitiesList,
+      depositsMap,
+      depositTxList,
+      mealsCount,
+      dutiesList,
+      nameOfMess
+    );
+    
     setIsSyncing(false);
-  };
-
-  // --- Supabase Cloud Restore/Download Handler ---
-  const loadDataFromSupabase = async (): Promise<boolean> => {
-    if (!currentUser || !currentUser.email) return false;
-    const sClient = getSupabaseClient();
-    if (!sClient) return false;
-
-    setIsSyncing(true);
-    try {
-      console.log("সুপাবেজ থেকে লাইভ রিস্টোর করা হচ্ছে...");
-      const { data, error } = await sClient
-        .from(getSupabaseTableName())
-        .select("*")
-        .eq("user_email", currentUser.email)
-        .maybeSingle();
-
-      if (error) {
-        console.error("সুপাবেজ থেকে ডাটা লোড করতে সমস্যা হয়েছে:", error);
-        setIsSyncing(false);
-        return false;
-      }
-
-      if (data) {
-        console.log("সুপাবেজ থেকে পাওয়া ডাটা সফলভাবে লোড হয়েছে:", data);
-        if (data.members !== undefined && Array.isArray(data.members)) {
-          setMembers(data.members);
-          try { localStorage.setItem("mess_members", JSON.stringify(data.members)); } catch(e){}
-        }
-        if (data.expenses !== undefined && Array.isArray(data.expenses)) {
-          setExpenses(data.expenses);
-          try { localStorage.setItem("mess_expenses", JSON.stringify(data.expenses)); } catch(e){}
-        }
-
-        // Unpack meals column if it's stored as JSONB with our nested fields
-        if (data.meals !== undefined && data.meals !== null) {
-          if (typeof data.meals === "object" && !Array.isArray(data.meals)) {
-            const mealsObj = data.meals as any;
-            if (mealsObj.fixedMealCount !== undefined) {
-              setFixedMealCount(Number(mealsObj.fixedMealCount) || 0);
-              try { localStorage.setItem("mess_meals", JSON.stringify(Number(mealsObj.fixedMealCount) || 0)); } catch(e){}
-            }
-            if (mealsObj.utilities !== undefined && Array.isArray(mealsObj.utilities)) {
-              setUtilities(mealsObj.utilities);
-              try { localStorage.setItem("mess_utilities", JSON.stringify(mealsObj.utilities)); } catch(e){}
-            }
-            if (mealsObj.deposits !== undefined && typeof mealsObj.deposits === "object") {
-              setDeposits(mealsObj.deposits);
-              try { localStorage.setItem("mess_deposits", JSON.stringify(mealsObj.deposits)); } catch(e){}
-            }
-            if (mealsObj.depositHistory !== undefined && Array.isArray(mealsObj.depositHistory)) {
-              setDepositTransactions(mealsObj.depositHistory);
-              try { localStorage.setItem("mess_deposit_history", JSON.stringify(mealsObj.depositHistory)); } catch(e){}
-            }
-            if (mealsObj.duties !== undefined && Array.isArray(mealsObj.duties)) {
-              setDutyAssignments(mealsObj.duties);
-              try { localStorage.setItem("mess_duties", JSON.stringify(mealsObj.duties)); } catch(e){}
-            }
-            if (mealsObj.messName !== undefined && mealsObj.messName) {
-              setMessName(mealsObj.messName);
-              try { localStorage.setItem("mess_name", mealsObj.messName); } catch(e){}
-            }
-          } else {
-            // It's a primitive number/string in legacy schema
-            setFixedMealCount(Number(data.meals) || 0);
-            try { localStorage.setItem("mess_meals", JSON.stringify(Number(data.meals) || 0)); } catch(e){}
-
-            // Try loading from other columns if they are physically there as a fallback
-            if (data.utilities !== undefined && Array.isArray(data.utilities)) {
-              setUtilities(data.utilities);
-              try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
-            }
-            if (data.deposits !== undefined && typeof data.deposits === "object" && data.deposits !== null) {
-              setDeposits(data.deposits as Record<string, number>);
-              try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
-            }
-            if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
-              setDepositTransactions(data.depositHistory);
-              try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
-            }
-            if (data.duties !== undefined && Array.isArray(data.duties)) {
-              setDutyAssignments(data.duties);
-              try { localStorage.setItem("mess_duties", JSON.stringify(data.duties)); } catch(e){}
-            }
-            if (data.mess_name !== undefined && data.mess_name) {
-              setMessName(data.mess_name);
-              try { localStorage.setItem("mess_name", data.mess_name); } catch(e){}
-            } else if (data.messName !== undefined && data.messName) {
-              setMessName(data.messName);
-              try { localStorage.setItem("mess_name", data.messName); } catch(e){}
-            }
-          }
-        } else {
-          // If meals column is empty, look at legacy columns directly
-          if (data.utilities !== undefined && Array.isArray(data.utilities)) {
-            setUtilities(data.utilities);
-            try { localStorage.setItem("mess_utilities", JSON.stringify(data.utilities)); } catch(e){}
-          }
-          if (data.deposits !== undefined && typeof data.deposits === "object" && data.deposits !== null) {
-            setDeposits(data.deposits as Record<string, number>);
-            try { localStorage.setItem("mess_deposits", JSON.stringify(data.deposits)); } catch(e){}
-          }
-          if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
-            setDepositTransactions(data.depositHistory);
-            try { localStorage.setItem("mess_deposit_history", JSON.stringify(data.depositHistory)); } catch(e){}
-          }
-          if (data.duties !== undefined && Array.isArray(data.duties)) {
-            setDutyAssignments(data.duties);
-            try { localStorage.setItem("mess_duties", JSON.stringify(data.duties)); } catch(e){}
-          }
-          if (data.mess_name !== undefined && data.mess_name) {
-            setMessName(data.mess_name);
-            try { localStorage.setItem("mess_name", data.mess_name); } catch(e){}
-          } else if (data.messName !== undefined && data.messName) {
-            setMessName(data.messName);
-            try { localStorage.setItem("mess_name", data.messName); } catch(e){}
-          }
-          if (data.fixedMealCount !== undefined) {
-            setFixedMealCount(Number(data.fixedMealCount) || 0);
-            try { localStorage.setItem("mess_meals", JSON.stringify(Number(data.fixedMealCount) || 0)); } catch(e){}
-          }
-        }
-        
-        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        setLastCloudSync(currentTime);
-        
-        await sendNotification(
-          messId,
-          "সুপাবেজ ডাটা রিস্টোর সম্পন্ন",
-          `সুপাবেজ ক্লাউড ডাটাবেজ থেকে আপনার মেসের সকল তথ্য সফলভাবে রিস্টোর করা হয়েছে।`,
-          "success"
-        );
-        
-        setIsSyncing(false);
-        return true;
-      }
-    } catch (e) {
-      console.error("Supabase fetch runtime error:", e);
-    }
-    setIsSyncing(false);
-    return false;
   };
 
   // --- Auth Observer ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user;
       if (user) {
-        setCurrentUser(user);
+        setCurrentUser(user as User);
         
-        // Execute the workspace mapping logic asynchronously with a strict timeout fallback 
-        // to prevent the loading screen from freezing if Firestore is unreachable or misconfigured.
-        (async () => {
-          let activeMessId = "M" + user.uid.substring(0, 5).toUpperCase();
-          
-          try {
-            const userDocRef = doc(db, "users", user.uid);
-            
-            // Limit firestore get to 2 seconds
-            const userDocSnap = await Promise.race([
-              getDoc(userDocRef),
-              new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
-            ]);
-            
-            if (userDocSnap && userDocSnap.exists()) {
-              const userData = userDocSnap.data();
-              if (userData && userData.messId) {
-                activeMessId = userData.messId;
-              }
-            } else {
-              // No profile document registered yet. Check photoURL or fallback safely.
-              if (user.photoURL && user.photoURL.startsWith("M")) {
-                activeMessId = user.photoURL;
-              }
-              
-              // Run background save mapping with a 2-second limit
-              await Promise.race([
-                setDoc(userDocRef, {
-                  uid: user.uid,
-                  email: user.email || "",
-                  name: user.displayName || "মেম্বর",
-                  messId: activeMessId
-                }, { merge: true }),
-                new Promise<void>((resolve) => setTimeout(resolve, 2000))
-              ]);
-            }
-          } catch (fetchErr) {
-            const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
-            console.warn("User workspace resolver running on backup/offline state:", errMsg);
-            
-            if (user.photoURL && user.photoURL.startsWith("M")) {
-              activeMessId = user.photoURL;
-            }
-          } finally {
-            setMessId(activeMessId);
-            await loadDataFromSupabase();
-            setAuthLoading(false);
+        let activeMessId = "M" + user.id.substring(0, 5).toUpperCase();
+        if (user.user_metadata?.photoURL && user.user_metadata.photoURL.startsWith("M")) {
+           activeMessId = user.user_metadata.photoURL;
+        }
+        setMessId(activeMessId);
+        if (user.user_metadata?.messName) {
+           setMessName(user.user_metadata.messName);
+        }
+        
+        if (user.email) {
+          loadDataFromSupabase(user.email);
+        } else {
+          // If a mock user is defined for testing bypass
+          if ((window as any).__MOCK_USER__) {
+             setCurrentUser((window as any).__MOCK_USER__);
+             if ((window as any).__MOCK_USER__.user_metadata?.messName) {
+                setMessName((window as any).__MOCK_USER__.user_metadata.messName);
+             }
+             loadDataFromSupabase("zz@z.com");
+             return;
           }
-        })();
+          setAuthLoading(false);
+        }
       } else {
+        if ((window as any).__MOCK_USER__) {
+             setCurrentUser((window as any).__MOCK_USER__);
+             loadDataFromSupabase("zz@z.com");
+             return;
+        }
         setCurrentUser(null);
         setAuthLoading(false);
       }
     });
-    return () => unsubscribe();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user;
+      if (user) {
+        setCurrentUser(user as User);
+        
+        let activeMessId = "M" + user.id.substring(0, 5).toUpperCase();
+        if (user.user_metadata?.photoURL && user.user_metadata.photoURL.startsWith("M")) {
+           activeMessId = user.user_metadata.photoURL;
+        }
+        setMessId(activeMessId);
+        if (user.user_metadata?.messName) {
+           setMessName(user.user_metadata.messName);
+        }
+        
+        if (user.email) {
+          await loadDataFromSupabase(user.email);
+        } else {
+          if ((window as any).__MOCK_USER__) {
+             setCurrentUser((window as any).__MOCK_USER__);
+             if ((window as any).__MOCK_USER__.user_metadata?.messName) {
+                setMessName((window as any).__MOCK_USER__.user_metadata.messName);
+             }
+             await loadDataFromSupabase("zz@z.com");
+             return;
+          }
+          setAuthLoading(false);
+        }
+      } else {
+        if ((window as any).__MOCK_USER__) {
+             setCurrentUser((window as any).__MOCK_USER__);
+             await loadDataFromSupabase("zz@z.com");
+             return;
+        }
+        setCurrentUser(null);
+        setAuthLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // --- Firestore Real-time Listeners (Reactive Sync) ---
-  useEffect(() => {
-    if (!currentUser) return;
+  // Offline sync removed
 
-    let unsubscribeDashboard: (() => void) | null = null;
-    let unsubscribeMembers: (() => void) | null = null;
-    let unsubscribeExpenses: (() => void) | null = null;
-    let unsubscribeUtilities: (() => void) | null = null;
-    let unsubscribeDeposits: (() => void) | null = null;
-    let unsubscribeSettings: (() => void) | null = null;
-    let unsubscribeDuties: (() => void) | null = null;
-    let unsubscribeNotifications: (() => void) | null = null;
-
-    if (currentUser.email) {
-      const dashboardPath = `users/${currentUser.email}/messData/dashboard`;
-      unsubscribeDashboard = onSnapshot(
-        doc(db, "users", currentUser.email, "messData", "dashboard"),
-        async (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-
-            // Auto Data Deletion (90 days check)
-            const sessionStart = data.sessionStartDate ? new Date(data.sessionStartDate).getTime() : Date.now();
-            const daysPassed = (Date.now() - sessionStart) / (1000 * 60 * 60 * 24);
-            
-            if (daysPassed >= 90) {
-              // 3 Months passed, wipe everything except members' detail
-              console.log("3 Months passed. Resetting data for new cycle.");
-              setExpenses([]);
-              setUtilities([]);
-              setDeposits({});
-              setDepositTransactions([]);
-              setFixedMealCount(0);
-              setDutyAssignments([]);
-              try {
-                // Initialize the new session on firestore immediately without wiping members array
-                await setDoc(doc(db, "users", currentUser.email, "messData", "dashboard"), {
-                  sessionStartDate: new Date().toISOString(),
-                  expenses: [],
-                  utilities: [],
-                  deposits: {},
-                  depositHistory: [],
-                  fixedMealCount: 0,
-                  duties: [],
-                }, { merge: true });
-
-                const sClient = getSupabaseClient();
-                if (sClient) {
-                  const { data: exRecord } = await sClient.from(getSupabaseTableName()).select("user_email").eq("user_email", currentUser.email).maybeSingle();
-                  const newPayload = {
-                    user_email: currentUser.email,
-                    members: data.members || [],
-                    expenses: [],
-                    meals: {
-                      fixedMealCount: 0,
-                      utilities: [],
-                      deposits: {},
-                      depositHistory: [],
-                      duties: [],
-                      messName: data.messName || "মেস ড্যাশবোর্ড",
-                      lastUpdated: new Date().toISOString()
-                    }
-                  };
-                  if (exRecord) {
-                    await sClient.from(getSupabaseTableName()).update(newPayload).eq("user_email", currentUser.email);
-                  } else {
-                    await sClient.from(getSupabaseTableName()).insert(newPayload);
-                  }
-                  console.log("Supabase reset completed successfully!");
-                }
-              } catch (e) {
-                console.error("Failed to execute 90 days wipe script:", e);
-              }
-            } else {
-              if (data.members !== undefined) {
-                setMembers(data.members);
-              }
-              if (data.expenses !== undefined) {
-                setExpenses(data.expenses);
-              }
-              if (data.utilities !== undefined) {
-                setUtilities(data.utilities);
-              }
-              if (data.deposits !== undefined) {
-                setDeposits(data.deposits);
-              }
-              if (data.depositHistory !== undefined && Array.isArray(data.depositHistory)) {
-                setDepositTransactions(data.depositHistory);
-              }
-              if (data.fixedMealCount !== undefined) {
-                setFixedMealCount(data.fixedMealCount);
-              }
-              if (data.duties !== undefined) {
-                setDutyAssignments(data.duties || []);
-              }
-              if (data.messName !== undefined) {
-                setMessName(data.messName || "মেস ড্যাশবোর্ড");
-              }
-            }
-          } else {
-            // Document doesn't exist in mocked Firestore initially
-            try {
-              const userDocRef = doc(db, "users", currentUser.email!, "messData", "dashboard");
-              await setDoc(userDocRef, {
-                messName: "মেস ড্যাশবোর্ড",
-                lastUpdated: new Date()
-              }, { merge: true });
-            } catch (initErr) {
-              console.warn("Gmail dashboard bootstrap pending:", initErr);
-            }
-          }
-        },
-        (error) => {
-          console.warn("Retrying dashboard document lookup via local offline cache", error);
-        }
-      );
-    } else {
-      // 1. Members Listener
-      const membersPath = `messes/${messId}/members`;
-      unsubscribeMembers = onSnapshot(
-        collection(db, "messes", messId, "members"),
-        (snapshot) => {
-          const list: Member[] = [];
-          snapshot.forEach((docSnap) => {
-            list.push(docSnap.data() as Member);
-          });
-          setMembers(list);
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, membersPath);
-        }
-      );
-
-      // 2. Bazaar Expenses Listener
-      const expensesPath = `messes/${messId}/expenses`;
-      unsubscribeExpenses = onSnapshot(
-        collection(db, "messes", messId, "expenses"),
-        (snapshot) => {
-          const list: Expense[] = [];
-          snapshot.forEach((docSnap) => {
-            list.push(docSnap.data() as Expense);
-          });
-          setExpenses(list);
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, expensesPath);
-        }
-      );
-
-      // 3. Utilities Listener
-      const utilitiesPath = `messes/${messId}/utilities`;
-      unsubscribeUtilities = onSnapshot(
-        collection(db, "messes", messId, "utilities"),
-        (snapshot) => {
-          const list: UtilityExpense[] = [];
-          snapshot.forEach((docSnap) => {
-            list.push(docSnap.data() as UtilityExpense);
-          });
-          setUtilities(list);
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, utilitiesPath);
-        }
-      );
-
-      // 4. Deposits Listener
-      const depositsPath = `messes/${messId}/deposits`;
-      unsubscribeDeposits = onSnapshot(
-        collection(db, "messes", messId, "deposits"),
-        (snapshot) => {
-          const map: Record<string, number> = {};
-          snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            map[data.memberId] = data.amount;
-          });
-          setDeposits(map);
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, depositsPath);
-        }
-      );
-
-      // 5. Config/Settings Listener
-      const settingsPath = `messes/${messId}/settings/current`;
-      unsubscribeSettings = onSnapshot(
-        doc(db, "messes", messId, "settings", "current"),
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.fixedMealCount !== undefined) {
-              setFixedMealCount(data.fixedMealCount);
-            }
-            if (data.messName !== undefined) {
-              setMessName(data.messName);
-            }
-          } else {
-            setFixedMealCount(0);
-          }
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, settingsPath);
-        }
-      );
-
-      // 6. Duties Schedule Listener
-      const dutiesPath = `messes/${messId}/duties`;
-      unsubscribeDuties = onSnapshot(
-        collection(db, "messes", messId, "duties"),
-        (snapshot) => {
-          const list: DutyAssignment[] = [];
-          snapshot.forEach((docSnap) => {
-            list.push(docSnap.data() as DutyAssignment);
-          });
-          setDutyAssignments(list);
-        },
-        (error) => {
-          handleFirestoreError(error, OperationType.GET, dutiesPath);
-        }
-      );
-    }
-
-    // 7. Audit Log Notifications Listener (Synced)
-    const notificationsPath = `messes/${messId}/notifications`;
-    const q = query(
-      collection(db, "messes", messId, "notifications"),
-      orderBy("timestamp", "desc"),
-      limit(30)
-    );
-    unsubscribeNotifications = onSnapshot(
-      q,
-      (snapshot) => {
-        const list: MessNotification[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as MessNotification);
-        });
-
-        // Trigger reactive in-app banner alert if it is freshly landed
-        if (list.length > 0) {
-          const latestItem = list[0];
-          // Ensure notification happened after application load to prevent spam
-          const isFresh = latestItem.timestamp > appLoadTime;
-          // Check we haven't already displayed it
-          const isNotified = activeToast?.id === latestItem.id;
-          if (isFresh && !isNotified) {
-            setActiveToast(latestItem);
-            const timer = setTimeout(() => {
-              setActiveToast(null);
-            }, 4000);
-          }
-        }
-        setNotifications(list);
-      },
-      (error) => {
-        console.warn("Notifications lookup offline warning:", error);
-      }
-    );
-
-    return () => {
-      if (unsubscribeDashboard) unsubscribeDashboard();
-      if (unsubscribeMembers) unsubscribeMembers();
-      if (unsubscribeExpenses) unsubscribeExpenses();
-      if (unsubscribeUtilities) unsubscribeUtilities();
-      if (unsubscribeDeposits) unsubscribeDeposits();
-      if (unsubscribeSettings) unsubscribeSettings();
-      if (unsubscribeDuties) unsubscribeDuties();
-      if (unsubscribeNotifications) unsubscribeNotifications();
-    };
-  }, [currentUser, messId]);
 
   // --- Real-time Actions Handlers with descriptive audit-trail notifications ---
 
@@ -713,15 +288,6 @@ export default function App() {
       dutyAssignments,
       messName
     );
-
-    // 2. Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/members/${id}`;
-    setDoc(doc(db, "messes", messId, "members", id), newMember)
-      .then(() => setDoc(doc(db, "messes", messId, "deposits", id), {
-        memberId: id,
-        amount: 0,
-      }))
-      .catch((error) => console.warn("messes collection fallback sync warning:", error));
 
     sendNotification(
       messId,
@@ -752,12 +318,6 @@ export default function App() {
       dutyAssignments,
       messName
     );
-
-    // Non-blocking background sync for messes collection replica
-    const memberPath = `messes/${messId}/members/${id}`;
-    deleteDoc(doc(db, "messes", messId, "members", id))
-      .then(() => deleteDoc(doc(db, "messes", messId, "deposits", id)))
-      .catch((error) => console.warn("messes collection fallback sync warning:", error));
 
     sendNotification(
       messId,
@@ -792,12 +352,6 @@ export default function App() {
       messName
     );
 
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/expenses/${id}`;
-    setDoc(doc(db, "messes", messId, "expenses", id), newExpense).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
-    );
-
     const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
     const msg = buyerName
       ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
@@ -829,12 +383,6 @@ export default function App() {
       messName
     );
 
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/expenses/${id}`;
-    deleteDoc(doc(db, "messes", messId, "expenses", id)).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
-    );
-
     if (expItem) {
       sendNotification(
         messId,
@@ -864,12 +412,6 @@ export default function App() {
       messName
     );
 
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/utilities/${id}`;
-    setDoc(doc(db, "messes", messId, "utilities", id), newUtility).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
-    );
-
     sendNotification(
       messId,
       "ইউটিলিটি ও অন্যান্য বিল",
@@ -894,12 +436,6 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName
-    );
-
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/utilities/${id}`;
-    deleteDoc(doc(db, "messes", messId, "utilities", id)).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
     );
 
     if (utItem) {
@@ -941,13 +477,6 @@ export default function App() {
       messName
     );
 
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/deposits/${memberId}`;
-    setDoc(doc(db, "messes", messId, "deposits", memberId), {
-      memberId,
-      amount: newTotal,
-    }).catch((error) => console.warn("messes collection fallback sync warning:", error));
-
     sendNotification(
       messId,
       "নতুন জমা কনফার্ম",
@@ -971,11 +500,6 @@ export default function App() {
     setDeposits(updatedDeposits);
 
     await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
-    
-    setDoc(doc(db, "messes", messId, "deposits", existingTx.memberId), {
-      memberId: existingTx.memberId,
-      amount: newTotal,
-    }).catch(console.warn);
   };
 
   const handleDeleteDeposit = async (id: string, amount: number, memberId: string) => {
@@ -989,11 +513,6 @@ export default function App() {
     setDeposits(updatedDeposits);
 
     await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
-
-    setDoc(doc(db, "messes", messId, "deposits", memberId), {
-      memberId,
-      amount: newTotal,
-    }).catch(console.warn);
   };
 
   const handleSetFixedMealCount = async (count: number) => {
@@ -1011,13 +530,6 @@ export default function App() {
       dutyAssignments,
       messName
     );
-
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/settings/current`;
-    setDoc(doc(db, "messes", messId, "settings", "current"), {
-      fixedMealCount: count,
-      messName: messName,
-    }).catch((error) => console.warn("messes collection fallback sync warning:", error));
 
     sendNotification(
       messId,
@@ -1041,14 +553,6 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       newName
-    );
-
-    // Non-blocking background sync for messes collection replica
-    const path = `messes/${messId}/settings/current`;
-    setDoc(doc(db, "messes", messId, "settings", "current"), {
-      messName: newName,
-    }, { merge: true }).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
     );
 
     sendNotification(
@@ -1080,13 +584,6 @@ export default function App() {
       messName
     );
 
-    // Non-blocking background sync for messes collection replica
-    const documentId = `${assignment.day}_${assignment.role}`;
-    const path = `messes/${messId}/duties/${documentId}`;
-    setDoc(doc(db, "messes", messId, "duties", documentId), assignment).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
-    );
-
     sendNotification(
       messId,
       "মেস ডিউটি আপডেট",
@@ -1110,13 +607,6 @@ export default function App() {
       fixedMealCount,
       updatedDuties,
       messName
-    );
-
-    // Non-blocking background sync for messes collection replica
-    const documentId = `${day}_${role}`;
-    const path = `messes/${messId}/duties/${documentId}`;
-    deleteDoc(doc(db, "messes", messId, "duties", documentId)).catch((error) =>
-      console.warn("messes collection fallback sync warning:", error)
     );
 
     sendNotification(
@@ -1149,33 +639,6 @@ export default function App() {
     );
 
     try {
-      // 1. Delete all member docs and associated deposit entries
-      for (const member of members) {
-        await deleteDoc(doc(db, "messes", messId, "members", member.id));
-        await deleteDoc(doc(db, "messes", messId, "deposits", member.id));
-      }
-
-      // 2. Delete all bazaar expenses
-      for (const exp of expenses) {
-        await deleteDoc(doc(db, "messes", messId, "expenses", exp.id));
-      }
-
-      // 3. Delete all utilities
-      for (const ut of utilities) {
-        await deleteDoc(doc(db, "messes", messId, "utilities", ut.id));
-      }
-
-      // 4. Delete all duty schedule days using the unique key
-      for (const duty of dutyAssignments) {
-        await deleteDoc(doc(db, "messes", messId, "duties", `${duty.day}_${duty.role}`));
-      }
-
-      // 5. Reset settings to default
-      await setDoc(doc(db, "messes", messId, "settings", "current"), {
-        fixedMealCount: 0,
-        messName: messName,
-      });
-
       // Audit Notification Log
       await sendNotification(
         messId,
@@ -1190,7 +653,8 @@ export default function App() {
 
   const handleLogOut = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
+      (window as any).__MOCK_USER__ = null;
       localStorage.clear();
       setMembers([]);
       setExpenses([]);
@@ -1243,21 +707,27 @@ export default function App() {
 
   // --- Render Login Portal if not Authenticated ---
   if (!currentUser) {
-    return <AuthScreen onAuthSuccess={() => {}} />;
+    return <AuthScreen onAuthSuccess={() => {
+        if ((window as any).__MOCK_USER__) {
+            setCurrentUser((window as any).__MOCK_USER__);
+            setMessId((window as any).__MOCK_USER__.user_metadata?.photoURL || "M99999");
+            loadDataFromSupabase((window as any).__MOCK_USER__.email);
+        }
+    }} />;
   }
 
   return (
     <div
-      className={`min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col ${
+      className={`min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full overflow-x-hidden ${
         darkMode ? "bg-brand-bg text-zinc-100" : "bg-[#FAFAFE] text-zinc-800"
       }`}
     >
       {/* Viewport alignment */}
-      <div className="w-full max-w-md mx-auto min-h-screen flex flex-col shadow-2xl relative bg-zinc-950/20 border-x border-purple-950/15">
+      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-zinc-950/20 border-x border-purple-950/15 overflow-x-hidden">
         
         {/* Real-time floating Notification Toast Alert Banner */}
         {activeToast && (
-          <div className="fixed top-14 inset-x-4 max-w-md mx-auto z-50 flex justify-center pointer-events-none select-none">
+          <div className="fixed top-14 inset-x-4 w-full z-50 flex justify-center pointer-events-none select-none">
             <div
               className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-xl shadow-black/80 transition-all duration-300 translate-y-0 w-full ${
                 activeToast.type === "success"
@@ -1412,7 +882,7 @@ export default function App() {
         </main>
 
         {/* Premium Sticky Bottom Navbar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto border-t border-purple-950/45 bg-zinc-950/95 backdrop-blur-md px-2 py-2 select-none">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-purple-950/45 bg-zinc-950/95 backdrop-blur-md px-2 py-2 select-none">
           <div className="flex items-center justify-around">
             {/* Tab 0 - Members */}
             <button
@@ -1522,11 +992,13 @@ export default function App() {
             setIsMoreOpen(false);
           }}
           messId={messId}
-          onLoadFromSupabase={loadDataFromSupabase}
-          onSaveToSupabase={() => saveToGmailDoc(safeMembers, safeExpenses, safeUtilities, safeDeposits, depositTransactions, fixedMealCount, dutyAssignments, messName)}
           dueMemberIds={dueMemberIds}
+          currentUserName={currentUser?.user_metadata?.displayName || currentUser?.email || "মেস ইউজার"}
+          isAdmin={currentUser?.email === "admin@mppd7x.com"}
+          onOpenAdminPanel={() => { setIsMoreOpen(false); setShowAdminPanel(true); }}
         />
 
+        {/* History Modal */}
         <HistoryModal
           isOpen={showHistory}
           onClose={() => setShowHistory(false)}
@@ -1539,6 +1011,9 @@ export default function App() {
           dutyAssignments={dutyAssignments}
           messName={messName}
         />
+        {showAdminPanel && (
+          <AdminPanel onClose={() => setShowAdminPanel(false)} />
+        )}
       </div>
     </div>
   );

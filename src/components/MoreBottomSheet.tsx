@@ -19,7 +19,6 @@ import {
   ShoppingBag
 } from "lucide-react";
 import { Member, Expense, UtilityExpense, DutyAssignment } from "../types";
-import { auth } from "../lib/firebase";
 
 interface MoreBottomSheetProps {
   isOpen: boolean;
@@ -36,9 +35,10 @@ interface MoreBottomSheetProps {
   onLogOut: () => void;
   onTabChange: (tabIdx: number) => void;
   messId: string;
-  onLoadFromSupabase?: () => Promise<boolean>;
-  onSaveToSupabase?: () => void;
   dueMemberIds?: string[];
+  currentUserName: string;
+  isAdmin?: boolean;
+  onOpenAdminPanel?: () => void;
 }
 
 export default function MoreBottomSheet({
@@ -56,17 +56,13 @@ export default function MoreBottomSheet({
   onLogOut,
   onTabChange,
   messId,
-  onLoadFromSupabase,
-  onSaveToSupabase,
-  dueMemberIds
+  dueMemberIds,
+  currentUserName,
+  isAdmin,
+  onOpenAdminPanel
 }: MoreBottomSheetProps) {
-  const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | "supabase" | null>(null);
+  const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-
-  // Supabase states
-  const [sbStatus, setSbStatus] = useState<string>("");
-  const [sbStatusType, setSbStatusType] = useState<"success" | "error" | "">("");
-  const [sbLoading, setSbLoading] = useState(false);
 
   // Duty Form States
   const [selectedDay, setSelectedDay] = useState("শনিবার");
@@ -166,7 +162,6 @@ export default function MoreBottomSheet({
       </tr>
     `).join("") || "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
 
-    const currentUserName = auth.currentUser?.displayName || "মেস ইউজার";
     const reportTitle = `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
 
     const htmlContent = `
@@ -511,27 +506,6 @@ export default function MoreBottomSheet({
                 </div>
               </div>
 
-              {/* Supabase Action */}
-              <button
-                onClick={() => {
-                  setSbStatus("");
-                  setActiveModal("supabase");
-                }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-purple-950/10 hover:bg-purple-950/20 border border-purple-900/35 hover:border-purple-500/40 transition-all text-left cursor-pointer group animate-fade-in"
-                id="btn-menu-supabase"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-lg bg-teal-500/10 text-teal-400 group-hover:scale-105 transition-transform font-sans">
-                    <Sparkles className="w-5 h-5 text-teal-400" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-teal-300 block font-sans">সুপাবেজ ডাটাবেজ ব্যাকআপ (Supabase Backup)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">কাস্টম সুপাবেজ এপিআই কনফিগার করুন এবং ডাটা ব্যাকআপ বা রিস্টোর করুন</span>
-                  </div>
-                </div>
-              </button>
-
-              {/* Export PDF Action */}
               <button
                 onClick={handleExportPDF}
                 className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-950/10 hover:bg-emerald-950/20 border border-emerald-900/35 hover:border-emerald-500/40 transition-all text-left cursor-pointer group"
@@ -547,6 +521,24 @@ export default function MoreBottomSheet({
                   </div>
                 </div>
               </button>
+
+              {isAdmin && (
+                 <button
+                   onClick={onOpenAdminPanel}
+                   className="w-full flex items-center justify-between p-3.5 rounded-xl bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 hover:border-brand-accent/50 transition-all text-left cursor-pointer group"
+                   id="btn-menu-admin-panel"
+                 >
+                   <div className="flex items-center gap-3.5">
+                     <div className="p-2.5 rounded-lg bg-brand-accent/20 text-brand-amber group-hover:scale-105 transition-transform">
+                       <Sparkles className="w-5 h-5 animate-pulse" />
+                     </div>
+                     <div>
+                       <span className="text-sm font-bold text-brand-amber block font-sans">সুপার অ্যাডমিন প্যানেল</span>
+                       <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">সকল ইউজার ও মেসের ডাটা দেখুন এবং পিডিএফ ডাউনলোড করুন</span>
+                     </div>
+                   </div>
+                 </button>
+              )}
             </div>
 
             <div className="space-y-2 border-t border-zinc-900/40 pt-3">
@@ -587,7 +579,7 @@ export default function MoreBottomSheet({
                 ← মূল মেনু ফিরে যান
               </button>
               <span className="text-xs font-extrabold font-mono uppercase tracking-widest text-brand-amber">
-                {activeModal === "ledger" ? "চূড়ান্ত হিসাব" : activeModal === "supabase" ? "সুপাবেজ সিঙ্ক" : "মেস ডিউটি ও দায়িত্ব"}
+                {activeModal === "ledger" ? "চূড়ান্ত হিসাব" : "মেস ডিউটি ও দায়িত্ব"}
               </span>
             </div>
 
@@ -925,92 +917,6 @@ export default function MoreBottomSheet({
               </div>
             )}
 
-            {/* Supabase Sub Modal */}
-            {activeModal === "supabase" && (
-              <div className="space-y-4 flex-1 flex flex-col min-h-0 text-left">
-                <div className="bg-teal-950/20 border border-teal-500/20 rounded-xl p-3 flex gap-2">
-                  <Sparkles className="w-4 h-4 text-teal-400 shrink-0 mt-0.5 text-glow" />
-                  <p className="text-[10px] text-zinc-300 leading-normal">
-                    সুপাবেজ (Supabase) একটি সুপারফাস্ট ক্লাউড ডাটাবেজ সার্ভিস। এখানে আপনার জিমেইল সাপেক্ষে মেসের যাবতীয় তথ্য রিয়েল-টাইম ব্যাকআপ এবং যেকোনো ডিভাইসে সরাসরি রিস্টোর করতে পারবেন।
-                  </p>
-                </div>
-
-                {sbStatus && (
-                  <div className={`p-2.5 border rounded-xl text-xs font-semibold ${
-                    sbStatusType === "success" 
-                      ? "bg-emerald-950/25 border-emerald-500/35 text-emerald-405" 
-                      : "bg-rose-950/25 border-rose-500/35 text-rose-405"
-                  }`}>
-                    {sbStatus}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3 shrink-0 pt-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setSbLoading(true);
-                      setSbStatus("সুপাবেজ ক্লাউড থেকে ডাটা রিস্টোর হচ্ছে...");
-                      setSbStatusType("success");
-                      try {
-                        if (onLoadFromSupabase) {
-                          const result = await onLoadFromSupabase();
-                          if (result) {
-                            setSbStatus("ক্লাউড ডাটা সফলভাবে ডাউনলোড ও রিস্টোর করা হয়েছে!");
-                            setSbStatusType("success");
-                          } else {
-                            setSbStatus(`রিস্টোর ব্যর্থ! নিশ্চিত করুন সুপাবেজে 'Mess-appp' টেবিলটি সঠিক স্কিমায় তৈরি আছে অথবা জিমেইলের অনুকূলে পূর্বের ব্যাকআপ ডাটা রানিং আছে।`);
-                            setSbStatusType("error");
-                          }
-                        }
-                      } catch (err: any) {
-                        setSbStatus("ত্রুটি: " + (err.message || String(err)));
-                        setSbStatusType("error");
-                      } finally {
-                        setSbLoading(false);
-                      }
-                    }}
-                    disabled={sbLoading}
-                    className="flex flex-col items-center justify-center p-3.5 bg-indigo-950/20 hover:bg-indigo-950/40 border border-indigo-900/30 hover:border-indigo-500/40 rounded-xl transition-all text-center cursor-pointer disabled:opacity-50 active:scale-95"
-                  >
-                    <Download className={`w-5 h-5 text-indigo-400 mb-1.5 ${sbLoading ? "animate-bounce" : ""}`} />
-                    <span className="text-xs font-bold text-zinc-200">ক্লাউড থেকে রিস্টোর</span>
-                    <span className="text-[9px] text-zinc-400 mt-1 font-sans">ক্লাউড ডাটা অ্যাপে ডাউনলোড করুন</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSbLoading(true);
-                      setSbStatus("সুপাবেজ ক্লাউডে ব্যাকআপ সেভ হচ্ছে...");
-                      setSbStatusType("success");
-                      try {
-                        if (onSaveToSupabase) {
-                          onSaveToSupabase();
-                          setSbStatus("ডাটা সফলভাবে সুপাবেজ ক্লাউড সিস্টেমে ব্যাকআপ হিসেবে সেভ করা হয়েছে!");
-                          setSbStatusType("success");
-                        }
-                      } catch (err: any) {
-                        setSbStatus("ব্যাকআপ ব্যর্থ: " + (err.message || String(err)));
-                        setSbStatusType("error");
-                      } finally {
-                        setSbLoading(false);
-                      }
-                    }}
-                    disabled={sbLoading}
-                    className="flex flex-col items-center justify-center p-3.5 bg-emerald-950/20 hover:bg-emerald-950/40 border border-emerald-900/30 hover:border-emerald-500/40 rounded-xl transition-all text-center cursor-pointer disabled:opacity-50 active:scale-95"
-                  >
-                    <Sparkles className={`w-5 h-5 text-emerald-400 mb-1.5 ${sbLoading ? "animate-pulse" : ""}`} />
-                    <span className="text-xs font-bold text-zinc-200">ক্লাউডে ব্যাকআপ দিন</span>
-                    <span className="text-[9px] text-zinc-405 mt-1 font-sans">রানিং সকল ডাটা ক্লাউডে সেভ করুন</span>
-                  </button>
-                </div>
-
-                <div className="mt-auto pt-3 border-t border-purple-950/10 text-zinc-500 text-[9px] leading-relaxed text-center font-sans">
-                  * আপনার সুপাবেজ ব্যাকআপে অবশ্যই <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">Mess-appp</code> নামক টেবিল থাকতে হবে যার প্রাইমারী কী বা ইউনিক কলাম <code className="bg-zinc-900 border border-zinc-850 py-0.5 px-1 rounded font-mono text-brand-amber">user_email</code>।
-                </div>
-              </div>
-            )}
           </div>
         )}
         {/* Slidable Warning Modal Overlay */}
