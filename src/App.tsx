@@ -27,6 +27,7 @@ import AuthScreen from "./components/AuthScreen";
 import HistoryModal from "./components/HistoryModal";
 import AdminPanel from "./components/AdminPanel";
 import BazaarTab from "./components/BazaarTab";
+import LandingPage from "./components/LandingPage";
 import { Member, Expense, UtilityExpense, DutyAssignment, Deposit, BazaarItem } from "./types";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
   // --- Auth Session States ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [showAuth, setShowAuth] = useState<boolean>(false);
 
   // --- Real-Time State Data ---
   const [members, setMembers] = useState<Member[]>([]);
@@ -249,7 +251,7 @@ export default function App() {
              if (getMockUser().user_metadata?.messName) {
                 setMessName(getMockUser().user_metadata.messName);
              }
-             loadDataFromSupabase("zz@z.com");
+             loadDataFromSupabase(getMockUser().email);
              return;
           }
           setAuthLoading(false);
@@ -257,7 +259,7 @@ export default function App() {
       } else {
         if (getMockUser()) {
              setCurrentUser(getMockUser());
-             loadDataFromSupabase("zz@z.com");
+             loadDataFromSupabase(getMockUser().email);
              return;
         }
         setCurrentUser(null);
@@ -287,7 +289,7 @@ export default function App() {
              if (getMockUser().user_metadata?.messName) {
                 setMessName(getMockUser().user_metadata.messName);
              }
-             await loadDataFromSupabase("zz@z.com");
+             await loadDataFromSupabase(getMockUser().email);
              return;
           }
           setAuthLoading(false);
@@ -295,7 +297,7 @@ export default function App() {
       } else {
         if (getMockUser()) {
              setCurrentUser(getMockUser());
-             await loadDataFromSupabase("zz@z.com");
+             await loadDataFromSupabase(getMockUser().email);
              return;
         }
         setCurrentUser(null);
@@ -792,6 +794,10 @@ export default function App() {
 
   // --- Render Login Portal if not Authenticated ---
   if (!currentUser) {
+    if (!showAuth) {
+      return <LandingPage onGetStarted={() => setShowAuth(true)} />;
+    }
+    
     return <AuthScreen onAuthSuccess={() => {
         if (getMockUser()) {
             setCurrentUser(getMockUser());

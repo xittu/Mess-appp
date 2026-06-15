@@ -1,5 +1,5 @@
 {
-  "name": "Mess Meal & Expense Manager",
+  "name": "Dormz",
   "description": "A fully responsive, modern Mess & Hostel Meal and Expense Management application featuring member registers, daily meal logs, bazaar trackers, dynamic deposits, and automatic ledger calculations.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
