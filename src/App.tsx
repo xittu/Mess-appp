@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Toaster, toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   ReceiptText,
@@ -24,9 +26,15 @@ import MoreBottomSheet from "./components/MoreBottomSheet";
 import AuthScreen from "./components/AuthScreen";
 import HistoryModal from "./components/HistoryModal";
 import AdminPanel from "./components/AdminPanel";
-import { Member, Expense, UtilityExpense, DutyAssignment, Deposit } from "./types";
+import BazaarTab from "./components/BazaarTab";
+import { Member, Expense, UtilityExpense, DutyAssignment, Deposit, BazaarItem } from "./types";
 
 export default function App() {
+  const getMockUser = () => {
+    if ((window as any).__MOCK_USER__) return (window as any).__MOCK_USER__;
+    try { return JSON.parse(localStorage.getItem('__MOCK_USER__') || 'null'); } catch(e) { return null; }
+  };
+
   // --- Auth Session States ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
@@ -39,6 +47,7 @@ export default function App() {
   const [depositTransactions, setDepositTransactions] = useState<Deposit[]>([]);
   const [fixedMealCount, setFixedMealCount] = useState<number>(0);
   const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>([]);
+  const [bazaarList, setBazaarList] = useState<BazaarItem[]>([]);
 
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
@@ -71,7 +80,11 @@ export default function App() {
 
       if (error && error.code !== 'PGRST116') {
         console.error("ডাটা লোড করতে সমস্যা:", error.message);
+        throw error;
       } else if (data) {
+        // Cache to local storage for offline use
+        localStorage.setItem(`messOfflineState_${userEmail}`, JSON.stringify(data));
+
         // ডাটাবেজ থেকে এনে রিয়্যাক্ট স্টেট আপডেট
         if (data.members) setMembers(data.members);
         
@@ -94,6 +107,7 @@ export default function App() {
         }
         
         if (data.duties) setDutyAssignments(data.duties);
+        if (data.expenses && data.expenses.shared_list) setBazaarList(data.expenses.shared_list); else if (data.bazaar_list) setBazaarList(data.bazaar_list);
         
         if (data.meals && data.meals.messName) {
            setMessName(data.meals.messName);
@@ -102,7 +116,34 @@ export default function App() {
         setLastCloudSync(new Date().toLocaleTimeString());
       }
     } catch (err) {
-      console.error("ডাটা লোড করতে সমস্যা:", err);
+      console.error("ডাটা লোড করতে সমস্যা, অফলাইন ডাটা লোড করা হচ্ছে...", err);
+      // Fallback to offline data
+      const offlineData = localStorage.getItem(`messOfflineState_${userEmail}`);
+      if (offlineData) {
+        const data = JSON.parse(offlineData);
+        if (data.members) setMembers(data.members);
+        if (data.expenses && !Array.isArray(data.expenses)) {
+          setExpenses(data.expenses.bazaar || []);
+          setUtilities(data.expenses.utilities || []);
+        } else if (data.expenses) {
+          setExpenses(data.expenses);
+        }
+        if (data.meals && data.meals.fixedMealCount !== undefined) {
+          setFixedMealCount(data.meals.fixedMealCount);
+        }
+        if (data.deposits && !Array.isArray(data.deposits)) {
+          setDeposits(data.deposits.balances || {});
+          setDepositTransactions(data.deposits.history || []);
+        } else if (data.deposits) {
+          setDeposits(data.deposits);
+        }
+        if (data.duties) setDutyAssignments(data.duties);
+        if (data.expenses && data.expenses.shared_list) setBazaarList(data.expenses.shared_list); else if (data.bazaar_list) setBazaarList(data.bazaar_list);
+        if (data.meals && data.meals.messName) {
+           setMessName(data.meals.messName);
+        }
+        toast.info("অফলাইন ডাটা লোড করা হয়েছে", { description: "আপনার ইন্টারনেট কানেকশন চেক করুন।" });
+      }
     } finally {
       // Once loaded, setup is complete
       setAuthLoading(false);
@@ -118,7 +159,8 @@ export default function App() {
     depositTxList: Deposit[],
     mealsCount: number,
     dutiesList: DutyAssignment[],
-    nameOfMess: string
+    nameOfMess: string,
+    bList: BazaarItem[]
   ) {
     if (!currentUser || !currentUser.email) {
       console.error("ইউজার লগইন করা নেই! ডাটা সেভ করা যাবে না।");
@@ -128,12 +170,15 @@ export default function App() {
     const messPayload = {
       user_email: currentUser.email, // মেইন কী
       members: membersList || [], 
-      expenses: { bazaar: expensesList, utilities: utilitiesList },
+      expenses: { bazaar: expensesList, utilities: utilitiesList, shared_list: bList || [] },
       meals: { fixedMealCount: mealsCount, messName: nameOfMess },
       deposits: { balances: depositsMap, history: depositTxList },
       duties: dutiesList || [],
       last_updated: new Date()
     };
+
+    // Cache locally immediately prior to remote sync attempt
+    localStorage.setItem(`messOfflineState_${currentUser.email}`, JSON.stringify(messPayload));
   
     // সুপাবেজের 'mess_data' টেবিলে ডাটা পাঠানো হচ্ছে
     const { data, error } = await supabase
@@ -142,6 +187,7 @@ export default function App() {
   
     if (error) {
       console.error("সুপাবেজে ডাটা সেভ করতে এরর:", error.message);
+      toast.error("ডাটা সার্ভারে সেভ হয়নি", { description: "অফলাইনে সেভ করা হয়েছে, ইন্টারনেট কানেকশন ফিরে এলে আবার সেস্টা করুন।"});
     } else {
       console.log("অভিনন্দন! সকল ডাটা জিমেইল অনুযায়ী সুপাবেজে সেভ হয়েছে।");
       setLastCloudSync(new Date().toLocaleTimeString());
@@ -157,7 +203,8 @@ export default function App() {
     depositTxList: Deposit[],
     mealsCount: number,
     dutiesList: DutyAssignment[],
-    nameOfMess: string
+    nameOfMess: string,
+    bList: BazaarItem[]
   ) => {
     if (!currentUser || !currentUser.email) return;
     setIsSyncing(true);
@@ -170,7 +217,8 @@ export default function App() {
       depositTxList,
       mealsCount,
       dutiesList,
-      nameOfMess
+      nameOfMess,
+      bList
     );
     
     setIsSyncing(false);
@@ -196,10 +244,10 @@ export default function App() {
           loadDataFromSupabase(user.email);
         } else {
           // If a mock user is defined for testing bypass
-          if ((window as any).__MOCK_USER__) {
-             setCurrentUser((window as any).__MOCK_USER__);
-             if ((window as any).__MOCK_USER__.user_metadata?.messName) {
-                setMessName((window as any).__MOCK_USER__.user_metadata.messName);
+          if (getMockUser()) {
+             setCurrentUser(getMockUser());
+             if (getMockUser().user_metadata?.messName) {
+                setMessName(getMockUser().user_metadata.messName);
              }
              loadDataFromSupabase("zz@z.com");
              return;
@@ -207,8 +255,8 @@ export default function App() {
           setAuthLoading(false);
         }
       } else {
-        if ((window as any).__MOCK_USER__) {
-             setCurrentUser((window as any).__MOCK_USER__);
+        if (getMockUser()) {
+             setCurrentUser(getMockUser());
              loadDataFromSupabase("zz@z.com");
              return;
         }
@@ -234,10 +282,10 @@ export default function App() {
         if (user.email) {
           await loadDataFromSupabase(user.email);
         } else {
-          if ((window as any).__MOCK_USER__) {
-             setCurrentUser((window as any).__MOCK_USER__);
-             if ((window as any).__MOCK_USER__.user_metadata?.messName) {
-                setMessName((window as any).__MOCK_USER__.user_metadata.messName);
+          if (getMockUser()) {
+             setCurrentUser(getMockUser());
+             if (getMockUser().user_metadata?.messName) {
+                setMessName(getMockUser().user_metadata.messName);
              }
              await loadDataFromSupabase("zz@z.com");
              return;
@@ -245,8 +293,8 @@ export default function App() {
           setAuthLoading(false);
         }
       } else {
-        if ((window as any).__MOCK_USER__) {
-             setCurrentUser((window as any).__MOCK_USER__);
+        if (getMockUser()) {
+             setCurrentUser(getMockUser());
              await loadDataFromSupabase("zz@z.com");
              return;
         }
@@ -286,7 +334,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -316,7 +365,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -349,7 +399,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
@@ -380,7 +431,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     if (expItem) {
@@ -409,7 +461,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -435,7 +488,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     if (utItem) {
@@ -474,7 +528,8 @@ export default function App() {
       updatedTx,
       fixedMealCount,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -499,7 +554,7 @@ export default function App() {
     const updatedDeposits = { ...deposits, [existingTx.memberId]: newTotal };
     setDeposits(updatedDeposits);
 
-    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
+    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName, bazaarList);
   };
 
   const handleDeleteDeposit = async (id: string, amount: number, memberId: string) => {
@@ -512,7 +567,7 @@ export default function App() {
     const updatedDeposits = { ...deposits, [memberId]: newTotal };
     setDeposits(updatedDeposits);
 
-    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName);
+    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName, bazaarList);
   };
 
   const handleSetFixedMealCount = async (count: number) => {
@@ -528,7 +583,8 @@ export default function App() {
       depositTransactions,
       count,
       dutyAssignments,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -552,7 +608,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       dutyAssignments,
-      newName
+      newName,
+      bazaarList
     );
 
     sendNotification(
@@ -581,7 +638,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       updatedDuties,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -606,7 +664,8 @@ export default function App() {
       depositTransactions,
       fixedMealCount,
       updatedDuties,
-      messName
+      messName,
+      bazaarList
     );
 
     sendNotification(
@@ -615,6 +674,32 @@ export default function App() {
       `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
       "warning"
     ).catch(console.error);
+  };
+
+  const handleAddBazaarItem = async (name: string) => {
+    if (!currentUser) return;
+    const newItem: BazaarItem = {
+      id: "BI" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+      name,
+      isChecked: false
+    };
+    const updated = [...bazaarList, newItem];
+    setBazaarList(updated);
+    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
+  };
+
+  const handleToggleBazaarItem = async (id: string, isChecked: boolean) => {
+    if (!currentUser) return;
+    const updated = bazaarList.map(item => item.id === id ? { ...item, isChecked } : item);
+    setBazaarList(updated);
+    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
+  };
+
+  const handleDeleteBazaarItem = async (id: string) => {
+    if (!currentUser) return;
+    const updated = bazaarList.filter(item => item.id !== id);
+    setBazaarList(updated);
+    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
   };
 
   const handleClearAllData = async () => {
@@ -654,7 +739,7 @@ export default function App() {
   const handleLogOut = async () => {
     try {
       await supabase.auth.signOut();
-      (window as any).__MOCK_USER__ = null;
+      (window as any).__MOCK_USER__ = null; localStorage.removeItem('__MOCK_USER__');
       localStorage.clear();
       setMembers([]);
       setExpenses([]);
@@ -708,10 +793,10 @@ export default function App() {
   // --- Render Login Portal if not Authenticated ---
   if (!currentUser) {
     return <AuthScreen onAuthSuccess={() => {
-        if ((window as any).__MOCK_USER__) {
-            setCurrentUser((window as any).__MOCK_USER__);
-            setMessId((window as any).__MOCK_USER__.user_metadata?.photoURL || "M99999");
-            loadDataFromSupabase((window as any).__MOCK_USER__.email);
+        if (getMockUser()) {
+            setCurrentUser(getMockUser());
+            setMessId(getMockUser().user_metadata?.photoURL || "M99999");
+            loadDataFromSupabase(getMockUser().email);
         }
     }} />;
   }
@@ -726,34 +811,7 @@ export default function App() {
       <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-zinc-950/20 border-x border-purple-950/15 overflow-x-hidden">
         
         {/* Real-time floating Notification Toast Alert Banner */}
-        {activeToast && (
-          <div className="fixed top-14 inset-x-4 w-full z-50 flex justify-center pointer-events-none select-none">
-            <div
-              className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-2xl border shadow-xl shadow-black/80 transition-all duration-300 translate-y-0 w-full ${
-                activeToast.type === "success"
-                  ? "bg-emerald-950/95 text-emerald-300 border-emerald-500/40"
-                  : activeToast.type === "danger"
-                  ? "bg-red-950/95 text-red-350 border-red-500/40"
-                  : activeToast.type === "warning"
-                  ? "bg-amber-950/95 text-amber-200 border-amber-500/40"
-                  : "bg-indigo-950/95 text-indigo-300 border-indigo-500/40"
-              }`}
-            >
-              <div className="flex-1 text-left">
-                <span className="text-xs font-bold block">{activeToast.title}</span>
-                <span className="text-[11px] block mt-0.5 leading-relaxed text-zinc-200">
-                  {activeToast.message}
-                </span>
-              </div>
-              <button
-                onClick={() => setActiveToast(null)}
-                className="hover:bg-black/20 p-1 rounded-lg text-zinc-400 hover:text-white pointer-events-auto"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Toaster position="top-right" richColors />
 
         {/* Dynamic App Header */}
          <div className="relative">
@@ -879,6 +937,17 @@ export default function App() {
               dueMemberIds={dueMemberIds}
             />
           )}
+
+          {activeTab === 4 && (
+            <BazaarTab
+              bazaarList={bazaarList}
+              dutyAssignments={dutyAssignments}
+              members={safeMembers}
+              onAddBazaarItem={handleAddBazaarItem}
+              onToggleBazaarItem={handleToggleBazaarItem}
+              onDeleteBazaarItem={handleDeleteBazaarItem}
+            />
+          )}
         </main>
 
         {/* Premium Sticky Bottom Navbar */}
@@ -955,7 +1024,26 @@ export default function App() {
               <span className="text-[10px] font-sans">জমা</span>
             </button>
 
-            {/* Tab 4 - Bottom Sheet drawer */}
+            {/* Tab 4 - Bazaar */}
+            <button
+              onClick={() => {
+                setActiveTab(4);
+                setIsMoreOpen(false);
+              }}
+              className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
+                activeTab === 4 && !isMoreOpen
+                  ? "text-brand-amber font-semibold scale-105"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {bazaarList.some(i => !i.isChecked) && (
+                <span className="absolute top-1.5 right-4 w-2 h-2 bg-rose-500 rounded-full border border-zinc-950"></span>
+              )}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <span className="text-[10px] font-sans">বাজার</span>
+            </button>
+
+            {/* Tab 5 - Bottom Sheet drawer */}
             <button
               onClick={() => {
                 setIsMoreOpen(true);

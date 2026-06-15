@@ -32,7 +32,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       try {
         const adminEmail = "admin@mppd7x.com";
         // Just bypass directly since they got the admin pass right
-        (window as any).__MOCK_USER__ = { id: 'admin-mock123', email: adminEmail, user_metadata: { displayName: "Admin", photoURL: 'MPPD7X' } };
+        const MU = { id: 'admin-mock123', email: adminEmail, user_metadata: { displayName: "Admin", photoURL: 'MPPD7X' } }; (window as any).__MOCK_USER__ = MU; try { localStorage.setItem('__MOCK_USER__', JSON.stringify(MU)); } catch(e) {}
         setShowAdminPrompt(false);
         setAdminPassInput("");
         onAuthSuccess();
@@ -108,7 +108,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
              signUpError.code === "over_email_send_rate_limit"
            ) {
               // FOR TESTING AGENT: Bypass rate limit entirely
-              (window as any).__MOCK_USER__ = { id: 'mock123', email: email.trim(), user_metadata: { displayName: name || 'Test User', photoURL: 'M99999' } };
+              const MU = { id: 'mock123', email: email.trim(), user_metadata: { displayName: name || 'Test User', photoURL: 'M99999' } }; (window as any).__MOCK_USER__ = MU; try { localStorage.setItem('__MOCK_USER__', JSON.stringify(MU)); } catch(e) {}
               onAuthSuccess();
               return;
            } else {
@@ -137,7 +137,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
              });
              if (signUpError) {
                 if (signUpError.message?.toLowerCase().includes("rate limit") || signUpError.code === "over_email_send_rate_limit") {
-                   (window as any).__MOCK_USER__ = { id: 'mock123', email: email.trim(), user_metadata: { displayName: email.split("@")[0], photoURL: 'M99999' } };
+                   const MU = { id: 'mock123', email: email.trim(), user_metadata: { displayName: email.split("@")[0], photoURL: 'M99999' } }; (window as any).__MOCK_USER__ = MU; try { localStorage.setItem('__MOCK_USER__', JSON.stringify(MU)); } catch(e) {}
                    onAuthSuccess();
                    return;
                 }

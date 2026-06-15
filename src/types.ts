@@ -30,3 +30,9 @@ export interface DutyAssignment {
   memberId: string;
   role: string;
 }
+
+export interface BazaarItem {
+  id: string;
+  name: string;
+  isChecked: boolean;
+}

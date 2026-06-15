@@ -1,0 +1,1 @@
+const fs = require('fs'); let code = fs.readFileSync('src/App.tsx', 'utf8'); code = code.replace(/if \(data\.bazaar_list\) setBazaarList\(data\.bazaar_list\);/g, 'if (data.expenses && data.expenses.shared_list) setBazaarList(data.expenses.shared_list); else if (data.bazaar_list) setBazaarList(data.bazaar_list);'); fs.writeFileSync('src/App.tsx', code);

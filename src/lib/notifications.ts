@@ -1,3 +1,5 @@
+import { toast } from 'sonner';
+
 export interface MessNotification {
   id: string;
   title: string;
@@ -6,15 +8,20 @@ export interface MessNotification {
   timestamp: number;
 }
 
-/**
- * Dispatches a real-time in-app notification.
- */
 export async function sendNotification(
   messId: string,
   title: string,
   message: string,
   type: "info" | "success" | "warning" | "danger" = "info"
 ) {
-  // Offline notifications, handled strictly via React States now.
-  // We no longer rely on external Firebase Sync for transient notices.
+  if (type === "success") {
+    toast.success(title, { description: message });
+  } else if (type === "danger") {
+    toast.error(title, { description: message });
+  } else if (type === "warning") {
+    toast.warning(title, { description: message });
+  } else {
+    toast.info(title, { description: message });
+  }
 }
+
