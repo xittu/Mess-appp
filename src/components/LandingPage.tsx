@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Home, Users, Receipt, UtensilsCrossed, CalendarClock, ShieldCheck, FileText } from 'lucide-react';
+import { ArrowRight, Home, Users, Receipt, UtensilsCrossed, CalendarClock, ShieldCheck, FileText, ChevronDown } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -27,7 +27,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0C15] text-zinc-100 flex flex-col font-sans overflow-x-hidden pt-12 md:pt-0">
+    <div className="min-h-screen bg-[#0F0C15] text-zinc-100 flex flex-col font-sans overflow-x-hidden pt-4 md:pt-0">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/20 via-purple-900/5 to-[#0F0C15] pointer-events-none"></div>
       
       <header className="relative z-10 p-6 md:px-12 flex justify-between items-center bg-transparent">
@@ -64,12 +64,12 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
 
       <main className="flex-1 flex flex-col relative z-10 px-6 md:px-12 max-w-6xl mx-auto w-full">
         {/* Hero Section */}
-        <div className="py-20 md:py-32 flex flex-col items-center text-center">
+        <div className="pt-6 pb-10 md:py-24 flex flex-col items-center text-center min-h-[calc(100vh-100px)] justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/20 text-purple-300 text-xs font-medium mb-8"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-950/30 border border-purple-500/20 text-purple-300 text-xs font-medium mb-4"
           >
             <SparkleIcon />
             স্মার্ট মেস ম্যানেজমেন্ট সিস্টেম
@@ -79,30 +79,55 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-8 leading-tight"
+            className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-3 leading-tight"
           >
             Dorm<span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-amber via-yellow-300 to-orange-400">z</span>
           </motion.h1>
 
-          <motion.div 
+          <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col sm:flex-row gap-4 mt-8"
+            className="text-zinc-400 text-sm md:text-lg max-w-2xl mb-6 leading-relaxed px-2"
+          >
+            Dormz (ডর্মস) হলো একটি অত্যাধুনিক এবং সহজবোধ্য মেস ম্যানেজমেন্ট অ্যাপ্লিকেশন যা তৈরি করা হয়েছে ব্যাচেলর এবং মেসে বসবাসরত মানুষদের দৈনন্দিন হিসাব-নিকাশকে ঝামেলামুক্ত করার জন্য।
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 mb-2"
           >
             <button
               onClick={onGetStarted}
-              className="flex items-center justify-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold text-lg shadow-lg shadow-purple-600/20 transition-all w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-medium text-base shadow-sm shadow-purple-600/20 transition-all w-full sm:w-auto"
             >
               লগইন করুন
             </button>
             <button
               onClick={onGetStarted}
-              className="group flex items-center justify-center gap-3 px-8 py-4 bg-brand-amber hover:bg-amber-400 text-zinc-950 rounded-full font-bold text-lg shadow-lg shadow-brand-amber/20 transition-all w-full sm:w-auto"
+              className="group flex items-center justify-center gap-2 px-6 py-3 bg-brand-amber hover:bg-amber-400 text-zinc-950 rounded-full font-medium text-base shadow-sm shadow-brand-amber/20 transition-all w-full sm:w-auto"
             >
               নতুন একাউন্ট খুলুন
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 1 }}
+            className="mt-6 flex flex-col items-center justify-center text-zinc-500 cursor-pointer hover:text-brand-amber transition-colors"
+            onClick={scrollToDetails}
+          >
+            <span className="text-sm font-medium mb-2 uppercase tracking-widest text-xs">আরও জানুন</span>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            >
+              <ChevronDown className="w-6 h-6" />
+            </motion.div>
           </motion.div>
         </div>
 
@@ -117,9 +142,6 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">অ্যাপ সম্পর্কে বিস্তারিত</h2>
           <div className="space-y-6 text-zinc-300 text-base md:text-lg leading-relaxed">
-            <p>
-              Dormz (ডর্মস) হলো একটি অত্যাধুনিক এবং সহজবোধ্য মেস ম্যানেজমেন্ট অ্যাপ্লিকেশন যা তৈরি করা হয়েছে ব্যাচেলর এবং মেসে বসবাসরত মানুষদের দৈনন্দিন হিসাব-নিকাশকে ঝামেলামুক্ত করার জন্য।
-            </p>
             <p>
               খাতা-কলমে হিসাব রাখার দিন শেষ! এখন আপনি খুব সহজেই আপনার স্মার্টফোন বা পিসি থেকে মেসের মিল (Meals), বাজার খরচ (Bazaar Expenses), ইউটিলিটি বিল (Utility Bills), এবং সদস্যদের টাকা জমার (Deposits) হিসাব রিয়েল-টাইমে ট্র্যাক করতে পারবেন। অ্যাপটি স্বয়ংক্রিয়ভাবে কার কত টাকা ব্যক্তিগত জমা আছে, কে কত টাকা খরচ করেছে এবং মাস শেষে কার দেনা বা পাওনা কত—তা মুহূর্তের মধ্যে হিসাব করে দেয়।
             </p>

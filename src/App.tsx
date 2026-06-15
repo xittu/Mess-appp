@@ -798,13 +798,16 @@ export default function App() {
       return <LandingPage onGetStarted={() => setShowAuth(true)} />;
     }
     
-    return <AuthScreen onAuthSuccess={() => {
+    return <AuthScreen 
+      onAuthSuccess={() => {
         if (getMockUser()) {
             setCurrentUser(getMockUser());
             setMessId(getMockUser().user_metadata?.photoURL || "M99999");
             loadDataFromSupabase(getMockUser().email);
         }
-    }} />;
+      }} 
+      onBackToHome={() => setShowAuth(false)}
+    />;
   }
 
   return (

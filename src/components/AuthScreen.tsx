@@ -4,9 +4,10 @@ import { AlertCircle, Eye, EyeOff, Sparkles, LogIn, UserPlus } from "lucide-reac
 
 interface AuthScreenProps {
   onAuthSuccess: () => void;
+  onBackToHome?: () => void;
 }
 
-export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
+export default function AuthScreen({ onAuthSuccess, onBackToHome }: AuthScreenProps) {
   const [isRegisterMode, setIsRegisterMode] = useState(true); // Default to register mode matching the screenshot "Create Account"
   const [name, setName] = useState("");
   const [messName, setMessName] = useState("");
@@ -331,7 +332,7 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       <div className="mt-4 flex flex-col items-center gap-2">
         <button
           onClick={() => {
-            // Safe decorative action
+            if (onBackToHome) onBackToHome();
           }}
           className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-all font-semibold flex items-center gap-1 cursor-pointer bg-[#130F22]/40 px-3 py-1.5 rounded-full border border-purple-950/20 hover:scale-[1.02] duration-300"
         >
