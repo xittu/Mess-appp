@@ -39,7 +39,8 @@ export default function App() {
   // --- Auth Session States ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [showAuth, setShowAuth] = useState<boolean>(false);
+  const [showAuth, setShowAuth] = useState<boolean>(window.location.pathname === '/update-password');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
 
   // --- Real-Time State Data ---
   const [members, setMembers] = useState<Member[]>([]);
@@ -793,12 +794,16 @@ export default function App() {
   }
 
   // --- Render Login Portal if not Authenticated ---
-  if (!currentUser) {
-    if (!showAuth) {
-      return <LandingPage onGetStarted={() => setShowAuth(true)} />;
+  if (!currentUser || window.location.pathname === '/update-password') {
+    if (!showAuth && window.location.pathname !== '/update-password') {
+      return <LandingPage onGetStarted={(mode) => {
+        setAuthMode(mode);
+        setShowAuth(true);
+      }} />;
     }
     
     return <AuthScreen 
+      initialMode={authMode}
       onAuthSuccess={() => {
         if (getMockUser()) {
             setCurrentUser(getMockUser());

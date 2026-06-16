@@ -5,19 +5,107 @@ import { AlertCircle, Eye, EyeOff, Sparkles, LogIn, UserPlus } from "lucide-reac
 interface AuthScreenProps {
   onAuthSuccess: () => void;
   onBackToHome?: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-export default function AuthScreen({ onAuthSuccess, onBackToHome }: AuthScreenProps) {
-  const [isRegisterMode, setIsRegisterMode] = useState(true); // Default to register mode matching the screenshot "Create Account"
+export default function AuthScreen({ onAuthSuccess, onBackToHome, initialMode = 'register' }: AuthScreenProps) {
+  const [isRegisterMode, setIsRegisterMode] = useState(initialMode === 'register'); // Default to register mode matching the screenshot "Create Account"
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const [isUpdatePasswordMode] = useState(window.location.pathname === '/update-password');
+  
   const [name, setName] = useState("");
   const [messName, setMessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResendEmail, setShowResendEmail] = useState(false);
+
+  const handleResendEmail = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+      setSuccessMsg("যাচাইকরণ লিংকটি আবার পাঠানো হয়েছে। অনুগ্রহ করে ইনবক্স (বা স্প্যাম ফোল্ডার) চেক করুন।");
+      setShowResendEmail(false);
+    } catch (err: any) {
+      if (err.message?.toLowerCase().includes("rate limit") || err.code === "over_email_send_rate_limit") {
+        setErrorMsg("অতিরিক্ত বার চেষ্টা করা হয়েছে, অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন (Rate Limited)।");
+      } else {
+        setErrorMsg(err.message || "লিংক পাঠানো সম্ভব হয়নি।");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!email.trim()) {
+      setErrorMsg("অনুগ্রহ করে আপনার ইমেইল প্রদান করুন।");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: 'https://dormz.vercel.app/update-password',
+      });
+      if (error) throw error;
+      setSuccessMsg("পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে। অনুগ্রহ করে ইনবক্স চেক করুন।");
+    } catch (err: any) {
+      console.log("Forgot password event:", err.message);
+      if (err.message?.toLowerCase().includes("rate limit") || err.code === "over_email_send_rate_limit") {
+        setErrorMsg("অতিরিক্ত বার চেষ্টা করা হয়েছে, অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন (Rate Limited)।");
+      } else {
+        setErrorMsg(err.message || "রিসেট লিংক পাঠানো সম্ভব হয়নি।");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (newPassword.length < 6) {
+      setErrorMsg("নতুন পাসওয়ার্ডটি কমপক্ষে ৬ অক্ষরের হতে হবে।");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setSuccessMsg("আপনার পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে। স্ক্রিন রিফ্রেশ হচ্ছে...");
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (err: any) {
+      console.log("Update password event:", err.message);
+      setErrorMsg(err.message || "পাসওয়ার্ড আপডেট করা সম্ভব হয়নি।");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- Admin Area States ---
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
@@ -124,29 +212,7 @@ export default function AuthScreen({ onAuthSuccess, onBackToHome }: AuthScreenPr
         });
 
         if (signInError) {
-          if (signInError.message?.includes("Invalid login") || signInError.code === "invalid_credentials") {
-             // Fallback: auto-register to help automated tests and fast on-boarding
-             const { error: signUpError } = await supabase.auth.signUp({
-                email: email.trim(),
-                password: password,
-                options: {
-                  data: {
-                    displayName: email.split("@")[0],
-                    photoURL: "M" + Math.random().toString(36).substr(2, 5).toUpperCase(),
-                  }
-                }
-             });
-             if (signUpError) {
-                if (signUpError.message?.toLowerCase().includes("rate limit") || signUpError.code === "over_email_send_rate_limit") {
-                   const MU = { id: 'mock123', email: email.trim(), user_metadata: { displayName: email.split("@")[0], photoURL: 'M99999' } }; (window as any).__MOCK_USER__ = MU; try { localStorage.setItem('__MOCK_USER__', JSON.stringify(MU)); } catch(e) {}
-                   onAuthSuccess();
-                   return;
-                }
-                throw signInError; // throw original signIn error if signUp also fails
-             }
-          } else {
-             throw signInError;
-          }
+          throw signInError;
         }
       }
 
@@ -154,7 +220,10 @@ export default function AuthScreen({ onAuthSuccess, onBackToHome }: AuthScreenPr
     } catch (err: any) {
       // console.error("Auth error:", err); // Keep silent to avoid AI Studio intercepting user-facing expected auth errors
       console.log("Auth event:", err.message);
-      if (err.message?.toLowerCase().includes("rate limit") || err.code === "over_email_send_rate_limit") {
+      if (err.message?.toLowerCase().includes("email not confirmed") || err.code === "email_not_confirmed") {
+        setErrorMsg("আপনার ইমেইলটি এখনও যাচাই করা হয়নি। (যদি আপনি সবেমাত্র কনফার্মেশন অফ করে থাকেন, তবে পূর্বের অ্যাকাউন্টগুলোর ক্ষেত্রে তা কাজ করবে না। অনুগ্রহ করে ইনবক্স/স্প্যাম চেক করুন অথবা ডাটাবেস থেকে ইউজার ডিলিট করে আবার সাইন আপ করুন।)");
+        setShowResendEmail(true);
+      } else if (err.message?.toLowerCase().includes("rate limit") || err.code === "over_email_send_rate_limit") {
         setErrorMsg("অতিরিক্ত বার চেষ্টা করা হয়েছে, অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন (Rate Limited)।");
       } else if (err.message?.includes("already registered") || err.code === "user_already_exists") {
         setErrorMsg("এই ইমেইল অ্যাড্রেসটি ইতিমধ্যে রেজিস্টার করা হয়েছে! অ্যাকাউন্টটি লগইন করুন অথবা অন্য ইমেইল ব্যবহার করুন।");
@@ -187,145 +256,249 @@ export default function AuthScreen({ onAuthSuccess, onBackToHome }: AuthScreenPr
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-wide">
-            {isRegisterMode ? "Create Account" : "Sign In"}
+            {isUpdatePasswordMode ? "Update Password" : isForgotPasswordMode ? "Reset Password" : isRegisterMode ? "Create Account" : "Sign In"}
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            {isRegisterMode ? "Start managing your mess meals" : "Access your active mess account"}
+            {isUpdatePasswordMode ? "Enter your new password below" : isForgotPasswordMode ? "Enter your email to receive a reset link" : isRegisterMode ? "Start managing your mess meals" : "Access your active mess account"}
           </p>
         </div>
 
         {/* Elegant Error Banner */}
         {errorMsg && (
-          <div className="mb-4 bg-red-950/20 border border-red-500/30 rounded-xl p-2.5 flex gap-2 items-start text-red-300">
-            <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-            <span className="text-[11px] leading-normal font-medium">{errorMsg}</span>
+          <div className="mb-4 bg-red-950/20 border border-red-500/30 rounded-xl p-2.5 flex flex-col gap-2 items-start text-red-300">
+            <div className="flex gap-2 items-start">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+              <span className="text-[11px] leading-normal font-medium">{errorMsg}</span>
+            </div>
+            {showResendEmail && (
+               <button
+                 type="button"
+                 onClick={handleResendEmail}
+                 disabled={loading}
+                 className="mt-1 ml-5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-[10px] rounded flex items-center gap-1 transition-colors"
+               >
+                 {loading ? "পাঠানো হচ্ছে..." : "পুনরায় লিংক পাঠান"}
+               </button>
+            )}
+          </div>
+        )}
+
+        {/* Success Banner */}
+        {successMsg && (
+          <div className="mb-4 bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-2.5 flex gap-2 items-start text-emerald-300">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+            <span className="text-[11px] leading-normal font-medium">{successMsg}</span>
           </div>
         )}
 
         {/* Form Block */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {isRegisterMode && (
-            <>
-              {/* Your Name */}
-              <div className="space-y-1 text-left">
-                <label className="text-xs font-semibold text-zinc-300 tracking-wide">Your Name</label>
+        {isUpdatePasswordMode ? (
+          <form onSubmit={handleUpdatePassword} className="space-y-3">
+            <div className="space-y-1 text-left relative">
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">New Password</label>
+              <div className="relative">
                 <input
-                  type="text"
-                  required={isRegisterMode}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Zitu"
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-
-              {/* Dormitory / Mess Name */}
-              <div className="space-y-1 text-left">
-                <label className="text-xs font-semibold text-zinc-300 tracking-wide">Dormitory / Mess Name</label>
-                <input
-                  type="text"
-                  required={isRegisterMode}
-                  value={messName}
-                  onChange={(e) => setMessName(e.target.value)}
-                  placeholder="e.g. Hall-1 Mess"
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Email */}
-          <div className="space-y-1 text-left">
-            <label className="text-xs font-semibold text-zinc-300 tracking-wide">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. user@email.com"
-              className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
-            />
-          </div>
-
-          {/* Password with Eye icon toggle */}
-          <div className="space-y-1 text-left relative">
-            <label className="text-xs font-semibold text-zinc-300 tracking-wide">Password</label>
-            <div className="relative">
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !newPassword.trim() || newPassword.length < 6}
+              className="w-full py-2.5 text-xs font-semibold text-white bg-[#62428F] hover:bg-[#7252A0] active:bg-[#52347D] rounded-[2rem] transition-all shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-1.5 mt-3"
+            >
+              Update Password
+            </button>
+          </form>
+        ) : isForgotPasswordMode ? (
+          <form onSubmit={handleForgotPassword} className="space-y-3">
+            <div className="space-y-1 text-left">
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">Email</label>
               <input
-                type={showPassword ? "text" : "password"}
+                type="email"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. user@email.com"
+                className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
-          </div>
-
-          {/* Terms & Conditions Checkbox - Only in register mode */}
-          {isRegisterMode && (
-            <div className="flex items-start gap-2 mt-2 text-left">
-              <input
-                type="checkbox"
-                id="agree-checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-0.5 w-3.5 h-3.5 rounded border-[#251D3A] bg-[#0D091B] text-purple-600 focus:ring-purple-500 focus:ring-opacity-25"
-              />
-              <label htmlFor="agree-checkbox" className="text-[10px] text-zinc-400 select-none leading-normal">
-                I agree to the <span className="text-purple-400 underline cursor-pointer hover:text-purple-300">Terms and Conditions</span>. This app is free to use with ads.
-              </label>
+            <button
+              type="submit"
+              disabled={loading || !email.trim()}
+              className="w-full py-2.5 text-xs font-semibold text-white bg-[#62428F] hover:bg-[#7252A0] active:bg-[#52347D] rounded-[2rem] transition-all shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-1.5 mt-3"
+            >
+              Send Reset Link
+            </button>
+            <div className="mt-3.5 text-center">
+              <p className="text-[11px] text-zinc-400">
+                Remember your password?{" "}
+                <button
+                  onClick={() => setIsForgotPasswordMode(false)}
+                  className="text-[#9879C5] hover:text-purple-300 font-semibold cursor-pointer underline hover:no-underline"
+                  type="button"
+                >
+                  Back to Login
+                </button>
+              </p>
             </div>
-          )}
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {isRegisterMode && (
+              <>
+                {/* Your Name */}
+                <div className="space-y-1 text-left">
+                  <label className="text-xs font-semibold text-zinc-300 tracking-wide">Your Name</label>
+                  <input
+                    type="text"
+                    required={isRegisterMode}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Zitu"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                  />
+                </div>
 
-          {/* Submit Action Button Styled exactly like screenshot */}
-          <button
-            type="submit"
-            disabled={
-              loading ||
-              (isRegisterMode
-                ? !name.trim() || !messName.trim() || !email.trim() || !password.trim() || !agreeTerms
-                : !email.trim() || !password.trim())
-            }
-            className="w-full py-2.5 text-xs font-semibold text-white bg-[#62428F] hover:bg-[#7252A0] active:bg-[#52347D] rounded-[2rem] transition-all shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#62428F] disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-1.5 mt-3"
-          >
-            {isRegisterMode ? (
-              <>
-                <UserPlus className="w-3.5 h-3.5" />
-                Create Account
-              </>
-            ) : (
-              <>
-                <LogIn className="w-3.5 h-3.5" />
-                Sign In
+                {/* Dormitory / Mess Name */}
+                <div className="space-y-1 text-left">
+                  <label className="text-xs font-semibold text-zinc-300 tracking-wide">Dormitory / Mess Name</label>
+                  <input
+                    type="text"
+                    required={isRegisterMode}
+                    value={messName}
+                    onChange={(e) => setMessName(e.target.value)}
+                    placeholder="e.g. Hall-1 Mess"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                  />
+                </div>
               </>
             )}
-          </button>
-        </form>
+
+            {/* Email */}
+            <div className="space-y-1 text-left">
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. user@email.com"
+                className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+              />
+            </div>
+
+            {/* Password with Eye icon toggle */}
+            <div className="space-y-1 text-left relative">
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              
+              {!isRegisterMode && (
+                <div className="flex justify-end mt-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPasswordMode(true);
+                      setErrorMsg(null);
+                      setSuccessMsg(null);
+                    }}
+                    className="text-[10px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Terms & Conditions Checkbox - Only in register mode */}
+            {isRegisterMode && (
+              <div className="flex items-start gap-2 mt-2 text-left">
+                <input
+                  type="checkbox"
+                  id="agree-checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="mt-0.5 w-3.5 h-3.5 rounded border-[#251D3A] bg-[#0D091B] text-purple-600 focus:ring-purple-500 focus:ring-opacity-25"
+                />
+                <label htmlFor="agree-checkbox" className="text-[10px] text-zinc-400 select-none leading-normal">
+                  I agree to the <span className="text-purple-400 underline cursor-pointer hover:text-purple-300">Terms and Conditions</span>. This app is free to use with ads.
+                </label>
+              </div>
+            )}
+
+            {/* Submit Action Button Styled exactly like screenshot */}
+            <button
+              type="submit"
+              disabled={
+                loading ||
+                (isRegisterMode
+                  ? !name.trim() || !messName.trim() || !email.trim() || !password.trim() || !agreeTerms
+                  : !email.trim() || !password.trim())
+              }
+              className="w-full py-2.5 text-xs font-semibold text-white bg-[#62428F] hover:bg-[#7252A0] active:bg-[#52347D] rounded-[2rem] transition-all shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#62428F] disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-1.5 mt-3"
+            >
+              {isRegisterMode ? (
+                <>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Create Account
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-3.5 h-3.5" />
+                  Sign In
+                </>
+              )}
+            </button>
+          </form>
+        )}
 
         {/* Footer switch state - Switch Mode */}
-        <div className="mt-3.5 text-center">
-          <p className="text-[11px] text-zinc-400">
-            {isRegisterMode ? "Already have an account? " : "Don't have an account? "}
-            <button
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setErrorMsg(null);
-              }}
-              className="text-[#9879C5] hover:text-purple-300 font-semibold cursor-pointer underline hover:no-underline"
-              type="button"
-            >
-              {isRegisterMode ? "Sign in" : "Create Account"}
-            </button>
-          </p>
-        </div>
+        {!isUpdatePasswordMode && !isForgotPasswordMode && (
+          <div className="mt-3.5 text-center">
+            <p className="text-[11px] text-zinc-400">
+              {isRegisterMode ? "Already have an account? " : "Don't have an account? "}
+              <button
+                onClick={() => {
+                  setIsRegisterMode(!isRegisterMode);
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                }}
+                className="text-[#9879C5] hover:text-purple-300 font-semibold cursor-pointer underline hover:no-underline"
+                type="button"
+              >
+                {isRegisterMode ? "Sign in" : "Create Account"}
+              </button>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Back to Home decorative button matching screenshot */}

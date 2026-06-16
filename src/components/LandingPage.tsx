@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Home, Users, Receipt, UtensilsCrossed, CalendarClock, ShieldCheck, FileText, ChevronDown } from 'lucide-react';
 
 interface LandingPageProps {
-  onGetStarted: () => void;
+  onGetStarted: (mode: 'login' | 'register') => void;
 }
 
 export default function LandingPage({ onGetStarted }: LandingPageProps) {
@@ -48,13 +48,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
            className="flex gap-3"
         >
           <button
-            onClick={onGetStarted}
+            onClick={() => onGetStarted('login')}
             className="px-5 py-2 text-sm font-semibold rounded-full border border-purple-500/30 text-white hover:bg-purple-500/10 transition-colors hidden sm:block"
           >
             লগইন
           </button>
           <button
-            onClick={onGetStarted}
+            onClick={() => onGetStarted('register')}
             className="px-5 py-2 text-sm font-semibold rounded-full bg-brand-amber text-zinc-950 hover:bg-amber-400 transition-colors shadow-lg shadow-brand-amber/20"
           >
             সাইন আপ
@@ -100,13 +100,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             className="flex flex-col sm:flex-row gap-4 mb-2"
           >
             <button
-              onClick={onGetStarted}
+              onClick={() => onGetStarted('login')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-medium text-base shadow-sm shadow-purple-600/20 transition-all w-full sm:w-auto"
             >
               লগইন করুন
             </button>
             <button
-              onClick={onGetStarted}
+              onClick={() => onGetStarted('register')}
               className="group flex items-center justify-center gap-2 px-6 py-3 bg-brand-amber hover:bg-amber-400 text-zinc-950 rounded-full font-medium text-base shadow-sm shadow-brand-amber/20 transition-all w-full sm:w-auto"
             >
               নতুন একাউন্ট খুলুন
