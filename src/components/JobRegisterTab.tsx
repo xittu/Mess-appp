@@ -160,7 +160,7 @@ export default function JobRegisterTab({
           .update({
             status,
             user_name: selectedMemberName,
-            is_present: isPresent,
+            is_present: isPresent ? "Present" : "Absent",
             overtime_hours: parseFloat(overtimeHours.toString()) || 0,
           })
           .eq("id", existingData.id);
@@ -172,7 +172,7 @@ export default function JobRegisterTab({
             user_name: selectedMemberName,
             date,
             status,
-            is_present: isPresent,
+            is_present: isPresent ? "Present" : "Absent",
             overtime_hours: parseFloat(overtimeHours.toString()) || 0,
             mess_id: messId,
           },
