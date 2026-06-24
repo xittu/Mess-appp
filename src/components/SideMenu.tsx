@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   X,
   Calculator,
@@ -19,8 +20,9 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Member, Expense, UtilityExpense, DutyAssignment } from "../types";
+import JobRegisterTab from "./JobRegisterTab";
 
-interface MoreBottomSheetProps {
+interface SideMenuProps {
   isOpen: boolean;
   onClose: () => void;
   members: Member[];
@@ -37,11 +39,12 @@ interface MoreBottomSheetProps {
   messId: string;
   dueMemberIds?: string[];
   currentUserName: string;
+  currentUserId?: string;
   isAdmin?: boolean;
   onOpenAdminPanel?: () => void;
 }
 
-export default function MoreBottomSheet({
+export default function SideMenu({
   isOpen,
   onClose,
   members,
@@ -58,11 +61,12 @@ export default function MoreBottomSheet({
   messId,
   dueMemberIds,
   currentUserName,
+  currentUserId,
   isAdmin,
   onOpenAdminPanel,
-}: MoreBottomSheetProps) {
+}: SideMenuProps) {
   const [activeModal, setActiveModal] = useState<
-    "ledger" | "duty" | "fixed_meal_info" | null
+    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | null
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -118,7 +122,7 @@ export default function MoreBottomSheet({
     });
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = (isJobCycle: boolean = false) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert(
@@ -192,7 +196,13 @@ export default function MoreBottomSheet({
         .join("") ||
       "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
 
-    const reportTitle = `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
+    const reportTitle = isJobCycle 
+      ? `${currentUserName} - জব সাইকেল রিপোর্ট (20th to 20th)` 
+      : `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
+
+    const reportSubtitle = isJobCycle 
+      ? "পূর্ববর্তী মাসের ২০ তারিখ থেকে চলতি মাসের ২০ তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।" 
+      : "চলমান মাসের মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।";
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -330,8 +340,8 @@ export default function MoreBottomSheet({
           </div>
           
           <div class="header-info">
-            <h1>${currentUserName}</h1>
-            <p style="font-size: 16px; font-weight: 700; color: #1e293b;">মেস রিপোর্ট অ্যান্ড সেশন ডাটা শীট</p>
+            <h1>${reportTitle}</h1>
+            <p style="font-size: 14px; font-weight: 500; color: #1e293b;">${reportSubtitle}</p>
             <p>মেস সেশন আইডি: <b style="font-family: monospace; font-size:14px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${messId}</b></p>
             <p style="font-size: 11px; color: #64748b; margin-top: 8px;">রিপোর্ট প্রকাশের সময়: ${new Date().toLocaleDateString("bn-BD")} | ${new Date().toLocaleTimeString("bn-BD")}</p>
           </div>
@@ -436,43 +446,44 @@ export default function MoreBottomSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden select-none">
-      {/* Blurred overlay background */}
-      <div
-        className="absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Sliding Sheet */}
-      <div className="absolute inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl bg-zinc-950 border-t border-purple-950/50 flex flex-col overflow-hidden text-zinc-100 shadow-2xl">
-        {/* Handle bar */}
-        <div
-          className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto my-3 cursor-pointer shrink-0"
-          onClick={onClose}
-        />
-
-        {/* Sheet Main Header */}
-        <div className="px-5 pb-3 flex items-center justify-between border-b border-purple-950/30 shrink-0">
-          <div>
-            <h3 className="text-base font-bold font-sans text-brand-amber text-left">
-              আরও সেবা ও হিসাবসমূহ
-            </h3>
-            <p className="text-[10px] text-zinc-400 mt-0.5 text-left">
-              মেসের অটোমেটিক ক্যালকুলেটর ও অতিরিক্ত অপশন
-            </p>
-          </div>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[60] overflow-hidden select-none">
+          {/* Blurred overlay background */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-all cursor-pointer"
-            id="btn-close-bottom-sheet"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+          />
 
-        {/* Inner Scroller Content */}
-        {!activeModal ? (
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {/* Sliding Sidebar */}
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="absolute top-0 left-0 bottom-0 w-full max-w-[320px] bg-zinc-950 border-r border-purple-950/50 shadow-2xl overflow-hidden flex flex-col text-zinc-100"
+          >
+            {/* Sheet Main Header */}
+            <div className="flex items-center justify-between p-4 border-b border-purple-950/30 shrink-0">
+              <span className="font-bold text-zinc-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-brand-amber" />
+                Menu
+              </span>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                id="btn-close-side-menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Inner Scroller Content */}
+            {!activeModal ? (
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
             {/* Action Grid/List */}
             <div className="space-y-2.5">
               {/* hesap action */}
@@ -557,10 +568,7 @@ export default function MoreBottomSheet({
               </div>
 
               <button
-                onClick={() => {
-                  onClose();
-                  onTabChange(5);
-                }}
+                onClick={() => setActiveModal("job_register")}
                 className="w-full flex items-center justify-between p-3.5 rounded-xl bg-indigo-950/20 hover:bg-indigo-950/30 border border-indigo-900/30 hover:border-indigo-500/40 transition-all text-left cursor-pointer group"
                 id="btn-menu-job-register"
               >
@@ -580,7 +588,7 @@ export default function MoreBottomSheet({
               </button>
 
               <button
-                onClick={handleExportPDF}
+                onClick={() => setActiveModal("export_pdf")}
                 className="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-950/10 hover:bg-emerald-950/20 border border-emerald-900/35 hover:border-emerald-500/40 transition-all text-left cursor-pointer group"
                 id="btn-menu-export-pdf"
               >
@@ -1095,6 +1103,58 @@ export default function MoreBottomSheet({
                 </div>
               </div>
             )}
+
+            {activeModal === "job_register" && (
+              <div className="flex-1 overflow-hidden relative">
+                <JobRegisterTab
+                  members={members}
+                  messId={messId}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
+                  onClose={() => setActiveModal(null)}
+                />
+              </div>
+            )}
+
+            {activeModal === "export_pdf" && (
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="flex items-center gap-3 text-zinc-100 mb-2">
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <h4 className="font-bold text-sm">পিডিএফ ডাউনলোড</h4>
+                </div>
+                
+                <div className="bg-emerald-950/20 border border-emerald-900/30 rounded-xl p-4 text-center">
+                  <Download className="w-8 h-8 text-emerald-400 mx-auto mb-3 animate-bounce" />
+                  <p className="text-xs text-zinc-300 mb-5 leading-relaxed">
+                    আপনার মেসের সকল বাজার খরচ, জমা ও যাবতীয় হিসাবের পূর্ণাঙ্গ রিপোর্ট ডাউনলোড করতে নিচের যেকোনো একটি অপশন নির্বাচন করুন।
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        handleExportPDF();
+                      }}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-emerald-900/50"
+                    >
+                      ফুল মাস রিপোর্ট (1st - End)
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleExportPDF(true);
+                      }}
+                      className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-indigo-900/50"
+                    >
+                      জব সাইকেল রিপোর্ট (20th - 20th)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {/* Slidable Warning Modal Overlay */}
@@ -1137,7 +1197,9 @@ export default function MoreBottomSheet({
             </div>
           </div>
         )}
+        </motion.div>
       </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }

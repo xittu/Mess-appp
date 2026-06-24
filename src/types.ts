@@ -43,5 +43,7 @@ export interface Attendance {
   user_name: string;
   date: string;
   status: "Duty" | "Off Day";
+  is_present?: boolean;
+  overtime_hours?: number;
   mess_id?: string;
 }

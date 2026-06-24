@@ -22,7 +22,7 @@ import MembersTab from "./components/MembersTab";
 import ExpensesTab from "./components/ExpensesTab";
 import MealsTab from "./components/MealsTab";
 import DepositsTab from "./components/DepositsTab";
-import MoreBottomSheet from "./components/MoreBottomSheet";
+import SideMenu from "./components/SideMenu";
 import AuthScreen from "./components/AuthScreen";
 import HistoryModal from "./components/HistoryModal";
 import AdminPanel from "./components/AdminPanel";
@@ -72,11 +72,11 @@ export default function App() {
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [isMoreOpen, setIsMoreOpen] = useState<boolean>(false);
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -842,7 +842,7 @@ export default function App() {
     setFixedMealCount(0);
     setDutyAssignments([]);
 
-    await saveToGmailDoc([], [], [], {}, [], 0, [], "মেস ড্যাশবোর্ড");
+    await saveToGmailDoc([], [], [], {}, [], 0, [], "মেস ড্যাশবোর্ড", []);
 
     try {
       // Audit Notification Log
@@ -987,6 +987,7 @@ export default function App() {
             isSyncing={isSyncing}
             lastCloudSync={lastCloudSync}
             onShowHistory={() => setShowHistory(true)}
+            onOpenMenu={() => setIsMenuOpen(true)}
           />
 
           {/* Real-time Notification Bell trigger icon in Header */}
@@ -1116,19 +1117,6 @@ export default function App() {
               onDeleteBazaarItem={handleDeleteBazaarItem}
             />
           )}
-
-          {activeTab === 5 && (
-            <JobRegisterTab
-              members={safeMembers}
-              messId={messId}
-              currentUserId={currentUser?.id}
-              currentUserName={
-                currentUser?.user_metadata?.displayName ||
-                currentUser?.email ||
-                "মেস ইউজার"
-              }
-            />
-          )}
         </main>
 
         {/* Premium Sticky Bottom Navbar */}
@@ -1138,10 +1126,9 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab(0);
-                setIsMoreOpen(false);
               }}
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 0 && !isMoreOpen
+                activeTab === 0
                   ? "text-brand-amber font-semibold scale-105"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
@@ -1155,10 +1142,9 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab(1);
-                setIsMoreOpen(false);
               }}
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 1 && !isMoreOpen
+                activeTab === 1
                   ? "text-brand-amber font-semibold scale-105"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
@@ -1172,10 +1158,9 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab(2);
-                setIsMoreOpen(false);
               }}
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
-                activeTab === 2 && !isMoreOpen
+                activeTab === 2
                   ? "text-brand-amber font-semibold scale-105"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
@@ -1192,10 +1177,9 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab(3);
-                setIsMoreOpen(false);
               }}
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
-                activeTab === 3 && !isMoreOpen
+                activeTab === 3
                   ? "text-brand-amber font-semibold scale-105"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
@@ -1209,10 +1193,10 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveTab(4);
-                setIsMoreOpen(false);
+                setIsMenuOpen(false);
               }}
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
-                activeTab === 4 && !isMoreOpen
+                activeTab === 4 && !isMenuOpen
                   ? "text-brand-amber font-semibold scale-105"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
@@ -1237,29 +1221,13 @@ export default function App() {
               </svg>
               <span className="text-[10px] font-sans">বাজার</span>
             </button>
-
-            {/* Tab 5 - Bottom Sheet drawer */}
-            <button
-              onClick={() => {
-                setIsMoreOpen(true);
-              }}
-              className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
-                isMoreOpen
-                  ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-              id="nav-tab-more"
-            >
-              <Menu className="w-5 h-5" />
-              <span className="text-[10px] font-sans">আরও</span>
-            </button>
           </div>
         </nav>
 
         {/* Slidable More Services Drawer Sheet */}
-        <MoreBottomSheet
-          isOpen={isMoreOpen}
-          onClose={() => setIsMoreOpen(false)}
+        <SideMenu
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
           members={safeMembers}
           expenses={safeExpenses}
           utilities={safeUtilities}
@@ -1274,7 +1242,7 @@ export default function App() {
           onLogOut={handleLogOut}
           onTabChange={(tabIdx) => {
             setActiveTab(tabIdx);
-            setIsMoreOpen(false);
+            setIsMenuOpen(false);
           }}
           messId={messId}
           dueMemberIds={dueMemberIds}
@@ -1283,9 +1251,10 @@ export default function App() {
             currentUser?.email ||
             "মেস ইউজার"
           }
+          currentUserId={currentUser?.id}
           isAdmin={currentUser?.email === "admin@mppd7x.com"}
           onOpenAdminPanel={() => {
-            setIsMoreOpen(false);
+            setIsMenuOpen(false);
             setShowAdminPanel(true);
           }}
         />

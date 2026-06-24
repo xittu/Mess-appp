@@ -11,6 +11,7 @@ import {
   ChevronDown,
   CalendarDays,
   History,
+  Menu,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -25,6 +26,7 @@ interface HeaderProps {
   isSyncing?: boolean;
   lastCloudSync?: string | null;
   onShowHistory: () => void;
+  onOpenMenu: () => void;
 }
 
 // Highly stylized mapping for months with Bengali values, short codes, and individual gradient theme styles
@@ -64,6 +66,7 @@ export default function Header({
   isSyncing,
   lastCloudSync,
   onShowHistory,
+  onOpenMenu,
 }: HeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -109,92 +112,100 @@ export default function Header({
     <header className="w-full select-none">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-purple-950/40 bg-brand-card/95 backdrop-blur-md sticky top-0 z-40 transition-colors duration-300">
-        <div className="flex flex-col">
-          {isEditing ? (
-            <form
-              onSubmit={handleSave}
-              className="flex items-center gap-1.5 py-0.5"
-            >
-              <input
-                type="text"
-                value={tempName}
-                onChange={(e) => setTempName(e.target.value)}
-                className="bg-zinc-900 border border-zinc-700 text-brand-amber font-sans text-sm font-bold tracking-tight rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-accent w-40"
-                autoFocus
-                maxLength={100}
-                required
-              />
-              <button
-                type="submit"
-                className="p-1 text-emerald-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                title="সংরক্ষণ করুন"
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onOpenMenu}
+            className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-brand-amber hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex flex-col">
+            {isEditing ? (
+              <form
+                onSubmit={handleSave}
+                className="flex items-center gap-1.5 py-0.5"
               >
-                <Check className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="p-1 text-rose-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                title="বাতিল করুন"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-bold text-brand-amber font-sans tracking-tight">
-                {messName}
-              </span>
-              <button
-                onClick={() => {
-                  setTempName(messName);
-                  setIsEditing(true);
-                }}
-                className="p-1 text-zinc-400 hover:text-brand-amber transition-colors cursor-pointer"
-                title="মেসের নাম পরিবর্তন করুন"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent font-semibold border border-brand-accent/20 flex items-center gap-1.5 shadow-sm">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse shadow-sm" />
-                {currentMonthDetail.bnFull}
-              </span>
-            </div>
-          )}
-          <div className="flex flex-col gap-0.5 mt-0.5">
-            <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-mono">
-              <span>ID: {messId}</span>
-              <button
-                onClick={handleCopy}
-                className="p-1 hover:text-brand-amber transition-colors cursor-pointer"
-                title="Copy Mess ID"
-                id="btn-copy-mess-id"
-              >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </button>
-            </div>
-
-            {/* Real-time Google Cloud Sync Tracking State Indicators */}
-            {isSyncing ? (
-              <div className="text-[9.5px] text-amber-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
-                <span>ক্লাউড ব্যাকআপ হচ্ছে...</span>
-              </div>
-            ) : lastCloudSync ? (
-              <div className="text-[9.5px] text-emerald-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                <span>ব্যাকআপ নিরাপদ আছে ({lastCloudSync})</span>
-              </div>
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700 text-brand-amber font-sans text-sm font-bold tracking-tight rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-accent w-40"
+                  autoFocus
+                  maxLength={100}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="p-1 text-emerald-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                  title="সংরক্ষণ করুন"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="p-1 text-rose-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                  title="বাতিল করুন"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
             ) : (
-              <div className="text-[9.5px] text-emerald-500/80 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 inline-block" />
-                <span>ক্লাউডে সেভড</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg font-bold text-brand-amber font-sans tracking-tight">
+                  {messName}
+                </span>
+                <button
+                  onClick={() => {
+                    setTempName(messName);
+                    setIsEditing(true);
+                  }}
+                  className="p-1 text-zinc-400 hover:text-brand-amber transition-colors cursor-pointer"
+                  title="মেসের নাম পরিবর্তন করুন"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent font-semibold border border-brand-accent/20 flex items-center gap-1.5 shadow-sm">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse shadow-sm" />
+                  {currentMonthDetail.bnFull}
+                </span>
               </div>
             )}
+            <div className="flex flex-col gap-0.5 mt-0.5">
+              <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-mono">
+                <span>ID: {messId}</span>
+                <button
+                  onClick={handleCopy}
+                  className="p-1 hover:text-brand-amber transition-colors cursor-pointer"
+                  title="Copy Mess ID"
+                  id="btn-copy-mess-id"
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Real-time Google Cloud Sync Tracking State Indicators */}
+              {isSyncing ? (
+                <div className="text-[9.5px] text-amber-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                  <span>ক্লাউড ব্যাকআপ হচ্ছে...</span>
+                </div>
+              ) : lastCloudSync ? (
+                <div className="text-[9.5px] text-emerald-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                  <span>ব্যাকআপ নিরাপদ আছে ({lastCloudSync})</span>
+                </div>
+              ) : (
+                <div className="text-[9.5px] text-emerald-500/80 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 inline-block" />
+                  <span>ক্লাউডে সেভড</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
