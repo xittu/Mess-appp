@@ -67,15 +67,21 @@ export default function MembersTab({
         <h3 className="text-sm font-semibold text-zinc-200">
           মেস সদস্য তালিকা ({members.length} জন)
         </h3>
-        <span className="text-xs text-zinc-400 font-medium">নিবন্ধিত ব্যবহারকারী</span>
+        <span className="text-xs text-zinc-400 font-medium">
+          নিবন্ধিত ব্যবহারকারী
+        </span>
       </div>
 
       {/* Member List */}
       {members.length === 0 ? (
         <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
           <ShieldAlert className="w-8 h-8 text-brand-amber mx-auto mb-2 opacity-80" />
-          <p className="text-sm text-zinc-300 font-medium font-sans">কোনো সদস্য পাওয়া যায়নি!</p>
-          <p className="text-xs text-zinc-500 mt-1">উপরে নাম দিয়ে প্রথম মেস মেম্বার যুক্ত করুন।</p>
+          <p className="text-sm text-zinc-300 font-medium font-sans">
+            কোনো সদস্য পাওয়া যায়নি!
+          </p>
+          <p className="text-xs text-zinc-500 mt-1">
+            উপরে নাম দিয়ে প্রথম মেস মেম্বার যুক্ত করুন।
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -94,7 +100,10 @@ export default function MembersTab({
                   <span className="text-sm font-bold text-zinc-100 font-sans group-hover:text-white transition-colors">
                     {member.name}
                     {dueMemberIds?.includes(member.id) && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                        title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                      ></span>
                     )}
                   </span>
                   <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5">

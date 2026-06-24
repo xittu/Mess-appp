@@ -16,7 +16,7 @@ import {
   Download,
   ChevronDown,
   ChefHat,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
 import { Member, Expense, UtilityExpense, DutyAssignment } from "../types";
 
@@ -59,9 +59,11 @@ export default function MoreBottomSheet({
   dueMemberIds,
   currentUserName,
   isAdmin,
-  onOpenAdminPanel
+  onOpenAdminPanel,
 }: MoreBottomSheetProps) {
-  const [activeModal, setActiveModal] = useState<"ledger" | "duty" | "fixed_meal_info" | null>(null);
+  const [activeModal, setActiveModal] = useState<
+    "ledger" | "duty" | "fixed_meal_info" | null
+  >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Duty Form States
@@ -99,8 +101,12 @@ export default function MoreBottomSheet({
   const totalMeals = members.length * (fixedMealCount || 0);
 
   // If total meals is 0, meal rate is 0 to avoid Division by Zero
-  const mealRate = totalMeals > 0 ? parseFloat((totalBazaar / totalMeals).toFixed(2)) : 0;
-  const utilitySharePerMember = members.length > 0 ? parseFloat((totalUtility / members.length).toFixed(2)) : 0;
+  const mealRate =
+    totalMeals > 0 ? parseFloat((totalBazaar / totalMeals).toFixed(2)) : 0;
+  const utilitySharePerMember =
+    members.length > 0
+      ? parseFloat((totalUtility / members.length).toFixed(2))
+      : 0;
 
   const handleAddDutySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,26 +121,37 @@ export default function MoreBottomSheet({
   const handleExportPDF = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("পিডিএফ জেনারেট সম্পন্ন করতে অনুগ্রহ করে ব্রাউজারের পপ-আপ এলাউ করুন।");
+      alert(
+        "পিডিএফ জেনারেট সম্পন্ন করতে অনুগ্রহ করে ব্রাউজারের পপ-আপ এলাউ করুন।",
+      );
       return;
     }
 
-    const membersTableRows = members.map((member) => {
-      const deposit = deposits[member.id] || 0;
-      const memberBazaarSpent = expenses
-        .filter((e) => e.memberId === member.id)
-        .reduce((sum, item) => sum + item.amount, 0);
-      const totalContribution = deposit + memberBazaarSpent;
-      const memberMeals = fixedMealCount;
-      const bazaarCost = parseFloat((memberMeals * mealRate).toFixed(2));
-      const utilityCost = utilitySharePerMember;
-      const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
-      const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
-      const isDue = balance < 0;
-      const statusText = isDue ? `ব্যালেন্স: - ৳${Math.abs(balance)}` : `ব্যালেন্স: ৳${balance}`;
-      const statusColor = isDue ? "color: #e11d48; font-weight: bold;" : "color: #059669; font-weight: bold;";
+    const membersTableRows = members
+      .map((member) => {
+        const deposit = deposits[member.id] || 0;
+        const memberBazaarSpent = expenses
+          .filter((e) => e.memberId === member.id)
+          .reduce((sum, item) => sum + item.amount, 0);
+        const totalContribution = deposit + memberBazaarSpent;
+        const memberMeals = fixedMealCount;
+        const bazaarCost = parseFloat((memberMeals * mealRate).toFixed(2));
+        const utilityCost = utilitySharePerMember;
+        const totalMemberCost = parseFloat(
+          (bazaarCost + utilityCost).toFixed(2),
+        );
+        const balance = parseFloat(
+          (totalContribution - totalMemberCost).toFixed(2),
+        );
+        const isDue = balance < 0;
+        const statusText = isDue
+          ? `ব্যালেন্স: - ৳${Math.abs(balance)}`
+          : `ব্যালেন্স: ৳${balance}`;
+        const statusColor = isDue
+          ? "color: #e11d48; font-weight: bold;"
+          : "color: #059669; font-weight: bold;";
 
-      return `
+        return `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 12px 10px; font-weight: 600; color: #0f172a;">${member.name}</td>
           <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${deposit}</td>
@@ -145,22 +162,35 @@ export default function MoreBottomSheet({
           <td style="padding: 12px 10px; font-family: monospace; ${statusColor}">${statusText}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
 
-    const expensesList = expenses.map(e => `
+    const expensesList =
+      expenses
+        .map(
+          (e) => `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #475569;">${e.date}</td>
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${e.desc}</td>
         <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">৳${e.amount}</td>
       </tr>
-    `).join("") || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>চলমান মাসে কোনো বাজার খরচ যুক্ত করা হয়নি।</td></tr>";
+    `,
+        )
+        .join("") ||
+      "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>চলমান মাসে কোনো বাজার খরচ যুক্ত করা হয়নি।</td></tr>";
 
-    const utilitiesList = utilities.map(u => `
+    const utilitiesList =
+      utilities
+        .map(
+          (u) => `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${u.name}</td>
         <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">৳${u.amount}</td>
       </tr>
-    `).join("") || "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
+    `,
+        )
+        .join("") ||
+      "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
 
     const reportTitle = `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
 
@@ -303,7 +333,7 @@ export default function MoreBottomSheet({
             <h1>${currentUserName}</h1>
             <p style="font-size: 16px; font-weight: 700; color: #1e293b;">মেস রিপোর্ট অ্যান্ড সেশন ডাটা শীট</p>
             <p>মেস সেশন আইডি: <b style="font-family: monospace; font-size:14px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${messId}</b></p>
-            <p style="font-size: 11px; color: #64748b; margin-top: 8px;">রিপোর্ট প্রকাশের সময়: ${new Date().toLocaleDateString('bn-BD')} | ${new Date().toLocaleTimeString('bn-BD')}</p>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px;">রিপোর্ট প্রকাশের সময়: ${new Date().toLocaleDateString("bn-BD")} | ${new Date().toLocaleTimeString("bn-BD")}</p>
           </div>
  
           <div class="section-title">মেস পরিসংখ্যান ও চলমান সামারি</div>
@@ -416,13 +446,20 @@ export default function MoreBottomSheet({
       {/* Sliding Sheet */}
       <div className="absolute inset-x-0 bottom-0 max-h-[92vh] rounded-t-3xl bg-zinc-950 border-t border-purple-950/50 flex flex-col overflow-hidden text-zinc-100 shadow-2xl">
         {/* Handle bar */}
-        <div className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto my-3 cursor-pointer shrink-0" onClick={onClose} />
+        <div
+          className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto my-3 cursor-pointer shrink-0"
+          onClick={onClose}
+        />
 
         {/* Sheet Main Header */}
         <div className="px-5 pb-3 flex items-center justify-between border-b border-purple-950/30 shrink-0">
           <div>
-            <h3 className="text-base font-bold font-sans text-brand-amber text-left">আরও সেবা ও হিসাবসমূহ</h3>
-            <p className="text-[10px] text-zinc-400 mt-0.5 text-left">মেসের অটোমেটিক ক্যালকুলেটর ও অতিরিক্ত অপশন</p>
+            <h3 className="text-base font-bold font-sans text-brand-amber text-left">
+              আরও সেবা ও হিসাবসমূহ
+            </h3>
+            <p className="text-[10px] text-zinc-400 mt-0.5 text-left">
+              মেসের অটোমেটিক ক্যালকুলেটর ও অতিরিক্ত অপশন
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -449,8 +486,12 @@ export default function MoreBottomSheet({
                     <Calculator className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-zinc-100 block">হিসাব (Final Ledger)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">রিয়েল-টাইম মেস ক্যালকুলেটর ও রিফান্ড ড্যাশবোর্ড</span>
+                    <span className="text-sm font-bold text-zinc-100 block">
+                      হিসাব (Final Ledger)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">
+                      রিয়েল-টাইম মেস ক্যালকুলেটর ও রিফান্ড ড্যাশবোর্ড
+                    </span>
                   </div>
                 </div>
                 <div className="text-[11px] font-semibold text-zinc-500 bg-zinc-900 border border-zinc-850 px-2 py-0.5 rounded">
@@ -474,8 +515,13 @@ export default function MoreBottomSheet({
                     <CalendarDays className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-zinc-100 block">মেস ডিউটি রুটিন (Mess Duty Schedule)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">কার কোন দিন কি দায়িত্ব (বাজার, মিল ম্যানেজার, ক্লিনার) তার রুটিন</span>
+                    <span className="text-sm font-bold text-zinc-100 block">
+                      মেস ডিউটি রুটিন (Mess Duty Schedule)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">
+                      কার কোন দিন কি দায়িত্ব (বাজার, মিল ম্যানেজার, ক্লিনার) তার
+                      রুটিন
+                    </span>
                   </div>
                 </div>
                 <div className="text-[11px] text-indigo-400 bg-indigo-950/15 border border-indigo-950/30 px-2 py-0.5 rounded font-mono">
@@ -497,14 +543,41 @@ export default function MoreBottomSheet({
                     <Flame className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-zinc-100 block">নির্ধারিত মিল (Fixed Meals)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">সব মেম্বারদের জন্য সমান মাসিক মিল কনফিগারেশন</span>
+                    <span className="text-sm font-bold text-zinc-100 block">
+                      নির্ধারিত মিল (Fixed Meals)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">
+                      সব মেম্বারদের জন্য সমান মাসিক মিল কনফিগারেশন
+                    </span>
                   </div>
                 </div>
                 <div className="text-[11px] font-bold text-brand-amber bg-brand-amber/10 px-2 py-0.5 rounded">
                   {fixedMealCount} meals/mo
                 </div>
               </div>
+
+              <button
+                onClick={() => {
+                  onClose();
+                  onTabChange(5);
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-indigo-950/20 hover:bg-indigo-950/30 border border-indigo-900/30 hover:border-indigo-500/40 transition-all text-left cursor-pointer group"
+                id="btn-menu-job-register"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:scale-105 transition-transform">
+                    <ClipboardList className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-indigo-300 block font-sans">
+                      জব হাজিরা (Job Register)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
+                      প্রতিদিনের ডিউটি এবং অফ ডে হাজিরা চেক করুন
+                    </span>
+                  </div>
+                </div>
+              </button>
 
               <button
                 onClick={handleExportPDF}
@@ -516,28 +589,37 @@ export default function MoreBottomSheet({
                     <Download className="w-5 h-5 animate-pulse" />
                   </div>
                   <div>
-                    <span className="text-sm font-bold text-emerald-300 block font-sans">পিডিএফ হিসাব এক্সপোর্ট (PDF Export)</span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">মেস বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী ডাউনলোড করুন</span>
+                    <span className="text-sm font-bold text-emerald-300 block font-sans">
+                      পিডিএফ হিসাব এক্সপোর্ট (PDF Export)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
+                      মেস বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী ডাউনলোড
+                      করুন
+                    </span>
                   </div>
                 </div>
               </button>
 
               {isAdmin && (
-                 <button
-                   onClick={onOpenAdminPanel}
-                   className="w-full flex items-center justify-between p-3.5 rounded-xl bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 hover:border-brand-accent/50 transition-all text-left cursor-pointer group"
-                   id="btn-menu-admin-panel"
-                 >
-                   <div className="flex items-center gap-3.5">
-                     <div className="p-2.5 rounded-lg bg-brand-accent/20 text-brand-amber group-hover:scale-105 transition-transform">
-                       <Sparkles className="w-5 h-5 animate-pulse" />
-                     </div>
-                     <div>
-                       <span className="text-sm font-bold text-brand-amber block font-sans">সুপার অ্যাডমিন প্যানেল</span>
-                       <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">সকল ইউজার ও মেসের ডাটা দেখুন এবং পিডিএফ ডাউনলোড করুন</span>
-                     </div>
-                   </div>
-                 </button>
+                <button
+                  onClick={onOpenAdminPanel}
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 hover:border-brand-accent/50 transition-all text-left cursor-pointer group"
+                  id="btn-menu-admin-panel"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-2.5 rounded-lg bg-brand-accent/20 text-brand-amber group-hover:scale-105 transition-transform">
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-brand-amber block font-sans">
+                        সুপার অ্যাডমিন প্যানেল
+                      </span>
+                      <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
+                        সকল ইউজার ও মেসের ডাটা দেখুন এবং পিডিএফ ডাউনলোড করুন
+                      </span>
+                    </div>
+                  </div>
+                </button>
               )}
             </div>
 
@@ -579,135 +661,192 @@ export default function MoreBottomSheet({
                 ← মূল মেনু ফিরে যান
               </button>
               <span className="text-xs font-extrabold font-mono uppercase tracking-widest text-brand-amber">
-                {activeModal === "ledger" ? "চূড়ান্ত হিসাব" : "মেস ডিউটি ও দায়িত্ব"}
+                {activeModal === "ledger"
+                  ? "চূড়ান্ত হিসাব"
+                  : "মেস ডিউটি ও দায়িত্ব"}
               </span>
             </div>
 
             {/* Ledger Sub Modal */}
-            {activeModal === "ledger" && (() => {
-              const totalDeposits = Object.values(deposits).reduce((sum, item) => sum + item, 0);
-              const remainingBalance = totalDeposits - totalCostCombined;
-              return (
-                <div className="space-y-4 flex-1 flex flex-col min-h-0">
-                  {/* Statistics panel - 3 Cards Grid representing total calculations */}
-                  <div className="grid grid-cols-3 gap-2 px-0.5 shrink-0">
-                    <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
-                      <span className="text-[9px] text-zinc-400 block font-semibold leading-none">মোট বাজার</span>
-                      <span className="text-sm font-bold font-mono text-zinc-100 mt-1.5 block">৳{totalBazaar}</span>
-                    </div>
-                    <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
-                      <span className="text-[9px] text-zinc-400 block font-semibold leading-none">মিল রেট</span>
-                      <span className="text-sm font-bold font-mono text-brand-amber mt-1.5 block">৳{mealRate.toFixed(2)}</span>
-                    </div>
-                    <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
-                      <span className="text-[9px] text-zinc-400 block font-semibold leading-none">ইউটিলিটি/মেম্বার</span>
-                      <span className="text-sm font-bold font-mono text-indigo-400 mt-1.5 block">৳{utilitySharePerMember}</span>
-                    </div>
-                  </div>
-
-                  {/* Export PDF Button row */}
-                  <div className="flex items-center justify-between bg-zinc-900/20 border border-purple-950/5 px-3.5 py-2.5 rounded-xl shrink-0">
-                    <div className="text-left">
-                      <span className="text-[11px] font-bold text-zinc-200 block">সদস্যদের ফাইল লেজার</span>
-                      <span className="text-[9px] text-zinc-400 block mt-0.5">সব হিসাব সহ প্রিন্ট কপি</span>
-                    </div>
-                    <button
-                      onClick={handleExportPDF}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all border border-emerald-500/25 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      পিডিএফ ডাউনলোড
-                    </button>
-                  </div>
-
-                  {/* Main Scrollable Member Cards List */}
-                  <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
-                    {members.length === 0 ? (
-                      <div className="text-center py-10 text-xs text-zinc-500">
-                        কোন মেম্বার রেকর্ড পাওয়া যায়নি!
+            {activeModal === "ledger" &&
+              (() => {
+                const totalDeposits = Object.values(deposits).reduce(
+                  (sum, item) => sum + item,
+                  0,
+                );
+                const remainingBalance = totalDeposits - totalCostCombined;
+                return (
+                  <div className="space-y-4 flex-1 flex flex-col min-h-0">
+                    {/* Statistics panel - 3 Cards Grid representing total calculations */}
+                    <div className="grid grid-cols-3 gap-2 px-0.5 shrink-0">
+                      <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
+                        <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
+                          মোট বাজার
+                        </span>
+                        <span className="text-sm font-bold font-mono text-zinc-100 mt-1.5 block">
+                          ৳{totalBazaar}
+                        </span>
                       </div>
-                    ) : (
-                      members.map((member) => {
-                        const deposit = deposits[member.id] || 0;
-                        const memberBazaarSpent = expenses
-                          .filter((e) => e.memberId === member.id)
-                          .reduce((sum, item) => sum + item.amount, 0);
-                        const totalContribution = deposit + memberBazaarSpent;
-                        const memberMeals = fixedMealCount;
-                        const bazaarCost = parseFloat((memberMeals * mealRate).toFixed(2));
-                        const utilityCost = utilitySharePerMember;
-                        const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
-                        const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
-                        const isDue = balance < 0;
+                      <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
+                        <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
+                          মিল রেট
+                        </span>
+                        <span className="text-sm font-bold font-mono text-brand-amber mt-1.5 block">
+                          ৳{mealRate.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
+                        <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
+                          ইউটিলিটি/মেম্বার
+                        </span>
+                        <span className="text-sm font-bold font-mono text-indigo-400 mt-1.5 block">
+                          ৳{utilitySharePerMember}
+                        </span>
+                      </div>
+                    </div>
 
-                        return (
-                          <div
-                            key={member.id}
-                            className="bg-brand-card border border-purple-950/10 p-4 rounded-2xl flex flex-col gap-3 shadow-md"
-                          >
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-extrabold text-zinc-100 font-sans">
-                                {member.name}
-                                {dueMemberIds?.includes(member.id) && (
-                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                    {/* Export PDF Button row */}
+                    <div className="flex items-center justify-between bg-zinc-900/20 border border-purple-950/5 px-3.5 py-2.5 rounded-xl shrink-0">
+                      <div className="text-left">
+                        <span className="text-[11px] font-bold text-zinc-200 block">
+                          সদস্যদের ফাইল লেজার
+                        </span>
+                        <span className="text-[9px] text-zinc-400 block mt-0.5">
+                          সব হিসাব সহ প্রিন্ট কপি
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleExportPDF}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all border border-emerald-500/25 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        পিডিএফ ডাউনলোড
+                      </button>
+                    </div>
+
+                    {/* Main Scrollable Member Cards List */}
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
+                      {members.length === 0 ? (
+                        <div className="text-center py-10 text-xs text-zinc-500">
+                          কোন মেম্বার রেকর্ড পাওয়া যায়নি!
+                        </div>
+                      ) : (
+                        members.map((member) => {
+                          const deposit = deposits[member.id] || 0;
+                          const memberBazaarSpent = expenses
+                            .filter((e) => e.memberId === member.id)
+                            .reduce((sum, item) => sum + item.amount, 0);
+                          const totalContribution = deposit + memberBazaarSpent;
+                          const memberMeals = fixedMealCount;
+                          const bazaarCost = parseFloat(
+                            (memberMeals * mealRate).toFixed(2),
+                          );
+                          const utilityCost = utilitySharePerMember;
+                          const totalMemberCost = parseFloat(
+                            (bazaarCost + utilityCost).toFixed(2),
+                          );
+                          const balance = parseFloat(
+                            (totalContribution - totalMemberCost).toFixed(2),
+                          );
+                          const isDue = balance < 0;
+
+                          return (
+                            <div
+                              key={member.id}
+                              className="bg-brand-card border border-purple-950/10 p-4 rounded-2xl flex flex-col gap-3 shadow-md"
+                            >
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-extrabold text-zinc-100 font-sans">
+                                  {member.name}
+                                  {dueMemberIds?.includes(member.id) && (
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                                      title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                    ></span>
+                                  )}
+                                </span>
+                                {balance < 0 ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400">
+                                    <TrendingDown className="w-3.5 h-3.5" />
+                                    ব্যালেন্স: - ৳{Math.abs(balance)}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                                    <TrendingUp className="w-3.5 h-3.5" />
+                                    ব্যালেন্স: ৳{balance}
+                                  </span>
                                 )}
-                              </span>
-                              {balance < 0 ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400">
-                                  <TrendingDown className="w-3.5 h-3.5" />
-                                  ব্যালেন্স: - ৳{Math.abs(balance)}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                                  <TrendingUp className="w-3.5 h-3.5" />
-                                  ব্যালেন্স: ৳{balance}
-                                </span>
-                              )}
-                            </div>
+                              </div>
 
-                            <div className="grid grid-cols-5 gap-2 text-center border-t border-purple-950/5 pt-3">
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-zinc-400 font-medium">জমা</span>
-                                <span className="text-xs font-bold font-mono text-zinc-200 mt-1">৳{deposit}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-zinc-400 font-medium">ব্রেড/বাজার</span>
-                                <span className="text-xs font-bold font-mono text-emerald-400 mt-1">৳{memberBazaarSpent}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-zinc-400 font-medium font-sans">মিল খরচ</span>
-                                <span className="text-xs font-bold font-mono text-zinc-200 mt-1">৳{bazaarCost}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-zinc-400 font-medium font-sans font-sans">ইউটিলিটি</span>
-                                <span className="text-xs font-bold font-mono text-zinc-200 mt-1">৳{utilityCost}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-zinc-400 font-medium font-sans">মোট খরচ</span>
-                                <span className="text-xs font-bold font-mono text-brand-amber mt-1">৳{totalMemberCost}</span>
+                              <div className="grid grid-cols-5 gap-2 text-center border-t border-purple-950/5 pt-3">
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-zinc-400 font-medium">
+                                    জমা
+                                  </span>
+                                  <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
+                                    ৳{deposit}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-zinc-400 font-medium">
+                                    ব্রেড/বাজার
+                                  </span>
+                                  <span className="text-xs font-bold font-mono text-emerald-400 mt-1">
+                                    ৳{memberBazaarSpent}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-zinc-400 font-medium font-sans">
+                                    মিল খরচ
+                                  </span>
+                                  <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
+                                    ৳{bazaarCost}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-zinc-400 font-medium font-sans font-sans">
+                                    ইউটিলিটি
+                                  </span>
+                                  <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
+                                    ৳{utilityCost}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-zinc-400 font-medium font-sans">
+                                    মোট খরচ
+                                  </span>
+                                  <span className="text-xs font-bold font-mono text-brand-amber mt-1">
+                                    ৳{totalMemberCost}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
+                          );
+                        })
+                      )}
+                    </div>
 
-                  <div className="bg-amber-950/15 border border-amber-900/30 rounded-xl p-3 flex gap-2 shrink-0">
-                    <AlertCircle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-zinc-400 leading-normal">
-                      মেসের মিল রেট ফর্মুলা: <b>(মোট বাজার খরচ / মোট মিল সংখ্যা)</b>। ইউটিলিটি চার্জ যেমন বিদ্যুৎ ও পানি বিল সকল মেম্বারদের মাঝে সমান ভাগ করা হয়েছে।
-                    </p>
+                    <div className="bg-amber-950/15 border border-amber-900/30 rounded-xl p-3 flex gap-2 shrink-0">
+                      <AlertCircle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-zinc-400 leading-normal">
+                        মেসের মিল রেট ফর্মুলা:{" "}
+                        <b>(মোট বাজার খরচ / মোট মিল সংখ্যা)</b>। ইউটিলিটি চার্জ
+                        যেমন বিদ্যুৎ ও পানি বিল সকল মেম্বারদের মাঝে সমান ভাগ করা
+                        হয়েছে।
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
             {/* Duty Sub Modal */}
             {activeModal === "duty" && (
               <div className="space-y-4 flex-1">
                 {/* Form to add schedule */}
-                <form onSubmit={handleAddDutySubmit} className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl space-y-4 shadow-xl">
+                <form
+                  onSubmit={handleAddDutySubmit}
+                  className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl space-y-4 shadow-xl"
+                >
                   <span className="text-xs font-bold text-zinc-200 block flex items-center gap-1.5 pb-1 border-b border-purple-950/5">
                     <ClipboardList className="w-4 h-4 text-brand-accent" />
                     নতুন ডিউটি শিডিউল যোগ করুন
@@ -716,7 +855,9 @@ export default function MoreBottomSheet({
                   <div className="grid grid-cols-2 gap-3 relative">
                     {/* Custom Day Dropdown */}
                     <div className="relative">
-                      <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">সপ্তাহের দিন</label>
+                      <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">
+                        সপ্তাহের দিন
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
@@ -726,9 +867,11 @@ export default function MoreBottomSheet({
                         className="w-full flex items-center justify-between text-[11px] font-bold py-2.5 px-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-850/90 border border-zinc-800 text-zinc-100 transition-all text-left cursor-pointer shadow-sm active:scale-95"
                       >
                         <span className="truncate">{selectedDay}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-500 ${isDaySelectOpen ? "rotate-180 text-brand-accent" : ""}`} />
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-500 ${isDaySelectOpen ? "rotate-180 text-brand-accent" : ""}`}
+                        />
                       </button>
-                      
+
                       {isDaySelectOpen && (
                         <div className="absolute z-40 mt-1.5 w-full bg-[#18142c] border border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
                           {weekdays.map((day) => (
@@ -754,7 +897,9 @@ export default function MoreBottomSheet({
 
                     {/* Custom Member Dropdown */}
                     <div className="relative">
-                      <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">মেস সদস্য</label>
+                      <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">
+                        মেস সদস্য
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
@@ -764,15 +909,20 @@ export default function MoreBottomSheet({
                         className="w-full flex items-center justify-between text-[11px] font-bold py-2.5 px-3 rounded-xl bg-zinc-900/80 hover:bg-zinc-850/90 border border-zinc-800 text-zinc-100 transition-all text-left cursor-pointer shadow-sm active:scale-95"
                       >
                         <span className="truncate">
-                          {members.find((m) => m.id === selectedMember)?.name || "সদস্য নির্বাচন"}
+                          {members.find((m) => m.id === selectedMember)?.name ||
+                            "সদস্য নির্বাচন"}
                         </span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-500 ${isMemberSelectOpen ? "rotate-180 text-brand-accent" : ""}`} />
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-500 ${isMemberSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
+                        />
                       </button>
-                      
+
                       {isMemberSelectOpen && (
                         <div className="absolute z-40 mt-1.5 w-full bg-[#18142c] border border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
                           {members.length === 0 ? (
-                            <div className="px-3 py-2 text-[10px] text-zinc-500">কোনো সদস্য নেই</div>
+                            <div className="px-3 py-2 text-[10px] text-zinc-500">
+                              কোনো সদস্য নেই
+                            </div>
                           ) : (
                             members.map((member) => (
                               <button
@@ -790,7 +940,10 @@ export default function MoreBottomSheet({
                               >
                                 {member.name}
                                 {dueMemberIds?.includes(member.id) && (
-                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                  <span
+                                    className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                                    title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                  ></span>
                                 )}
                               </button>
                             ))
@@ -802,7 +955,9 @@ export default function MoreBottomSheet({
 
                   {/* Modern Segmented Role Selector */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] text-zinc-400 font-semibold">দায়িত্বরত কাজ নির্বাচন করুন</label>
+                    <label className="block text-[10px] text-zinc-400 font-semibold">
+                      দায়িত্বরত কাজ নির্বাচন করুন
+                    </label>
                     <div className="grid grid-cols-2 gap-2.5">
                       <button
                         type="button"
@@ -812,17 +967,24 @@ export default function MoreBottomSheet({
                           setIsMemberSelectOpen(false);
                         }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left cursor-pointer focus:outline-none ${
-                          selectedRole === "বাজার দায়িত্ব" || selectedRole !== "রান্নার ডেট"
+                          selectedRole === "বাজার দায়িত্ব" ||
+                          selectedRole !== "রান্নার ডেট"
                             ? "bg-purple-950/25 border-purple-500/50 text-zinc-100 shadow-md ring-1 ring-purple-500/20"
                             : "bg-zinc-900/40 border-zinc-900 text-zinc-400 hover:bg-zinc-900/70"
                         }`}
                       >
-                        <div className={`p-1.5 rounded-lg shrink-0 ${(selectedRole === "বাজার দায়িত্ব" || selectedRole !== "রান্নার ডেট") ? "bg-brand-accent/25 text-brand-accent" : "bg-zinc-850 text-zinc-500"}`}>
+                        <div
+                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === "বাজার দায়িত্ব" || selectedRole !== "রান্নার ডেট" ? "bg-brand-accent/25 text-brand-accent" : "bg-zinc-850 text-zinc-500"}`}
+                        >
                           <ShoppingBag className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <span className="text-[10px] font-extrabold block leading-tight">বাজার দায়িত্ব</span>
-                          <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">সাপ্তাহিক বাজার দায়িত্ব</span>
+                          <span className="text-[10px] font-extrabold block leading-tight">
+                            বাজার দায়িত্ব
+                          </span>
+                          <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">
+                            সাপ্তাহিক বাজার দায়িত্ব
+                          </span>
                         </div>
                       </button>
 
@@ -839,12 +1001,18 @@ export default function MoreBottomSheet({
                             : "bg-zinc-900/40 border-zinc-900 text-zinc-400 hover:bg-zinc-900/70"
                         }`}
                       >
-                        <div className={`p-1.5 rounded-lg shrink-0 ${selectedRole === "রান্নার ডেট" ? "bg-brand-amber/25 text-brand-amber" : "bg-zinc-850 text-zinc-500"}`}>
+                        <div
+                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === "রান্নার ডেট" ? "bg-brand-amber/25 text-brand-amber" : "bg-zinc-850 text-zinc-500"}`}
+                        >
                           <ChefHat className="w-3.5 h-3.5" />
                         </div>
                         <div>
-                          <span className="text-[10px] font-extrabold block leading-tight">রান্নার ডেট</span>
-                          <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">মিল রান্না করার দায়িত্ব</span>
+                          <span className="text-[10px] font-extrabold block leading-tight">
+                            রান্নার ডেট
+                          </span>
+                          <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">
+                            মিল রান্না করার দায়িত্ব
+                          </span>
                         </div>
                       </button>
                     </div>
@@ -862,14 +1030,20 @@ export default function MoreBottomSheet({
 
                 {/* Duty List */}
                 <div className="space-y-2 max-h-[35vh] overflow-y-auto">
-                  <span className="text-xs font-semibold text-zinc-350 block">সাপ্তাহিক মেস ডিউটি রুটিন (বাজার ও রান্নার ডেট)</span>
+                  <span className="text-xs font-semibold text-zinc-350 block">
+                    সাপ্তাহিক মেস ডিউটি রুটিন (বাজার ও রান্নার ডেট)
+                  </span>
 
                   {dutyAssignments.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-zinc-500">কোনো সাপ্তাহিক ডিউটি শিডিউল সেট করা নেই।</div>
+                    <div className="text-center py-6 text-xs text-zinc-500">
+                      কোনো সাপ্তাহিক ডিউটি শিডিউল সেট করা নেই।
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       {dutyAssignments.map((duty, idx) => {
-                        const personnel = members.find((m) => m.id === duty.memberId)?.name || "Inactive User";
+                        const personnel =
+                          members.find((m) => m.id === duty.memberId)?.name ||
+                          "Inactive User";
                         return (
                           <div
                             key={idx}
@@ -883,13 +1057,18 @@ export default function MoreBottomSheet({
                                 <span className="text-xs font-bold text-zinc-200 block mt-0.5 leading-tight truncate">
                                   {personnel}
                                   {dueMemberIds?.includes(duty.memberId) && (
-                                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                                    <span
+                                      className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                                      title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                    ></span>
                                   )}
                                 </span>
                               </div>
                               <button
                                 type="button"
-                                onClick={() => onRemoveDuty(duty.day, duty.role)}
+                                onClick={() =>
+                                  onRemoveDuty(duty.day, duty.role)
+                                }
                                 className="text-zinc-500 hover:text-rose-450 p-1 rounded-md hover:bg-rose-950/15 transition-all text-[11px] cursor-pointer"
                                 title="ডিউটি মুছে ফেলুন"
                                 id={`btn-del-duty-${idx}`}
@@ -916,7 +1095,6 @@ export default function MoreBottomSheet({
                 </div>
               </div>
             )}
-
           </div>
         )}
         {/* Slidable Warning Modal Overlay */}
@@ -924,16 +1102,20 @@ export default function MoreBottomSheet({
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all">
             <div className="bg-[#18122B] border border-red-500/25 max-w-sm w-full rounded-2xl p-6 shadow-2xl relative text-center text-zinc-200 select-none">
               <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 w-40 h-8 bg-red-500/10 rounded-full blur-2xl pointer-events-none"></div>
-              
+
               <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-red-950/45 border border-red-500/35 text-red-400 mb-4 animate-bounce">
                 <AlertCircle className="w-6 h-6" />
               </div>
-              
-              <h4 className="text-sm font-extrabold text-white mb-2 font-sans">ডাটা রিসেট করার সতর্কতা!</h4>
+
+              <h4 className="text-sm font-extrabold text-white mb-2 font-sans">
+                ডাটা রিসেট করার সতর্কতা!
+              </h4>
               <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-6">
-                আপনি কি ডাটা রিসেট করতে চান? তাহলে কিন্তু আপনার মেসের সদস্যদের তথ্য, বিগত জমা এবং যাবতীয় খরচের সকল ডাটা চিরতরে কেটে যাবে এবং এটি আর পুনরুদ্ধার করা যাবে না।
+                আপনি কি ডাটা রিসেট করতে চান? তাহলে কিন্তু আপনার মেসের সদস্যদের
+                তথ্য, বিগত জমা এবং যাবতীয় খরচের সকল ডাটা চিরতরে কেটে যাবে এবং
+                এটি আর পুনরুদ্ধার করা যাবে না।
               </p>
-              
+
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {

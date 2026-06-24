@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Toaster, toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Toaster, toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   ReceiptText,
@@ -12,7 +12,7 @@ import {
   X,
   Sparkles,
   Info,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -27,20 +27,36 @@ import AuthScreen from "./components/AuthScreen";
 import HistoryModal from "./components/HistoryModal";
 import AdminPanel from "./components/AdminPanel";
 import BazaarTab from "./components/BazaarTab";
+import JobRegisterTab from "./components/JobRegisterTab";
 import LandingPage from "./components/LandingPage";
-import { Member, Expense, UtilityExpense, DutyAssignment, Deposit, BazaarItem } from "./types";
+import {
+  Member,
+  Expense,
+  UtilityExpense,
+  DutyAssignment,
+  Deposit,
+  BazaarItem,
+} from "./types";
 
 export default function App() {
   const getMockUser = () => {
     if ((window as any).__MOCK_USER__) return (window as any).__MOCK_USER__;
-    try { return JSON.parse(localStorage.getItem('__MOCK_USER__') || 'null'); } catch(e) { return null; }
+    try {
+      return JSON.parse(localStorage.getItem("__MOCK_USER__") || "null");
+    } catch (e) {
+      return null;
+    }
   };
 
   // --- Auth Session States ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [showAuth, setShowAuth] = useState<boolean>(window.location.pathname === '/update-password');
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+  const [showAuth, setShowAuth] = useState<boolean>(
+    window.location.pathname === "/update-password",
+  );
+  const [authMode, setAuthMode] = useState<"login" | "register">("register");
+  const [isResettingPassword, setIsResettingPassword] =
+    useState<boolean>(false);
 
   // --- Real-Time State Data ---
   const [members, setMembers] = useState<Member[]>([]);
@@ -64,7 +80,8 @@ export default function App() {
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
-  const [showNotificationCenter, setShowNotificationCenter] = useState<boolean>(false);
+  const [showNotificationCenter, setShowNotificationCenter] =
+    useState<boolean>(false);
   const [activeToast, setActiveToast] = useState<MessNotification | null>(null);
   const [appLoadTime] = useState<number>(() => Date.now());
 
@@ -76,21 +93,24 @@ export default function App() {
   const loadDataFromSupabase = async (userEmail: string) => {
     try {
       const { data, error } = await supabase
-        .from('mess_data') // আপনার টেবিল নাম
-        .select('*')
-        .eq('user_email', userEmail)
+        .from("mess_data") // আপনার টেবিল নাম
+        .select("*")
+        .eq("user_email", userEmail)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== "PGRST116") {
         console.error("ডাটা লোড করতে সমস্যা:", error.message);
         throw error;
       } else if (data) {
         // Cache to local storage for offline use
-        localStorage.setItem(`messOfflineState_${userEmail}`, JSON.stringify(data));
+        localStorage.setItem(
+          `messOfflineState_${userEmail}`,
+          JSON.stringify(data),
+        );
 
         // ডাটাবেজ থেকে এনে রিয়্যাক্ট স্টেট আপডেট
         if (data.members) setMembers(data.members);
-        
+
         if (data.expenses && !Array.isArray(data.expenses)) {
           setExpenses(data.expenses.bazaar || []);
           setUtilities(data.expenses.utilities || []);
@@ -101,21 +121,23 @@ export default function App() {
         if (data.meals && data.meals.fixedMealCount !== undefined) {
           setFixedMealCount(data.meals.fixedMealCount);
         }
-        
+
         if (data.deposits && !Array.isArray(data.deposits)) {
           setDeposits(data.deposits.balances || {});
           setDepositTransactions(data.deposits.history || []);
         } else if (data.deposits) {
           setDeposits(data.deposits);
         }
-        
+
         if (data.duties) setDutyAssignments(data.duties);
-        if (data.expenses && data.expenses.shared_list) setBazaarList(data.expenses.shared_list); else if (data.bazaar_list) setBazaarList(data.bazaar_list);
-        
+        if (data.expenses && data.expenses.shared_list)
+          setBazaarList(data.expenses.shared_list);
+        else if (data.bazaar_list) setBazaarList(data.bazaar_list);
+
         if (data.meals && data.meals.messName) {
-           setMessName(data.meals.messName);
+          setMessName(data.meals.messName);
         }
-        
+
         setLastCloudSync(new Date().toLocaleTimeString());
       }
     } catch (err) {
@@ -141,11 +163,15 @@ export default function App() {
           setDeposits(data.deposits);
         }
         if (data.duties) setDutyAssignments(data.duties);
-        if (data.expenses && data.expenses.shared_list) setBazaarList(data.expenses.shared_list); else if (data.bazaar_list) setBazaarList(data.bazaar_list);
+        if (data.expenses && data.expenses.shared_list)
+          setBazaarList(data.expenses.shared_list);
+        else if (data.bazaar_list) setBazaarList(data.bazaar_list);
         if (data.meals && data.meals.messName) {
-           setMessName(data.meals.messName);
+          setMessName(data.meals.messName);
         }
-        toast.info("অফলাইন ডাটা লোড করা হয়েছে", { description: "আপনার ইন্টারনেট কানেকশন চেক করুন।" });
+        toast.info("অফলাইন ডাটা লোড করা হয়েছে", {
+          description: "আপনার ইন্টারনেট কানেকশন চেক করুন।",
+        });
       }
     } finally {
       // Once loaded, setup is complete
@@ -163,34 +189,44 @@ export default function App() {
     mealsCount: number,
     dutiesList: DutyAssignment[],
     nameOfMess: string,
-    bList: BazaarItem[]
+    bList: BazaarItem[],
   ) {
     if (!currentUser || !currentUser.email) {
       console.error("ইউজার লগইন করা নেই! ডাটা সেভ করা যাবে না।");
       return;
     }
-  
+
     const messPayload = {
       user_email: currentUser.email, // মেইন কী
-      members: membersList || [], 
-      expenses: { bazaar: expensesList, utilities: utilitiesList, shared_list: bList || [] },
+      members: membersList || [],
+      expenses: {
+        bazaar: expensesList,
+        utilities: utilitiesList,
+        shared_list: bList || [],
+      },
       meals: { fixedMealCount: mealsCount, messName: nameOfMess },
       deposits: { balances: depositsMap, history: depositTxList },
       duties: dutiesList || [],
-      last_updated: new Date()
+      last_updated: new Date(),
     };
 
     // Cache locally immediately prior to remote sync attempt
-    localStorage.setItem(`messOfflineState_${currentUser.email}`, JSON.stringify(messPayload));
-  
+    localStorage.setItem(
+      `messOfflineState_${currentUser.email}`,
+      JSON.stringify(messPayload),
+    );
+
     // সুপাবেজের 'mess_data' টেবিলে ডাটা পাঠানো হচ্ছে
     const { data, error } = await supabase
-      .from('mess_data')
-      .upsert(messPayload, { onConflict: 'user_email' }); 
-  
+      .from("mess_data")
+      .upsert(messPayload, { onConflict: "user_email" });
+
     if (error) {
       console.error("সুপাবেজে ডাটা সেভ করতে এরর:", error.message);
-      toast.error("ডাটা সার্ভারে সেভ হয়নি", { description: "অফলাইনে সেভ করা হয়েছে, ইন্টারনেট কানেকশন ফিরে এলে আবার সেস্টা করুন।"});
+      toast.error("ডাটা সার্ভারে সেভ হয়নি", {
+        description:
+          "অফলাইনে সেভ করা হয়েছে, ইন্টারনেট কানেকশন ফিরে এলে আবার সেস্টা করুন।",
+      });
     } else {
       console.log("অভিনন্দন! সকল ডাটা জিমেইল অনুযায়ী সুপাবেজে সেভ হয়েছে।");
       setLastCloudSync(new Date().toLocaleTimeString());
@@ -207,11 +243,11 @@ export default function App() {
     mealsCount: number,
     dutiesList: DutyAssignment[],
     nameOfMess: string,
-    bList: BazaarItem[]
+    bList: BazaarItem[],
   ) => {
     if (!currentUser || !currentUser.email) return;
     setIsSyncing(true);
-    
+
     await saveAllDataToSupabase(
       membersList,
       expensesList,
@@ -221,85 +257,106 @@ export default function App() {
       mealsCount,
       dutiesList,
       nameOfMess,
-      bList
+      bList,
     );
-    
+
     setIsSyncing(false);
   };
 
   // --- Auth Observer ---
   useEffect(() => {
+    if (
+      window.location.hash.includes("type=recovery") ||
+      window.location.hash.includes("access_token")
+    ) {
+      // If type=recovery is in hash, it's definitely a recovery
+      if (window.location.hash.includes("type=recovery")) {
+        setIsResettingPassword(true);
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = session?.user;
       if (user) {
         setCurrentUser(user as User);
-        
+
         let activeMessId = "M" + user.id.substring(0, 5).toUpperCase();
-        if (user.user_metadata?.photoURL && user.user_metadata.photoURL.startsWith("M")) {
-           activeMessId = user.user_metadata.photoURL;
+        if (
+          user.user_metadata?.photoURL &&
+          user.user_metadata.photoURL.startsWith("M")
+        ) {
+          activeMessId = user.user_metadata.photoURL;
         }
         setMessId(activeMessId);
         if (user.user_metadata?.messName) {
-           setMessName(user.user_metadata.messName);
+          setMessName(user.user_metadata.messName);
         }
-        
+
         if (user.email) {
           loadDataFromSupabase(user.email);
         } else {
           // If a mock user is defined for testing bypass
           if (getMockUser()) {
-             setCurrentUser(getMockUser());
-             if (getMockUser().user_metadata?.messName) {
-                setMessName(getMockUser().user_metadata.messName);
-             }
-             loadDataFromSupabase(getMockUser().email);
-             return;
+            setCurrentUser(getMockUser());
+            if (getMockUser().user_metadata?.messName) {
+              setMessName(getMockUser().user_metadata.messName);
+            }
+            loadDataFromSupabase(getMockUser().email);
+            return;
           }
           setAuthLoading(false);
         }
       } else {
         if (getMockUser()) {
-             setCurrentUser(getMockUser());
-             loadDataFromSupabase(getMockUser().email);
-             return;
+          setCurrentUser(getMockUser());
+          loadDataFromSupabase(getMockUser().email);
+          return;
         }
         setCurrentUser(null);
         setAuthLoading(false);
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsResettingPassword(true);
+      }
       const user = session?.user;
       if (user) {
         setCurrentUser(user as User);
-        
+
         let activeMessId = "M" + user.id.substring(0, 5).toUpperCase();
-        if (user.user_metadata?.photoURL && user.user_metadata.photoURL.startsWith("M")) {
-           activeMessId = user.user_metadata.photoURL;
+        if (
+          user.user_metadata?.photoURL &&
+          user.user_metadata.photoURL.startsWith("M")
+        ) {
+          activeMessId = user.user_metadata.photoURL;
         }
         setMessId(activeMessId);
         if (user.user_metadata?.messName) {
-           setMessName(user.user_metadata.messName);
+          setMessName(user.user_metadata.messName);
         }
-        
+
         if (user.email) {
           await loadDataFromSupabase(user.email);
         } else {
           if (getMockUser()) {
-             setCurrentUser(getMockUser());
-             if (getMockUser().user_metadata?.messName) {
-                setMessName(getMockUser().user_metadata.messName);
-             }
-             await loadDataFromSupabase(getMockUser().email);
-             return;
+            setCurrentUser(getMockUser());
+            if (getMockUser().user_metadata?.messName) {
+              setMessName(getMockUser().user_metadata.messName);
+            }
+            await loadDataFromSupabase(getMockUser().email);
+            return;
           }
           setAuthLoading(false);
         }
       } else {
         if (getMockUser()) {
-             setCurrentUser(getMockUser());
-             await loadDataFromSupabase(getMockUser().email);
-             return;
+          setCurrentUser(getMockUser());
+          await loadDataFromSupabase(getMockUser().email);
+          return;
         }
         setCurrentUser(null);
         setAuthLoading(false);
@@ -310,7 +367,6 @@ export default function App() {
   }, []);
 
   // Offline sync removed
-
 
   // --- Real-time Actions Handlers with descriptive audit-trail notifications ---
 
@@ -338,21 +394,21 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "নতুন সদস্য যুক্ত করা হয়েছে",
       `মেস তালিকায় নতুন সদস্য হিসাবে "${name}" কে রেজিস্টার করা হয়েছে।`,
-      "success"
+      "success",
     ).catch(console.error);
   };
 
   const handleRemoveMember = async (id: string) => {
     if (!currentUser) return;
     const targetName = members.find((m) => m.id === id)?.name || "সদস্য";
-    
+
     const updatedMembers = members.filter((m) => m.id !== id);
     const updatedDeposits = { ...deposits };
     delete updatedDeposits[id];
@@ -369,18 +425,23 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "মেম্বার রিমুভ করা হয়েছে",
       `সদস্য তালিকা থেকে "${targetName}" (ID: ${id}) কে সফলভাবে বাদ দেওয়া হয়েছে।`,
-      "danger"
+      "danger",
     ).catch(console.error);
   };
 
-  const handleAddExpense = async (date: string, amount: number, desc: string, memberId?: string) => {
+  const handleAddExpense = async (
+    date: string,
+    amount: number,
+    desc: string,
+    memberId?: string,
+  ) => {
     if (!currentUser) return;
     const id = "EX" + Math.random().toString(36).substr(2, 6).toUpperCase();
     const newExpense: Expense = {
@@ -390,7 +451,7 @@ export default function App() {
       desc,
       memberId: memberId || "",
     };
-    
+
     const updatedExpenses = [...expenses, newExpense];
     setExpenses(updatedExpenses);
 
@@ -403,26 +464,25 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
-    const buyerName = memberId ? (members.find((m) => m.id === memberId)?.name || "") : "";
+    const buyerName = memberId
+      ? members.find((m) => m.id === memberId)?.name || ""
+      : "";
     const msg = buyerName
       ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
       : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`;
 
-    sendNotification(
-      messId,
-      "বাজার খরচ যোগ হয়েছে",
-      msg,
-      "info"
-    ).catch(console.error);
+    sendNotification(messId, "বাজার খরচ যোগ হয়েছে", msg, "info").catch(
+      console.error,
+    );
   };
 
   const handleRemoveExpense = async (id: string) => {
     if (!currentUser) return;
     const expItem = expenses.find((e) => e.id === id);
-    
+
     const updatedExpenses = expenses.filter((e) => e.id !== id);
     setExpenses(updatedExpenses);
 
@@ -435,7 +495,7 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     if (expItem) {
@@ -443,7 +503,7 @@ export default function App() {
         messId,
         "বাজার খরচ বাদ দেওয়া হয়েছে",
         `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ৳${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
-        "warning"
+        "warning",
       ).catch(console.error);
     }
   };
@@ -452,7 +512,7 @@ export default function App() {
     if (!currentUser) return;
     const id = "UT" + Math.random().toString(36).substr(2, 6).toUpperCase();
     const newUtility = { id, name, amount };
-    
+
     const updatedUtilities = [...utilities, newUtility];
     setUtilities(updatedUtilities);
 
@@ -465,21 +525,21 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "ইউটিলিটি ও অন্যান্য বিল",
       `একটি নতুন সাব-বিল "${name}" মূল্য ৳${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
-      "info"
+      "info",
     ).catch(console.error);
   };
 
   const handleRemoveUtility = async (id: string) => {
     if (!currentUser) return;
     const utItem = utilities.find((u) => u.id === id);
-    
+
     const updatedUtilities = utilities.filter((u) => u.id !== id);
     setUtilities(updatedUtilities);
 
@@ -492,7 +552,7 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     if (utItem) {
@@ -500,20 +560,24 @@ export default function App() {
         messId,
         "ইউটিলিটি বিল বাদ দেওয়া হয়েছে",
         `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ৳${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
-        "warning"
+        "warning",
       ).catch(console.error);
     }
   };
 
-  const handleAddDeposit = async (memberId: string, amount: number, date: string) => {
+  const handleAddDeposit = async (
+    memberId: string,
+    amount: number,
+    date: string,
+  ) => {
     if (!currentUser) return;
     const memberName = members.find((m) => m.id === memberId)?.name || "সদস্য";
-    
+
     const newTx: Deposit = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
       memberId,
       amount,
-      date
+      date,
     };
     const updatedTx = [...depositTransactions, newTx];
     setDepositTransactions(updatedTx);
@@ -532,24 +596,26 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "নতুন জমা কনফার্ম",
       `সদস্য "${memberName}" নতুন ৳${amount} টাকা ফান্ডে জমা দিয়েছেন।`,
-      "success"
+      "success",
     ).catch(console.error);
   };
 
   const handleEditDeposit = async (id: string, amount: number) => {
     if (!currentUser) return;
-    const existingTx = depositTransactions.find(d => d.id === id);
+    const existingTx = depositTransactions.find((d) => d.id === id);
     if (!existingTx) return;
 
     const diff = amount - existingTx.amount;
-    const updatedTx = depositTransactions.map(d => d.id === id ? { ...d, amount } : d);
+    const updatedTx = depositTransactions.map((d) =>
+      d.id === id ? { ...d, amount } : d,
+    );
     setDepositTransactions(updatedTx);
 
     const currentTotal = deposits[existingTx.memberId] || 0;
@@ -557,12 +623,26 @@ export default function App() {
     const updatedDeposits = { ...deposits, [existingTx.memberId]: newTotal };
     setDeposits(updatedDeposits);
 
-    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName, bazaarList);
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      updatedDeposits,
+      updatedTx,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      bazaarList,
+    );
   };
 
-  const handleDeleteDeposit = async (id: string, amount: number, memberId: string) => {
+  const handleDeleteDeposit = async (
+    id: string,
+    amount: number,
+    memberId: string,
+  ) => {
     if (!currentUser) return;
-    const updatedTx = depositTransactions.filter(d => d.id !== id);
+    const updatedTx = depositTransactions.filter((d) => d.id !== id);
     setDepositTransactions(updatedTx);
 
     const currentTotal = deposits[memberId] || 0;
@@ -570,12 +650,22 @@ export default function App() {
     const updatedDeposits = { ...deposits, [memberId]: newTotal };
     setDeposits(updatedDeposits);
 
-    await saveToGmailDoc(members, expenses, utilities, updatedDeposits, updatedTx, fixedMealCount, dutyAssignments, messName, bazaarList);
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      updatedDeposits,
+      updatedTx,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      bazaarList,
+    );
   };
 
   const handleSetFixedMealCount = async (count: number) => {
     if (!currentUser) return;
-    
+
     setFixedMealCount(count);
 
     await saveToGmailDoc(
@@ -587,20 +677,20 @@ export default function App() {
       count,
       dutyAssignments,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "নির্ধারিত মিল সেট পরিবর্তন",
       `এই মেস সেশনে চলমান মেম্বারদের জন্য নির্ধারিত মাসিক মিল রেট সংখ্যা "${count} টি" এ পরিবর্তন করা হয়েছে।`,
-      "warning"
+      "warning",
     ).catch(console.error);
   };
 
   const handleUpdateMessName = async (newName: string) => {
     if (!currentUser) return;
-    
+
     setMessName(newName);
 
     await saveToGmailDoc(
@@ -612,24 +702,27 @@ export default function App() {
       fixedMealCount,
       dutyAssignments,
       newName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "মেসের নাম পরিবর্তন",
       `মেসের নাম পরিবর্তন করে "${newName}" সেট করা হয়েছে।`,
-      "info"
+      "info",
     ).catch(console.error);
   };
 
   const handleAddDuty = async (assignment: DutyAssignment) => {
     if (!currentUser) return;
-    const memberName = members.find((m) => m.id === assignment.memberId)?.name || "কর্মকর্তা";
-    
+    const memberName =
+      members.find((m) => m.id === assignment.memberId)?.name || "কর্মকর্তা";
+
     const updatedDuties = [
-      ...dutyAssignments.filter(d => !(d.day === assignment.day && d.role === assignment.role)),
-      assignment
+      ...dutyAssignments.filter(
+        (d) => !(d.day === assignment.day && d.role === assignment.role),
+      ),
+      assignment,
     ];
     setDutyAssignments(updatedDuties);
 
@@ -642,21 +735,23 @@ export default function App() {
       fixedMealCount,
       updatedDuties,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "মেস ডিউটি আপডেট",
       `সাপ্তাহিক রুটিনানুযায়ী "${assignment.day}" এর জন্য "${memberName}" কে "${assignment.role}" এ নিয়োজিত করা হয়েছে।`,
-      "info"
+      "info",
     ).catch(console.error);
   };
 
   const handleRemoveDuty = async (day: string, role: string) => {
     if (!currentUser) return;
-    
-    const updatedDuties = dutyAssignments.filter(d => !(d.day === day && d.role === role));
+
+    const updatedDuties = dutyAssignments.filter(
+      (d) => !(d.day === day && d.role === role),
+    );
     setDutyAssignments(updatedDuties);
 
     await saveToGmailDoc(
@@ -668,14 +763,14 @@ export default function App() {
       fixedMealCount,
       updatedDuties,
       messName,
-      bazaarList
+      bazaarList,
     );
 
     sendNotification(
       messId,
       "মেস ডিউটি বাতিল",
       `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
-      "warning"
+      "warning",
     ).catch(console.error);
   };
 
@@ -684,30 +779,62 @@ export default function App() {
     const newItem: BazaarItem = {
       id: "BI" + Math.random().toString(36).substr(2, 6).toUpperCase(),
       name,
-      isChecked: false
+      isChecked: false,
     };
     const updated = [...bazaarList, newItem];
     setBazaarList(updated);
-    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      depositTransactions,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      updated,
+    );
   };
 
   const handleToggleBazaarItem = async (id: string, isChecked: boolean) => {
     if (!currentUser) return;
-    const updated = bazaarList.map(item => item.id === id ? { ...item, isChecked } : item);
+    const updated = bazaarList.map((item) =>
+      item.id === id ? { ...item, isChecked } : item,
+    );
     setBazaarList(updated);
-    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      depositTransactions,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      updated,
+    );
   };
 
   const handleDeleteBazaarItem = async (id: string) => {
     if (!currentUser) return;
-    const updated = bazaarList.filter(item => item.id !== id);
+    const updated = bazaarList.filter((item) => item.id !== id);
     setBazaarList(updated);
-    await saveToGmailDoc(members, expenses, utilities, deposits, depositTransactions, fixedMealCount, dutyAssignments, messName, updated);
+    await saveToGmailDoc(
+      members,
+      expenses,
+      utilities,
+      deposits,
+      depositTransactions,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      updated,
+    );
   };
 
   const handleClearAllData = async () => {
     if (!currentUser) return;
-    
+
     setMembers([]);
     setExpenses([]);
     setUtilities([]);
@@ -715,16 +842,7 @@ export default function App() {
     setFixedMealCount(0);
     setDutyAssignments([]);
 
-    await saveToGmailDoc(
-      [],
-      [],
-      [],
-      {},
-      [],
-      0,
-      [],
-      "মেস ড্যাশবোর্ড"
-    );
+    await saveToGmailDoc([], [], [], {}, [], 0, [], "মেস ড্যাশবোর্ড");
 
     try {
       // Audit Notification Log
@@ -732,7 +850,7 @@ export default function App() {
         messId,
         "ডাটা সফলভাবে রিসেট করা হয়েছে",
         `আপনার মেসের সকল তথ্য (সদস্য, খরচ, জমা ও ডিউটি) সফলভাবে চিরতরে মুছে ফেলা হয়েছে।`,
-        "danger"
+        "danger",
       );
     } catch (error) {
       console.warn("messes collection fallback sync warning:", error);
@@ -742,7 +860,8 @@ export default function App() {
   const handleLogOut = async () => {
     try {
       await supabase.auth.signOut();
-      (window as any).__MOCK_USER__ = null; localStorage.removeItem('__MOCK_USER__');
+      (window as any).__MOCK_USER__ = null;
+      localStorage.removeItem("__MOCK_USER__");
       localStorage.clear();
       setMembers([]);
       setExpenses([]);
@@ -763,23 +882,37 @@ export default function App() {
   const safeUtilities = Array.isArray(utilities) ? utilities : [];
   const safeDeposits = deposits || {};
 
-  const totalBazaarCost = safeExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const mealRate = safeMembers.length > 0 && fixedMealCount > 0 ? totalBazaarCost / (safeMembers.length * fixedMealCount) : 0;
-  const totalUtilityCost = safeUtilities.reduce((sum, u) => sum + (u.amount || 0), 0);
-  const utilitySharePerMember = safeMembers.length > 0 ? totalUtilityCost / safeMembers.length : 0;
+  const totalBazaarCost = safeExpenses.reduce(
+    (sum, e) => sum + (e.amount || 0),
+    0,
+  );
+  const mealRate =
+    safeMembers.length > 0 && fixedMealCount > 0
+      ? totalBazaarCost / (safeMembers.length * fixedMealCount)
+      : 0;
+  const totalUtilityCost = safeUtilities.reduce(
+    (sum, u) => sum + (u.amount || 0),
+    0,
+  );
+  const utilitySharePerMember =
+    safeMembers.length > 0 ? totalUtilityCost / safeMembers.length : 0;
 
-  const dueMemberIds = safeMembers.filter(member => {
-    const deposit = safeDeposits[member.id] || 0;
-    const memberBazaarSpent = safeExpenses
-      .filter((e) => e.memberId === member.id)
-      .reduce((sum, item) => sum + (item.amount || 0), 0);
-    const totalContribution = deposit + memberBazaarSpent;
-    const bazaarCost = parseFloat((fixedMealCount * mealRate).toFixed(2));
-    const utilityCost = parseFloat(utilitySharePerMember.toFixed(2));
-    const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
-    const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
-    return balance < 0;
-  }).map(m => m.id);
+  const dueMemberIds = safeMembers
+    .filter((member) => {
+      const deposit = safeDeposits[member.id] || 0;
+      const memberBazaarSpent = safeExpenses
+        .filter((e) => e.memberId === member.id)
+        .reduce((sum, item) => sum + (item.amount || 0), 0);
+      const totalContribution = deposit + memberBazaarSpent;
+      const bazaarCost = parseFloat((fixedMealCount * mealRate).toFixed(2));
+      const utilityCost = parseFloat(utilitySharePerMember.toFixed(2));
+      const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
+      const balance = parseFloat(
+        (totalContribution - totalMemberCost).toFixed(2),
+      );
+      return balance < 0;
+    })
+    .map((m) => m.id);
 
   // --- Render Loading Interface ---
   if (authLoading) {
@@ -794,25 +927,40 @@ export default function App() {
   }
 
   // --- Render Login Portal if not Authenticated ---
-  if (!currentUser || window.location.pathname === '/update-password') {
-    if (!showAuth && window.location.pathname !== '/update-password') {
-      return <LandingPage onGetStarted={(mode) => {
-        setAuthMode(mode);
-        setShowAuth(true);
-      }} />;
+  if (
+    !currentUser ||
+    window.location.pathname === "/update-password" ||
+    isResettingPassword
+  ) {
+    if (
+      !showAuth &&
+      window.location.pathname !== "/update-password" &&
+      !isResettingPassword
+    ) {
+      return (
+        <LandingPage
+          onGetStarted={(mode) => {
+            setAuthMode(mode);
+            setShowAuth(true);
+          }}
+        />
+      );
     }
-    
-    return <AuthScreen 
-      initialMode={authMode}
-      onAuthSuccess={() => {
-        if (getMockUser()) {
+
+    return (
+      <AuthScreen
+        initialMode={authMode}
+        isResettingPassword={isResettingPassword}
+        onAuthSuccess={() => {
+          if (getMockUser()) {
             setCurrentUser(getMockUser());
             setMessId(getMockUser().user_metadata?.photoURL || "M99999");
             loadDataFromSupabase(getMockUser().email);
-        }
-      }} 
-      onBackToHome={() => setShowAuth(false)}
-    />;
+          }
+        }}
+        onBackToHome={() => setShowAuth(false)}
+      />
+    );
   }
 
   return (
@@ -823,12 +971,11 @@ export default function App() {
     >
       {/* Viewport alignment */}
       <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-zinc-950/20 border-x border-purple-950/15 overflow-x-hidden">
-        
         {/* Real-time floating Notification Toast Alert Banner */}
         <Toaster position="top-right" richColors />
 
         {/* Dynamic App Header */}
-         <div className="relative">
+        <div className="relative">
           <Header
             messName={messName}
             messId={messId}
@@ -876,7 +1023,9 @@ export default function App() {
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
               {notifications.length === 0 ? (
-                <div className="text-center py-6 text-xs text-zinc-500">কোনো নোটিফিকেশন সতর্কতা নেই।</div>
+                <div className="text-center py-6 text-xs text-zinc-500">
+                  কোনো নোটিফিকেশন সতর্কতা নেই।
+                </div>
               ) : (
                 notifications.map((log) => (
                   <div
@@ -885,16 +1034,21 @@ export default function App() {
                       log.type === "success"
                         ? "bg-emerald-950/10 border-emerald-950/30 text-emerald-300"
                         : log.type === "danger"
-                        ? "bg-red-950/10 border-red-950/30 text-red-300"
-                        : log.type === "warning"
-                        ? "bg-amber-950/10 border-amber-950/30 text-amber-200"
-                        : "bg-zinc-900/30 border-zinc-800 text-zinc-300"
+                          ? "bg-red-950/10 border-red-950/30 text-red-300"
+                          : log.type === "warning"
+                            ? "bg-amber-950/10 border-amber-950/30 text-amber-200"
+                            : "bg-zinc-900/30 border-zinc-800 text-zinc-300"
                     }`}
                   >
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-bold text-[11px] block">{log.title}</span>
+                      <span className="font-bold text-[11px] block">
+                        {log.title}
+                      </span>
                       <span className="text-[9px] text-zinc-500 font-mono">
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(log.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                     <span className="text-[10.5px] leading-relaxed block text-zinc-200">
@@ -960,6 +1114,19 @@ export default function App() {
               onAddBazaarItem={handleAddBazaarItem}
               onToggleBazaarItem={handleToggleBazaarItem}
               onDeleteBazaarItem={handleDeleteBazaarItem}
+            />
+          )}
+
+          {activeTab === 5 && (
+            <JobRegisterTab
+              members={safeMembers}
+              messId={messId}
+              currentUserId={currentUser?.id}
+              currentUserName={
+                currentUser?.user_metadata?.displayName ||
+                currentUser?.email ||
+                "মেস ইউজার"
+              }
             />
           )}
         </main>
@@ -1050,10 +1217,24 @@ export default function App() {
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              {bazaarList.some(i => !i.isChecked) && (
+              {bazaarList.some((i) => !i.isChecked) && (
                 <span className="absolute top-1.5 right-4 w-2 h-2 bg-rose-500 rounded-full border border-zinc-950"></span>
               )}
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
               <span className="text-[10px] font-sans">বাজার</span>
             </button>
 
@@ -1084,7 +1265,9 @@ export default function App() {
           utilities={safeUtilities}
           deposits={safeDeposits}
           fixedMealCount={fixedMealCount}
-          dutyAssignments={Array.isArray(dutyAssignments) ? dutyAssignments : []}
+          dutyAssignments={
+            Array.isArray(dutyAssignments) ? dutyAssignments : []
+          }
           onAddDuty={handleAddDuty}
           onRemoveDuty={handleRemoveDuty}
           onClearAllData={handleClearAllData}
@@ -1095,9 +1278,16 @@ export default function App() {
           }}
           messId={messId}
           dueMemberIds={dueMemberIds}
-          currentUserName={currentUser?.user_metadata?.displayName || currentUser?.email || "মেস ইউজার"}
+          currentUserName={
+            currentUser?.user_metadata?.displayName ||
+            currentUser?.email ||
+            "মেস ইউজার"
+          }
           isAdmin={currentUser?.email === "admin@mppd7x.com"}
-          onOpenAdminPanel={() => { setIsMoreOpen(false); setShowAdminPanel(true); }}
+          onOpenAdminPanel={() => {
+            setIsMoreOpen(false);
+            setShowAdminPanel(true);
+          }}
         />
 
         {/* History Modal */}

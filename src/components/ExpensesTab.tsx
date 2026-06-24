@@ -1,10 +1,23 @@
 import React, { useState } from "react";
-import { ShoppingCart, LayoutGrid, Calendar, LogIn, Trash2, ShieldAlert, ChevronDown } from "lucide-react";
+import {
+  ShoppingCart,
+  LayoutGrid,
+  Calendar,
+  LogIn,
+  Trash2,
+  ShieldAlert,
+  ChevronDown,
+} from "lucide-react";
 import { Member, Expense, UtilityExpense } from "../types";
 
 interface ExpensesTabProps {
   expenses: Expense[];
-  onAddExpense: (date: string, amount: number, desc: string, memberId?: string) => void;
+  onAddExpense: (
+    date: string,
+    amount: number,
+    desc: string,
+    memberId?: string,
+  ) => void;
   onRemoveExpense: (id: string) => void;
   utilities: UtilityExpense[];
   onAddUtility: (name: string, amount: number) => void;
@@ -64,13 +77,17 @@ export default function ExpensesTab({
       {/* Quick Visual Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-zinc-400 font-medium">মোট বাজার খরচ</span>
+          <span className="text-[11px] text-zinc-400 font-medium">
+            মোট বাজার খরচ
+          </span>
           <span className="text-lg font-bold text-brand-amber font-mono mt-1">
             ৳ {totalBazaar.toLocaleString()}
           </span>
         </div>
         <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-zinc-400 font-medium">অন্যান্য ও ইউটিলিটি বিল</span>
+          <span className="text-[11px] text-zinc-400 font-medium">
+            অন্যান্য ও ইউটিলিটি বিল
+          </span>
           <span className="text-lg font-bold text-brand-accent font-mono mt-1">
             ৳ {totalUtility.toLocaleString()}
           </span>
@@ -130,10 +147,13 @@ export default function ExpensesTab({
             >
               <span className="truncate">
                 {selectedBuyerId
-                  ? members.find((m) => m.id === selectedBuyerId)?.name || "সদস্য"
+                  ? members.find((m) => m.id === selectedBuyerId)?.name ||
+                    "সদস্য"
                   : "সাধারণ / মেস ফান্ড (কেউ ব্যক্তিগতভাবে দেয়নি)"}
               </span>
-              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`} />
+              <ChevronDown
+                className={`w-4 h-4 text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
+              />
             </button>
 
             {isBuyerSelectOpen && (
@@ -168,7 +188,10 @@ export default function ExpensesTab({
                   >
                     {member.name}
                     {dueMemberIds?.includes(member.id) && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                        title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                      ></span>
                     )}
                   </button>
                 ))}
@@ -262,7 +285,9 @@ export default function ExpensesTab({
         {expenses.length === 0 ? (
           <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
             <ShieldAlert className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">মেসে এখনো কোনো বাজার খরচ এন্ট্রি করা হয়নি।</p>
+            <p className="text-xs text-zinc-400">
+              মেসে এখনো কোনো বাজার খরচ এন্ট্রি করা হয়নি।
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -278,14 +303,21 @@ export default function ExpensesTab({
                     </span>
                     {item.memberId && (
                       <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-sans tracking-wide">
-                        ক্রেতা: {members.find((m) => m.id === item.memberId)?.name || "সদস্য"}
+                        ক্রেতা:{" "}
+                        {members.find((m) => m.id === item.memberId)?.name ||
+                          "সদস্য"}
                         {dueMemberIds?.includes(item.memberId) && (
-                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                          <span
+                            className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                            title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                          ></span>
                         )}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-500 font-mono mt-1">{item.date}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-1">
+                    {item.date}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-amber font-mono">
@@ -309,7 +341,9 @@ export default function ExpensesTab({
       {/* Utility History List */}
       {utilities.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-zinc-200">বিদ্যুৎ ও ইউটিলিটি বিবরণী</h3>
+          <h3 className="text-sm font-semibold text-zinc-200">
+            বিদ্যুৎ ও ইউটিলিটি বিবরণী
+          </h3>
           <div className="space-y-2">
             {utilities.map((item) => (
               <div
@@ -320,7 +354,9 @@ export default function ExpensesTab({
                   <span className="text-sm font-bold text-zinc-200 font-sans">
                     {item.name}
                   </span>
-                  <span className="text-[10px] text-zinc-500 font-sans mt-0.5">গাসিক ভিলা ইউটিলিটি</span>
+                  <span className="text-[10px] text-zinc-500 font-sans mt-0.5">
+                    গাসিক ভিলা ইউটিলিটি
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-accent font-mono">

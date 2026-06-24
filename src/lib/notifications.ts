@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 export interface MessNotification {
   id: string;
@@ -12,7 +12,7 @@ export async function sendNotification(
   messId: string,
   title: string,
   message: string,
-  type: "info" | "success" | "warning" | "danger" = "info"
+  type: "info" | "success" | "warning" | "danger" = "info",
 ) {
   if (type === "success") {
     toast.success(title, { description: message });
@@ -24,4 +24,3 @@ export async function sendNotification(
     toast.info(title, { description: message });
   }
 }
-

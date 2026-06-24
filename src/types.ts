@@ -36,3 +36,12 @@ export interface BazaarItem {
   name: string;
   isChecked: boolean;
 }
+
+export interface Attendance {
+  id: string;
+  user_id: string;
+  user_name: string;
+  date: string;
+  status: "Duty" | "Off Day";
+  mess_id?: string;
+}

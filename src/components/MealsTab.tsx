@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { AlertTriangle, Settings, CheckCircle2, User, FlameKindling, Info } from "lucide-react";
+import {
+  AlertTriangle,
+  Settings,
+  CheckCircle2,
+  User,
+  FlameKindling,
+  Info,
+} from "lucide-react";
 import { Member } from "../types";
 
 interface MealsTabProps {
@@ -15,7 +22,9 @@ export default function MealsTab({
   onSetFixedMealCount,
   dueMemberIds,
 }: MealsTabProps) {
-  const [mealInput, setMealInput] = useState<string>(fixedMealCount ? fixedMealCount.toString() : "");
+  const [mealInput, setMealInput] = useState<string>(
+    fixedMealCount ? fixedMealCount.toString() : "",
+  );
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,7 +52,8 @@ export default function MealsTab({
               নির্ধারিত মিল এখনো সেট করা হয়নি!
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-              এই মাসের জন্য কোনো নির্দিষ্ট ডাবল বা সিঙ্গেল মিল রেট নির্ধারণ করা হয়নি। সঠি হিসাব নিকাশের জন্য নির্ধারিত মিল যোগ করুন।
+              এই মাসের জন্য কোনো নির্দিষ্ট ডাবল বা সিঙ্গেল মিল রেট নির্ধারণ করা
+              হয়নি। সঠি হিসাব নিকাশের জন্য নির্ধারিত মিল যোগ করুন।
             </p>
           </div>
         </div>
@@ -57,7 +67,8 @@ export default function MealsTab({
               নির্ধারিত মিল অত্যন্ত সফলভাবে সেট আছে
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-              প্রতিটি মেম্বারের বর্তমান নির্ধারিত মাসিক মিল সংখ্যা হচ্ছে <b>{fixedMealCount} টি</b>।
+              প্রতিটি মেম্বারের বর্তমান নির্ধারিত মাসিক মিল সংখ্যা হচ্ছে{" "}
+              <b>{fixedMealCount} টি</b>।
             </p>
           </div>
         </div>
@@ -69,11 +80,14 @@ export default function MealsTab({
 
         <div className="flex items-center gap-2 mb-3">
           <Settings className="w-4 h-4 text-brand-amber" />
-          <h3 className="text-sm font-bold text-white font-sans">নির্ধারিত মিল সেট করুন</h3>
+          <h3 className="text-sm font-bold text-white font-sans">
+            নির্ধারিত মিল সেট করুন
+          </h3>
         </div>
 
         <p className="text-xs text-zinc-400 mb-4 leading-relaxed font-sans">
-          নির্ধারণকৃত মিল সংখ্যা চলমান মেস সেশনের অন্তর্ভুক্ত সকল সক্রিয় মেম্বারদের জন্য সমানভাবে কার্যকর করা হবে।
+          নির্ধারণকৃত মিল সংখ্যা চলমান মেস সেশনের অন্তর্ভুক্ত সকল সক্রিয়
+          মেম্বারদের জন্য সমানভাবে কার্যকর করা হবে।
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,11 +112,15 @@ export default function MealsTab({
             </div>
 
             <div className="w-1/2 bg-black/20 border border-purple-950/20 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-zinc-500 font-semibold block uppercase">মোট মিল সংখ্যা</span>
+              <span className="text-[10px] text-zinc-500 font-semibold block uppercase">
+                মোট মিল সংখ্যা
+              </span>
               <span className="text-xl font-extrabold text-white font-mono block mt-1">
                 {totalMeals}
               </span>
-              <span className="text-[9px] text-zinc-400 font-sans block mt-0.5">({members.length} জন সক্রিয়)</span>
+              <span className="text-[9px] text-zinc-400 font-sans block mt-0.5">
+                ({members.length} জন সক্রিয়)
+              </span>
             </div>
           </div>
 
@@ -129,8 +147,12 @@ export default function MealsTab({
       {/* Member Meals Overview */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-zinc-200">সদস্যদের মিল ওভারভিউ</h4>
-          <span className="text-xs text-brand-amber font-mono font-medium">মিল সংখ্যা: {fixedMealCount}</span>
+          <h4 className="text-sm font-semibold text-zinc-200">
+            সদস্যদের মিল ওভারভিউ
+          </h4>
+          <span className="text-xs text-brand-amber font-mono font-medium">
+            মিল সংখ্যা: {fixedMealCount}
+          </span>
         </div>
 
         {members.length === 0 ? (
@@ -152,15 +174,22 @@ export default function MealsTab({
                     <span className="text-xs font-bold text-zinc-200 block font-sans">
                       {member.name}
                       {dueMemberIds?.includes(member.id) && (
-                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]" title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"></span>
+                        <span
+                          className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                          title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                        ></span>
                       )}
                     </span>
-                    <span className="text-[10px] text-zinc-500 block font-mono">ID: {member.id}</span>
+                    <span className="text-[10px] text-zinc-500 block font-mono">
+                      ID: {member.id}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-zinc-400 font-sans">মিল হিসাব:</span>
+                  <span className="text-xs text-zinc-400 font-sans">
+                    মিল হিসাব:
+                  </span>
                   <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-zinc-800 font-mono text-xs font-bold text-brand-amber">
                     {fixedMealCount} টি
                   </span>
@@ -173,7 +202,9 @@ export default function MealsTab({
         <div className="bg-purple-950/10 border border-purple-950/25 rounded-xl p-3.5 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
           <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
-            ব্যক্তিগত বা দৈনিক মিল কম-বেশি পরিবর্তনের জন্য নির্ধারিত মিলের জায়গায় আপনার মেসের মোট মিল বা কাস্টম লিমিট সেট করে নিন। এই সিস্টেমটি সহজ ও সরল গণনার জন্য ডিজাইন করা হয়েছে।
+            ব্যক্তিগত বা দৈনিক মিল কম-বেশি পরিবর্তনের জন্য নির্ধারিত মিলের
+            জায়গায় আপনার মেসের মোট মিল বা কাস্টম লিমিট সেট করে নিন। এই সিস্টেমটি
+            সহজ ও সরল গণনার জন্য ডিজাইন করা হয়েছে।
           </p>
         </div>
       </div>

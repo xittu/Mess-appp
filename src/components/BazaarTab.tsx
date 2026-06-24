@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Check, Trash2, Plus, CalendarDays } from 'lucide-react';
-import { BazaarItem, DutyAssignment, Member } from '../types';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Check, Trash2, Plus, CalendarDays } from "lucide-react";
+import { BazaarItem, DutyAssignment, Member } from "../types";
 
 interface BazaarTabProps {
   bazaarList: BazaarItem[];
@@ -18,19 +18,20 @@ export default function BazaarTab({
   members,
   onAddBazaarItem,
   onToggleBazaarItem,
-  onDeleteBazaarItem
+  onDeleteBazaarItem,
 }: BazaarTabProps) {
-  const [newItemName, setNewItemName] = useState('');
+  const [newItemName, setNewItemName] = useState("");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (newItemName.trim()) {
       onAddBazaarItem(newItemName.trim());
-      setNewItemName('');
+      setNewItemName("");
     }
   };
 
-  const getMemberName = (id: string) => members.find(m => m.id === id)?.name || 'অজানা';
+  const getMemberName = (id: string) =>
+    members.find((m) => m.id === id)?.name || "অজানা";
 
   return (
     <motion.div
@@ -45,14 +46,25 @@ export default function BazaarTab({
           সাপ্তাহিক বাজার ডিউটি
         </h2>
         {dutyAssignments.length === 0 ? (
-          <p className="text-xs text-zinc-500">কোনো ডিউটি সেট করা হয়নি। 'আরও' মেনু থেকে রুটিন সেট করুন।</p>
+          <p className="text-xs text-zinc-500">
+            কোনো ডিউটি সেট করা হয়নি। 'আরও' মেনু থেকে রুটিন সেট করুন।
+          </p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {dutyAssignments.map((duty, idx) => (
-              <div key={idx} className="bg-zinc-900/40 p-2 rounded-xl border border-purple-950/20 text-center">
-                <span className="block text-[10px] text-zinc-400 font-semibold">{duty.day}</span>
-                <span className="block text-xs font-bold text-zinc-200 mt-1">{getMemberName(duty.memberId)}</span>
-                <span className="block text-[9px] text-brand-accent mt-0.5">{duty.role}</span>
+              <div
+                key={idx}
+                className="bg-zinc-900/40 p-2 rounded-xl border border-purple-950/20 text-center"
+              >
+                <span className="block text-[10px] text-zinc-400 font-semibold">
+                  {duty.day}
+                </span>
+                <span className="block text-xs font-bold text-zinc-200 mt-1">
+                  {getMemberName(duty.memberId)}
+                </span>
+                <span className="block text-[9px] text-brand-accent mt-0.5">
+                  {duty.role}
+                </span>
               </div>
             ))}
           </div>
@@ -64,7 +76,7 @@ export default function BazaarTab({
           <ShoppingCart className="w-4 h-4" />
           বাজারের শেয়ার্ড লিস্ট
         </h2>
-        
+
         <form onSubmit={handleAdd} className="flex gap-2">
           <input
             type="text"
@@ -84,22 +96,28 @@ export default function BazaarTab({
 
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
           <AnimatePresence>
-            {bazaarList.map(item => (
+            {bazaarList.map((item) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`flex items-center justify-between p-3 rounded-xl border ${item.isChecked ? 'bg-emerald-950/10 border-emerald-900/30' : 'bg-zinc-900/40 border-zinc-850'}`}
+                className={`flex items-center justify-between p-3 rounded-xl border ${item.isChecked ? "bg-emerald-950/10 border-emerald-900/30" : "bg-zinc-900/40 border-zinc-850"}`}
               >
-                <div 
+                <div
                   className="flex items-center gap-3 cursor-pointer flex-1"
                   onClick={() => onToggleBazaarItem(item.id, !item.isChecked)}
                 >
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${item.isChecked ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-600'}`}>
-                    {item.isChecked && <Check className="w-3 h-3 text-emerald-950" />}
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center border ${item.isChecked ? "bg-emerald-500 border-emerald-500" : "border-zinc-600"}`}
+                  >
+                    {item.isChecked && (
+                      <Check className="w-3 h-3 text-emerald-950" />
+                    )}
                   </div>
-                  <span className={`text-sm ${item.isChecked ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                  <span
+                    className={`text-sm ${item.isChecked ? "text-zinc-500 line-through" : "text-zinc-200"}`}
+                  >
                     {item.name}
                   </span>
                 </div>
