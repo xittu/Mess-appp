@@ -155,24 +155,28 @@ export default function JobRegisterTab({
         .single();
 
       if (existingData) {
+        const finalIsPresent = status === "Off Day" ? "Absent" : (isPresent ? "Present" : "Absent");
+
         const { error } = await supabase
           .from("attendance")
           .update({
             status,
             user_name: selectedMemberName,
-            is_present: isPresent ? "Present" : "Absent",
+            is_present: finalIsPresent,
             overtime_hours: parseFloat(overtimeHours.toString()) || 0,
           })
           .eq("id", existingData.id);
         if (error) throw error;
       } else {
+        const finalIsPresent = status === "Off Day" ? "Absent" : (isPresent ? "Present" : "Absent");
+
         const { error } = await supabase.from("attendance").insert([
           {
             user_id: targetUserId,
             user_name: selectedMemberName,
             date,
             status,
-            is_present: isPresent ? "Present" : "Absent",
+            is_present: finalIsPresent,
             overtime_hours: parseFloat(overtimeHours.toString()) || 0,
             mess_id: messId,
           },
@@ -209,8 +213,12 @@ export default function JobRegisterTab({
     const memberRecords = history.filter((h) => h.user_name === memberName);
     const duty = memberRecords.filter((h) => h.status === "Duty").length;
     const off = memberRecords.filter((h) => h.status === "Off Day").length;
-    const present = memberRecords.filter((h) => h.is_present).length;
-    const absent = memberRecords.filter((h) => !h.is_present).length;
+    const present = memberRecords.filter((h) => 
+      typeof h.is_present === 'string' ? h.is_present === 'Present' || h.is_present === 'P' : h.is_present
+    ).length;
+    const absent = memberRecords.filter((h) => 
+      typeof h.is_present === 'string' ? h.is_present === 'Absent' || h.is_present === 'A' : !h.is_present
+    ).length;
     const overtime = memberRecords.reduce(
       (sum, h) => sum + (h.overtime_hours || 0),
       0,
@@ -238,8 +246,12 @@ export default function JobRegisterTab({
       const memberRecords = history.filter((h) => h.user_name === member.name);
       const duty = memberRecords.filter((h) => h.status === "Duty").length;
       const off = memberRecords.filter((h) => h.status === "Off Day").length;
-      const present = memberRecords.filter((h) => h.is_present).length;
-      const absent = memberRecords.filter((h) => !h.is_present).length;
+      const present = memberRecords.filter((h) => 
+        typeof h.is_present === 'string' ? h.is_present === 'Present' || h.is_present === 'P' : h.is_present
+      ).length;
+      const absent = memberRecords.filter((h) => 
+        typeof h.is_present === 'string' ? h.is_present === 'Absent' || h.is_present === 'A' : !h.is_present
+      ).length;
       const overtime = memberRecords.reduce(
         (sum, h) => sum + (h.overtime_hours || 0),
         0,
@@ -470,21 +482,23 @@ export default function JobRegisterTab({
                           <>
                             <span
                               className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${
-                                record.is_present
+                                (typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present)
                                   ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
                                   : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                               }`}
                             >
-                              {record.is_present ? "P" : "A"}
+                              {(typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present) ? "P" : "A"}
                             </span>
                             <span
                               className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider ${
-                                record.status === "Duty"
+                                record.status === "Off Day"
+                                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  : (typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present)
                                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                  : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  : "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                               }`}
                             >
-                              {record.status}
+                              {record.status === "Off Day" ? "Off Day" : ((typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present) ? "Duty" : "Absent")}
                             </span>
                             {record.overtime_hours ? (
                               <span className="px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
@@ -616,21 +630,23 @@ export default function JobRegisterTab({
                           <div className="flex gap-2">
                             <span
                               className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                                record.is_present
+                                (typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present)
                                   ? "text-indigo-400 bg-indigo-400/10"
                                   : "text-orange-400 bg-orange-400/10"
                               }`}
                             >
-                              {record.is_present ? "P" : "A"}
+                              {(typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present) ? "P" : "A"}
                             </span>
                             <span
                               className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                                record.status === "Duty"
+                                record.status === "Off Day"
+                                  ? "text-rose-400 bg-rose-400/10"
+                                  : (typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present)
                                   ? "text-emerald-400 bg-emerald-400/10"
-                                  : "text-rose-400 bg-rose-400/10"
+                                  : "text-orange-400 bg-orange-400/10"
                               }`}
                             >
-                              {record.status}
+                              {record.status === "Off Day" ? "Off Day" : ((typeof record.is_present === 'string' ? (record.is_present === 'Present' || record.is_present === 'P') : record.is_present) ? "Duty" : "Absent")}
                             </span>
                             {record.overtime_hours ? (
                               <span className="px-2 py-0.5 text-[10px] font-bold rounded uppercase text-purple-400 bg-purple-400/10">
