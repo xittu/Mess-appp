@@ -1252,6 +1252,7 @@ export default function App() {
             "মেস ইউজার"
           }
           currentUserId={currentUser?.id}
+          currentUserEmail={currentUser?.email}
           isAdmin={currentUser?.email === "admin@mppd7x.com"}
           onOpenAdminPanel={() => {
             setIsMenuOpen(false);

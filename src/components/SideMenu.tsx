@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PasswordChangeModal from "./PasswordChangeModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -40,6 +41,7 @@ interface SideMenuProps {
   dueMemberIds?: string[];
   currentUserName: string;
   currentUserId?: string;
+  currentUserEmail?: string;
   isAdmin?: boolean;
   onOpenAdminPanel?: () => void;
 }
@@ -62,6 +64,7 @@ export default function SideMenu({
   dueMemberIds,
   currentUserName,
   currentUserId,
+  currentUserEmail,
   isAdmin,
   onOpenAdminPanel,
 }: SideMenuProps) {
@@ -69,6 +72,7 @@ export default function SideMenu({
     "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | null
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   // Duty Form States
   const [selectedDay, setSelectedDay] = useState("শনিবার");
@@ -643,12 +647,24 @@ export default function SideMenu({
                   সদস্য তালিকা
                 </button>
                 <button
-                  onClick={onLogOut}
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-red-950/20 text-red-400 transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (currentUserEmail) {
+                      setShowPasswordChange(true);
+                    } else {
+                      alert("ইউজার ইমেইল পাওয়া যায়নি। পুনরায় লগইন করুন।");
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer"
                 >
-                  লগ আউট
+                  পাসওয়ার্ড পরিবর্তন
                 </button>
               </div>
+              <button
+                onClick={onLogOut}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-red-950/20 text-red-400 transition-colors cursor-pointer"
+              >
+                লগ আউট
+              </button>
               <button
                 onClick={() => setShowResetConfirm(true)}
                 className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-950 border border-zinc-900 text-[10px] font-sans font-semibold text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
@@ -1157,6 +1173,14 @@ export default function SideMenu({
             )}
           </div>
         )}
+        {/* Password Change Modal */}
+        {showPasswordChange && currentUserEmail && (
+          <PasswordChangeModal
+            onClose={() => setShowPasswordChange(false)}
+            userEmail={currentUserEmail}
+          />
+        )}
+
         {/* Slidable Warning Modal Overlay */}
         {showResetConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all">
