@@ -21,7 +21,6 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { Member, Expense, UtilityExpense, DutyAssignment } from "../types";
-import JobRegisterTab from "./JobRegisterTab";
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -36,6 +35,7 @@ interface SideMenuProps {
   onRemoveDuty: (day: string, role: string) => void;
   onClearAllData: () => void;
   onLogOut: () => void;
+  onAssignNfcTag: (memberId: string, nfcTagId: string) => void;
   onTabChange: (tabIdx: number) => void;
   messId: string;
   dueMemberIds?: string[];
@@ -59,6 +59,7 @@ export default function SideMenu({
   onRemoveDuty,
   onClearAllData,
   onLogOut,
+  onAssignNfcTag,
   onTabChange,
   messId,
   dueMemberIds,
@@ -570,26 +571,6 @@ export default function SideMenu({
                   {fixedMealCount} meals/mo
                 </div>
               </div>
-
-              <button
-                onClick={() => setActiveModal("job_register")}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-indigo-950/20 hover:bg-indigo-950/30 border border-indigo-900/30 hover:border-indigo-500/40 transition-all text-left cursor-pointer group"
-                id="btn-menu-job-register"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:scale-105 transition-transform">
-                    <ClipboardList className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-indigo-300 block font-sans">
-                      জব হাজিরা (Job Register)
-                    </span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
-                      প্রতিদিনের ডিউটি এবং অফ ডে হাজিরা চেক করুন
-                    </span>
-                  </div>
-                </div>
-              </button>
 
               <button
                 onClick={() => setActiveModal("export_pdf")}
@@ -1117,18 +1098,6 @@ export default function SideMenu({
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {activeModal === "job_register" && (
-              <div className="flex-1 overflow-hidden relative">
-                <JobRegisterTab
-                  members={members}
-                  messId={messId}
-                  currentUserId={currentUserId}
-                  currentUserName={currentUserName}
-                  onClose={() => setActiveModal(null)}
-                />
               </div>
             )}
 

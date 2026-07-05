@@ -2,6 +2,7 @@ export interface Member {
   id: string;
   name: string;
   joinDate: string;
+  nfc_tag_id?: string;
 }
 
 export interface Expense {

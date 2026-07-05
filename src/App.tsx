@@ -13,6 +13,7 @@ import {
   Sparkles,
   Info,
   CheckCircle2,
+  ClipboardList,
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import { User } from "@supabase/supabase-js";
@@ -77,6 +78,7 @@ export default function App() {
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -402,6 +404,33 @@ export default function App() {
       "নতুন সদস্য যুক্ত করা হয়েছে",
       `মেস তালিকায় নতুন সদস্য হিসাবে "${name}" কে রেজিস্টার করা হয়েছে।`,
       "success",
+    ).catch(console.error);
+  };
+
+  const handleAssignNfcTag = async (memberId: string, nfcTagId: string) => {
+    if (!currentUser) return;
+    const updatedMembers = members.map((m) =>
+      m.id === memberId ? { ...m, nfc_tag_id: nfcTagId } : m,
+    );
+    setMembers(updatedMembers);
+    await saveToGmailDoc(
+      updatedMembers,
+      expenses,
+      utilities,
+      deposits,
+      depositTransactions,
+      fixedMealCount,
+      dutyAssignments,
+      messName,
+      bazaarList,
+    );
+
+    const memberName = updatedMembers.find((m) => m.id === memberId)?.name || "সদস্য";
+    sendNotification(
+      messId,
+      "NFC Card Assigned",
+      `NFC Card has been successfully assigned to ${memberName}.`,
+      "info",
     ).catch(console.error);
   };
 
@@ -1240,6 +1269,7 @@ export default function App() {
           onRemoveDuty={handleRemoveDuty}
           onClearAllData={handleClearAllData}
           onLogOut={handleLogOut}
+          onAssignNfcTag={handleAssignNfcTag}
           onTabChange={(tabIdx) => {
             setActiveTab(tabIdx);
             setIsMenuOpen(false);
@@ -1276,6 +1306,42 @@ export default function App() {
         {showAdminPanel && (
           <AdminPanel onClose={() => setShowAdminPanel(false)} />
         )}
+
+        {/* Floating Job Register Button */}
+        <button
+          onClick={() => setIsJobRegisterOpen(true)}
+          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group"
+          aria-label="Open Job Register"
+        >
+          <ClipboardList className="w-6 h-6 group-hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Job Register Modal */}
+        <AnimatePresence>
+          {isJobRegisterOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="w-full max-w-4xl h-[90vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+              >
+                <JobRegisterTab
+                  members={safeMembers}
+                  messId={messId}
+                  currentUserId={currentUser?.id}
+                  currentUserName={
+                    currentUser?.user_metadata?.displayName ||
+                    currentUser?.email ||
+                    "মেস ইউজার"
+                  }
+                  onAssignNfcTag={handleAssignNfcTag}
+                  onClose={() => setIsJobRegisterOpen(false)}
+                />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

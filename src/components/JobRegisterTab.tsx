@@ -10,15 +10,21 @@ import {
   CheckSquare,
   XSquare,
   Clock,
+  Nfc,
+  AlertTriangle,
+  Loader2,
+  X
 } from "lucide-react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface JobRegisterTabProps {
   members: Member[];
   messId: string;
   currentUserId?: string; // Supabase auth user id
   currentUserName: string;
+  onAssignNfcTag?: (memberId: string, nfcTagId: string) => void;
   onClose: () => void;
 }
 
@@ -27,6 +33,7 @@ export default function JobRegisterTab({
   messId,
   currentUserId,
   currentUserName,
+  onAssignNfcTag,
   onClose,
 }: JobRegisterTabProps) {
   const [date, setDate] = useState<string>(
@@ -42,6 +49,11 @@ export default function JobRegisterTab({
   const [cycleType, setCycleType] = useState<"normal" | "20-20">("normal");
   const [historyMemberId, setHistoryMemberId] = useState<string>("");
   const [selectedMemberName, setSelectedMemberName] = useState<string>("");
+
+  const [nfcModalState, setNfcModalState] = useState<'hidden' | 'scanning' | 'success' | 'unregistered'>('hidden');
+  const [scannedTagId, setScannedTagId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [nfcMemberIdToAssign, setNfcMemberIdToAssign] = useState<string>("");
 
   useEffect(() => {
     if (members.length > 0 && !historyMemberId) {
@@ -132,6 +144,141 @@ export default function JobRegisterTab({
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleNfcPunch = async () => {
+    if (!('NDEFReader' in window)) {
+      alert("NFC not supported on this browser/device. Please use Android Chrome");
+      return;
+    }
+    
+    try {
+      if (window.self !== window.top) {
+        alert("Web NFC cannot be used inside the preview iframe. Please open the application in a new tab (using the arrow icon in the top right) to use NFC features.");
+        return;
+      }
+    } catch (e) {
+      alert("Web NFC cannot be used inside the preview iframe. Please open the application in a new tab to use NFC features.");
+      return;
+    }
+
+    try {
+      const ndef = new (window as any).NDEFReader();
+      await ndef.scan();
+      setNfcModalState('scanning');
+      setScannedTagId(null);
+      setSuccessMessage('');
+      
+      ndef.onreading = async (event: any) => {
+        const serialNumber = event.serialNumber;
+        setScannedTagId(serialNumber);
+
+        try {
+          // Check local members (which comes from JSONB mess_data)
+          let matchingMember = members.find((m) => m.nfc_tag_id === serialNumber);
+
+          if (!matchingMember) {
+            setNfcModalState('unregistered');
+            return;
+          }
+
+          // Registration found
+          setLoading(true);
+          const today = new Date().toISOString().split("T")[0];
+
+          const { data: existingData } = await supabase
+            .from("attendance")
+            .select("id")
+            .eq("user_id", matchingMember.id)
+            .eq("date", today)
+            .eq("mess_id", messId)
+            .single();
+
+          if (existingData) {
+            const { error } = await supabase
+              .from("attendance")
+              .update({
+                status: "Duty",
+                user_name: matchingMember.name,
+                is_present: "Present",
+                overtime_hours: 0,
+              })
+              .eq("id", existingData.id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from("attendance").insert([
+              {
+                user_id: matchingMember.id,
+                user_name: matchingMember.name,
+                date: today,
+                status: "Duty",
+                is_present: "Present",
+                overtime_hours: 0,
+                mess_id: messId,
+              },
+            ]);
+            if (error) throw error;
+          }
+
+          setSuccessMessage(`🟢 Access Granted! Attendance marked successfully for ${matchingMember.name}`);
+          setNfcModalState('success');
+          await fetchDailyAttendances();
+          if (viewMode === "history") {
+            await fetchHistory();
+          }
+          
+          setTimeout(() => {
+            setNfcModalState('hidden');
+          }, 4000);
+
+        } catch (err: any) {
+          console.error("NFC Submit Error:", err);
+          alert("Failed to save NFC attendance: " + err.message);
+          setNfcModalState('hidden');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      ndef.onreadingerror = () => {
+        alert("NFC Read Error. Please try again.");
+        setNfcModalState('hidden');
+      };
+    } catch (error: any) {
+      console.error("NFC Start Error:", error);
+      if (error.message && error.message.includes("top-level browsing context")) {
+        alert("Web NFC cannot be used inside the preview iframe. Please open the application in a new tab to use NFC features.");
+      } else {
+        alert("Error starting NFC scan: " + error.message);
+      }
+      setNfcModalState('hidden');
+    }
+  };
+
+  const handleAssignNfcCard = async () => {
+     if (!nfcMemberIdToAssign || !scannedTagId) {
+        alert("Please select a member first.");
+        return;
+     }
+     try {
+        setLoading(true);
+        if (onAssignNfcTag) {
+          onAssignNfcTag(nfcMemberIdToAssign, scannedTagId);
+        }
+        
+        const member = members.find(m => m.id === nfcMemberIdToAssign);
+        setSuccessMessage(`Card successfully registered to ${member?.name}!`);
+        setNfcModalState('success');
+        
+        // Let user know they might need to reload or it will work on next scan
+        setTimeout(() => {
+           setNfcModalState('hidden');
+        }, 3000);
+     } catch (err: any) {
+        alert("Failed to assign card: " + err.message);
+     } finally {
+        setLoading(false);
+     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -284,6 +431,52 @@ export default function JobRegisterTab({
       styles: { fontSize: 10, cellPadding: 3 },
       headStyles: {
         fillColor: [41, 128, 185],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+    });
+
+    // Add Detailed History Page
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Detailed Daily History", 14, 22);
+
+    // Sort history by date then member name
+    const sortedHistory = [...history].sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.user_name.localeCompare(b.user_name);
+    });
+
+    const historyData = sortedHistory.map((h) => {
+      const statusText = typeof h.is_present === 'string' 
+        ? h.is_present 
+        : (h.is_present ? "Present" : "Absent");
+        
+      return [
+        h.date,
+        h.user_name,
+        h.status,
+        statusText,
+        (h.overtime_hours || 0).toString()
+      ];
+    });
+
+    (doc as any).autoTable({
+      startY: 30,
+      head: [
+        [
+          "Date",
+          "Member Name",
+          "Duty Type",
+          "Status",
+          "Overtime (Hrs)"
+        ]
+      ],
+      body: historyData,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: {
+        fillColor: [52, 73, 94],
         textColor: 255,
         fontStyle: "bold",
       },
@@ -447,6 +640,21 @@ export default function JobRegisterTab({
               className="w-full bg-brand-amber text-zinc-950 font-bold py-3 rounded-xl shadow-lg shadow-brand-amber/10 hover:bg-amber-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? "Submitting..." : "Submit Attendance"}
+            </button>
+
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-zinc-800"></div>
+              <span className="flex-shrink-0 mx-4 text-zinc-500 text-xs font-medium">OR</span>
+              <div className="flex-grow border-t border-zinc-800"></div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNfcPunch}
+              className="w-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/30 transition-all shadow-lg shadow-indigo-900/10 mt-2"
+            >
+              <Nfc className="w-5 h-5" />
+              Punch via NFC Card
             </button>
           </form>
         </div>
@@ -664,6 +872,90 @@ export default function JobRegisterTab({
           </div>
         )}
       </div>
+
+      {/* NFC Action Modals */}
+      <AnimatePresence>
+        {nfcModalState !== 'hidden' && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6"
+            >
+              {nfcModalState === 'scanning' && (
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center animate-pulse">
+                    <Nfc className="w-8 h-8 text-indigo-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-100">Scanning NFC...</h3>
+                  <p className="text-zinc-400 text-sm">Please tap your NFC card to the back of your device.</p>
+                  <button onClick={() => setNfcModalState('hidden')} className="mt-4 text-xs text-zinc-500 hover:text-zinc-300">Cancel</button>
+                </div>
+              )}
+
+              {nfcModalState === 'success' && (
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-emerald-400">Success!</h3>
+                  <p className="text-zinc-300 text-sm">{successMessage}</p>
+                </div>
+              )}
+
+              {nfcModalState === 'unregistered' && (
+                <div className="space-y-5">
+                  <div className="text-center space-y-2">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center mb-3">
+                      <AlertTriangle className="w-6 h-6 text-rose-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-rose-400">❌ Unknown Card / Non-User detected</h3>
+                    <p className="text-zinc-400 text-xs font-mono bg-zinc-900/50 py-1.5 px-3 rounded-lg inline-block">
+                      Tag ID: {scannedTagId}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-zinc-800 pt-4">
+                    <label className="block text-xs font-medium text-zinc-400 mb-2">
+                      Assign Card to Member (Admin)
+                    </label>
+                    <select
+                      value={nfcMemberIdToAssign}
+                      onChange={(e) => setNfcMemberIdToAssign(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 mb-3"
+                    >
+                      <option value="">Select a member...</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setNfcModalState('hidden')}
+                        className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 text-sm font-semibold transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAssignNfcCard}
+                        disabled={!nfcMemberIdToAssign || loading}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex justify-center items-center gap-2"
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign Card"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
