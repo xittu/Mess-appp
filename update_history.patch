@@ -1,0 +1,15 @@
+--- src/components/HistoryModal.tsx
++++ src/components/HistoryModal.tsx
+@@ -40,11 +40,32 @@
+   const [reportTitle, setReportTitle] = React.useState(messName);
++  const [startDate, setStartDate] = React.useState("");
++  const [endDate, setEndDate] = React.useState("");
+ 
+-  const handleDownloadPDF = async (monthName: string) => {
++  const handleDownloadPDF = async (title: string, useDates: boolean = false) => {
+     if (!contentRef.current) return;
+     try {
+-      setReportTitle(`${messName} - ${monthName}`);
++      setReportTitle(`${messName} - ${title}`);
+       // Add a small delay to allow react to render the title update in the hidden dom before taking the canvas shot
+       await new Promise((r) => setTimeout(r, 100));

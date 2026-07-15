@@ -37,11 +37,15 @@ export default function HistoryModal({
 }: HistoryModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [reportTitle, setReportTitle] = React.useState(messName);
+  const [startDate, setStartDate] = React.useState('');
+  const [endDate, setEndDate] = React.useState('');
+  const [isCustom, setIsCustom] = React.useState(false);
 
-  const handleDownloadPDF = async (monthName: string) => {
+  const handleDownloadPDF = async (title: string, customMode: boolean = false) => {
     if (!contentRef.current) return;
     try {
-      setReportTitle(`${messName} - ${monthName}`);
+      setIsCustom(customMode);
+      setReportTitle(`${messName} - ${title}`);
       // Add a small delay to allow react to render the title update in the hidden dom before taking the canvas shot
       await new Promise((r) => setTimeout(r, 100));
 
@@ -67,6 +71,32 @@ export default function HistoryModal({
   };
 
   if (!isOpen) return null;
+
+  let filteredExpenses = expenses;
+  let filteredDepositsMap = { ...deposits };
+
+  if (isCustom && startDate && endDate) {
+    const sDate = new Date(startDate);
+    const eDate = new Date(endDate);
+    sDate.setHours(0,0,0,0);
+    eDate.setHours(23,59,59,999);
+    
+    filteredExpenses = expenses.filter(e => {
+      const ed = new Date(e.date);
+      return ed >= sDate && ed <= eDate;
+    });
+    
+    if (depositHistory) {
+      const nd = {};
+      depositHistory.filter(d => {
+        const dd = new Date(d.date);
+        return dd >= sDate && dd <= eDate;
+      }).forEach(d => {
+        nd[d.memberId] = (nd[d.memberId] || 0) + d.amount;
+      });
+      filteredDepositsMap = nd;
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -100,6 +130,21 @@ export default function HistoryModal({
             </div>
 
             <div className="grid grid-cols-1 gap-3">
+              <div className="flex flex-col gap-2 p-4 bg-zinc-950 rounded-xl border border-zinc-800/80">
+                <span className="text-emerald-100/90 font-bold font-sans text-sm">কাস্টম তারিখ রিপোর্ট</span>
+                <div className="flex gap-2">
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="flex-1 bg-zinc-900 text-white text-xs p-2 rounded border border-zinc-800" />
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="flex-1 bg-zinc-900 text-white text-xs p-2 rounded border border-zinc-800" />
+                </div>
+                <button
+                  onClick={() => handleDownloadPDF(`${startDate} to ${endDate}`, true)}
+                  disabled={!startDate || !endDate}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-2 px-3 rounded-lg flex justify-center items-center gap-2 transition-all font-sans text-xs shadow-lg"
+                >
+                  <Download className="w-4 h-4" />
+                  কাস্টম PDF ডাউনলোড
+                </button>
+              </div>
               {[0, 1, 2].map((monthOffset) => {
                 const monthName = getMonthName(monthOffset);
                 return (
@@ -111,7 +156,7 @@ export default function HistoryModal({
                       {monthName}
                     </span>
                     <button
-                      onClick={() => handleDownloadPDF(monthName)}
+                      onClick={() => handleDownloadPDF(monthName, false)}
                       className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-2 transition-all font-sans text-xs shadow-lg"
                     >
                       <Download className="w-4 h-4" />
@@ -165,8 +210,8 @@ export default function HistoryModal({
                           {m.id}
                         </td>
                         <td className="border border-gray-300 p-2 font-mono">
-                          {(deposits[m.id] || 0) +
-                            expenses
+                          {(filteredDepositsMap[m.id] || 0) +
+                            filteredExpenses
                               .filter((e) => e.memberId === m.id)
                               .reduce((sum, e) => sum + e.amount, 0)}
                         </td>
@@ -185,7 +230,7 @@ export default function HistoryModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {expenses.map((e, idx) => {
+                    {filteredExpenses.map((e, idx) => {
                       const memberName =
                         members.find((m) => m.id === e.memberId)?.name ||
                         "Unknown";

@@ -59,7 +59,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
       } else if (records) {
         setData(records as MessData[]);
         // Find admin's notices
-        const adminData = records.find((r) => r.user_email === "Zitu@admin.com" || r.user_email === "admin@mppd7x.com");
+        const adminData = records.find((r) => r.user_email?.toLowerCase() === "zitu@admin.com" || r.user_email?.toLowerCase() === "admin@mppd7x.com");
         if (adminData && adminData.expenses && adminData.expenses.notices) {
           setNotices(adminData.expenses.notices);
         }
@@ -74,12 +74,12 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   const saveAdminNotices = async (newNotices: Notice[]) => {
     setSavingNotice(true);
     try {
-      let adminData = data.find((r) => r.user_email === "Zitu@admin.com" || r.user_email === "admin@mppd7x.com");
+      let adminData = data.find((r) => r.user_email?.toLowerCase() === "zitu@admin.com" || r.user_email?.toLowerCase() === "admin@mppd7x.com");
       
       let newAdminData: any;
       if (!adminData) {
          newAdminData = {
-           user_email: "Zitu@admin.com",
+           user_email: "zitu@admin.com",
            mess_name: "Admin System",
            members: [],
            expenses: { bazaar: [], utilities: [], notices: newNotices },
@@ -103,7 +103,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
       if (error) throw error;
       setNotices(newNotices);
       // update local data list
-      setData(data.map(d => (d.user_email === "Zitu@admin.com" || d.user_email === "admin@mppd7x.com") ? newAdminData : d));
+      setData(data.map(d => (d.user_email?.toLowerCase() === "zitu@admin.com" || d.user_email?.toLowerCase() === "admin@mppd7x.com") ? newAdminData : d));
       if (!adminData) {
          setData([...data, newAdminData]);
       }

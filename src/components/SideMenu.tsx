@@ -578,32 +578,7 @@ export default function SideMenu({
                 </div>
               </button>
 
-              {/* fixed meal toggle */}
-              <div
-                onClick={() => {
-                  onClose();
-                  onTabChange(2); // Match Tab Index 2 (Meal List)
-                }}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-brand-card hover:bg-brand-accent/5 border border-purple-950/20 hover:border-brand-accent/30 transition-all text-left cursor-pointer group"
-                id="btn-menu-meals"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="p-2.5 rounded-lg bg-brand-amber/10 text-brand-amber group-hover:scale-105 transition-transform">
-                    <Flame className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold text-zinc-100 block">
-                      নির্ধারিত মিল (Fixed Meals)
-                    </span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">
-                      সব মেম্বারদের জন্য সমান মাসিক মিল কনফিগারেশন
-                    </span>
-                  </div>
-                </div>
-                <div className="text-[11px] font-bold text-brand-amber bg-brand-amber/10 px-2 py-0.5 rounded">
-                  {fixedMealCount} meals/mo
-                </div>
-              </div>
+
 
               <button
                 onClick={() => setActiveModal("export_pdf")}

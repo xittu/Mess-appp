@@ -83,6 +83,7 @@ export default function App() {
   const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
   const [globalNotices, setGlobalNotices] = useState<Notice[]>([]);
   const [showNoticePopup, setShowNoticePopup] = useState<boolean>(false);
+  const [missingAttendance, setMissingAttendance] = useState<boolean>(false);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -185,10 +186,9 @@ export default function App() {
         const { data: adminData } = await supabase
           .from("mess_data")
           .select("expenses")
-          .eq("user_email", "Zitu@admin.com")
-          .single();
-        if (adminData && adminData.expenses && adminData.expenses.notices) {
-           const notices = adminData.expenses.notices;
+          .in("user_email", ["zitu@admin.com", "Zitu@admin.com", "admin@mppd7x.com"]).limit(1);
+        if (adminData && adminData.length > 0 && adminData[0].expenses && adminData[0].expenses.notices) {
+           const notices = adminData[0].expenses.notices;
            setGlobalNotices(notices);
            if (notices.some((n: any) => n.isActive)) {
              // Show popup only if there are active notices
@@ -287,6 +287,60 @@ export default function App() {
 
     setIsSyncing(false);
   };
+
+  
+  useEffect(() => {
+    if (!messId || members.length === 0) return;
+    
+    const checkAttendance = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("attendance")
+        .select("member_name")
+        .eq("mess_id", messId)
+        .eq("date", today);
+      
+      if (data) {
+        setMissingAttendance(data.length < members.length);
+      }
+    };
+
+    checkAttendance();
+    const interval = setInterval(checkAttendance, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [messId, members]);
+
+  useEffect(() => {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    const checkTimeForNotification = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      
+      const timeKey = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate() + "-" + hours;
+      const lastNotified = localStorage.getItem("lastAttendanceNotify");
+
+      if (lastNotified === timeKey) return;
+
+      if ((hours === 7 || hours === 13 || hours === 18) && minutes === 0) {
+        if (Notification.permission === "granted") {
+          new Notification("হাজিরা রিমাইন্ডার", {
+            body: "অনুগ্রহ করে আপনার আজকের হাজিরা নিশ্চিত করুন।",
+            icon: "/pwa-192x192.png"
+          });
+          localStorage.setItem("lastAttendanceNotify", timeKey);
+        }
+      }
+    };
+
+    const timeInterval = setInterval(checkTimeForNotification, 60000);
+    checkTimeForNotification();
+
+    return () => clearInterval(timeInterval);
+  }, []);
 
   // --- Auth Observer ---
   useEffect(() => {
@@ -1333,9 +1387,15 @@ export default function App() {
         {/* Floating Job Register Button */}
         <button
           onClick={() => setIsJobRegisterOpen(true)}
-          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group"
+          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group relative"
           aria-label="Open Job Register"
         >
+          {missingAttendance && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-indigo-600"></span>
+            </span>
+          )}
           <ClipboardList className="w-6 h-6 group-hover:scale-110 transition-transform" />
         </button>
 

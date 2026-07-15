@@ -13,7 +13,8 @@ import {
   Nfc,
   AlertTriangle,
   Loader2,
-  X
+  X,
+  ArrowLeft
 } from "lucide-react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -488,8 +489,11 @@ export default function JobRegisterTab({
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 text-zinc-200">
-      <div className="p-3 border-b border-purple-950/30 flex justify-center bg-zinc-900/50">
-        <div className="flex w-full bg-zinc-900 rounded-lg p-1 border border-zinc-800">
+      <div className="p-3 border-b border-purple-950/30 flex items-center justify-between bg-zinc-900/50">
+        <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors mr-2 flex-shrink-0">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex flex-1 max-w-[280px] mx-auto bg-zinc-900 rounded-lg p-1 border border-zinc-800">
           <button
             onClick={() => setViewMode("daily")}
             className={`flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
