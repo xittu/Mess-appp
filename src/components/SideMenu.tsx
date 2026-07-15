@@ -45,6 +45,8 @@ interface SideMenuProps {
   currentUserEmail?: string;
   isAdmin?: boolean;
   onOpenAdminPanel?: () => void;
+  onNewSession?: (password: string) => Promise<boolean>;
+  archives?: any[];
 }
 
 export default function SideMenu({
@@ -70,12 +72,16 @@ export default function SideMenu({
   currentUserEmail,
   isAdmin,
   onOpenAdminPanel,
+  onNewSession,
+  archives = [],
 }: SideMenuProps) {
   const [activeModal, setActiveModal] = useState<
-    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | null
+    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | "new_session" | null
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [sessionPassword, setSessionPassword] = useState("");
+  const [isSessionLoading, setIsSessionLoading] = useState(false);
 
   // Export Date Range States
   const [exportStartDate, setExportStartDate] = useState("");
@@ -133,30 +139,51 @@ export default function SideMenu({
     });
   };
 
-  const handleExportPDF = (isJobCycle: boolean = false, startDate?: string, endDate?: string) => {
+    const handleExportPDF = (isJobCycle: boolean = false, startDate?: string, endDate?: string) => {
     let filteredExpenses = expenses;
     let filteredDeposits = deposits;
+
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
-      filteredExpenses = expenses.filter(e => {
+
+      filteredExpenses = [];
+      let nd: Record<string, number> = {};
+      let filteredTx: any[] = [];
+
+      filteredExpenses.push(...expenses.filter((e) => {
         const ed = new Date(e.date);
         return ed >= start && ed <= end;
-      });
+      }));
       if (depositHistory) {
-        const nd: Record<string, number> = {};
-        depositHistory.filter(d => {
+        filteredTx.push(...depositHistory.filter((d) => {
           const dd = new Date(d.date);
           return dd >= start && dd <= end;
-        }).forEach(d => {
-          nd[d.memberId] = (nd[d.memberId] || 0) + d.amount;
-        });
-        filteredDeposits = nd;
+        }));
       }
-    }
 
+      archives.forEach((arc: any) => {
+        if (arc.expenses) {
+          filteredExpenses.push(...arc.expenses.filter((e: any) => {
+            const ed = new Date(e.date);
+            return ed >= start && ed <= end;
+          }));
+        }
+        if (arc.depositTransactions) {
+          filteredTx.push(...arc.depositTransactions.filter((d: any) => {
+            const dd = new Date(d.date);
+            return dd >= start && dd <= end;
+          }));
+        }
+      });
+
+      filteredTx.forEach((d) => {
+        nd[d.memberId] = (nd[d.memberId] || 0) + d.amount;
+      });
+      filteredDeposits = nd;
+    }
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert(
@@ -579,6 +606,26 @@ export default function SideMenu({
               </button>
 
 
+
+              
+              <button
+                onClick={() => setActiveModal("new_session")}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-orange-950/10 hover:bg-orange-950/20 border border-orange-900/35 hover:border-orange-500/40 transition-all text-left cursor-pointer group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-400 group-hover:scale-105 transition-transform">
+                    <RotateCcw className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-orange-300 block font-sans">
+                      নতুন সেশন শুরু (New Session)
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
+                      হিসাব রিসেট করে নতুন সেশন শুরু করুন
+                    </span>
+                  </div>
+                </div>
+              </button>
 
               <button
                 onClick={() => setActiveModal("export_pdf")}
@@ -1105,6 +1152,59 @@ export default function SideMenu({
                       })}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            
+            {activeModal === "new_session" && (
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="flex items-center gap-3 text-zinc-100 mb-2">
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <h4 className="font-bold text-sm">নতুন সেশন শুরু</h4>
+                </div>
+                
+                <div className="bg-orange-950/20 border border-orange-900/30 rounded-xl p-4 text-center">
+                  <RotateCcw className="w-8 h-8 text-orange-400 mx-auto mb-3" />
+                  <p className="text-xs text-zinc-300 mb-5 leading-relaxed">
+                    সতর্কতা: নতুন সেশন শুরু করলে সকল খরচের হিসাব জিরো হয়ে যাবে। এই প্রক্রিয়াটি পূর্বাবস্থায় ফেরানো সম্ভব নয়।
+                  </p>
+                  
+                  <div className="space-y-3 text-left">
+                    <label className="block text-xs font-bold text-zinc-400">আপনার পাসওয়ার্ড দিন</label>
+                    <input
+                      type="password"
+                      value={sessionPassword}
+                      onChange={(e) => setSessionPassword(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs p-3 rounded-xl focus:outline-none focus:border-orange-500"
+                      placeholder="পাসওয়ার্ড..."
+                    />
+                    
+                    <button
+                      disabled={isSessionLoading || !sessionPassword}
+                      onClick={async () => {
+                        if (onNewSession) {
+                          setIsSessionLoading(true);
+                          const success = await onNewSession(sessionPassword);
+                          setIsSessionLoading(false);
+                          if (success) {
+                            setSessionPassword("");
+                            setActiveModal(null);
+                            onClose();
+                          }
+                        }
+                      }}
+                      className="w-full py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-orange-900/50 flex items-center justify-center gap-2 mt-4"
+                    >
+                      {isSessionLoading && <RotateCcw className="w-4 h-4 animate-spin" />}
+                      নিশ্চিত করুন
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

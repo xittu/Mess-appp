@@ -58,10 +58,13 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         }
       } else if (records) {
         setData(records as MessData[]);
-        // Find admin's notices
-        const adminData = records.find((r) => r.user_email?.toLowerCase() === "zitu@admin.com" || r.user_email?.toLowerCase() === "admin@mppd7x.com");
-        if (adminData && adminData.expenses && adminData.expenses.notices) {
-          setNotices(adminData.expenses.notices);
+        // Fetch notices from 'notices' table
+        const { data: noticesData } = await supabase
+          .from("notices")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (noticesData) {
+          setNotices(noticesData);
         }
       }
     } catch (err) {
@@ -71,68 +74,59 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const saveAdminNotices = async (newNotices: Notice[]) => {
+    const handleAddNotice = async () => {
+    if (!newNoticeMessage.trim()) return;
     setSavingNotice(true);
     try {
-      let adminData = data.find((r) => r.user_email?.toLowerCase() === "zitu@admin.com" || r.user_email?.toLowerCase() === "admin@mppd7x.com");
+      const { data, error } = await supabase.from("notices").insert([{
+        title: "Admin Notice",
+        content: newNoticeMessage.trim(),
+        is_active: true
+      }]).select();
       
-      let newAdminData: any;
-      if (!adminData) {
-         newAdminData = {
-           user_email: "zitu@admin.com",
-           mess_name: "Admin System",
-           members: [],
-           expenses: { bazaar: [], utilities: [], notices: newNotices },
-           meals: { fixedMealCount: 0 },
-           deposits: { balances: {}, history: [] },
-           duties: [],
-           last_updated: new Date()
-         };
-      } else {
-         newAdminData = {
-           ...adminData,
-           expenses: {
-             ...(adminData.expenses || { bazaar: [], utilities: [] }),
-             notices: newNotices
-           },
-           last_updated: new Date()
-         };
+      if (error) {
+        alert("Error adding notice: " + error.message);
+        throw error;
       }
-
-      const { error } = await supabase.from("mess_data").upsert(newAdminData, { onConflict: "user_email" });
-      if (error) throw error;
-      setNotices(newNotices);
-      // update local data list
-      setData(data.map(d => (d.user_email?.toLowerCase() === "zitu@admin.com" || d.user_email?.toLowerCase() === "admin@mppd7x.com") ? newAdminData : d));
-      if (!adminData) {
-         setData([...data, newAdminData]);
+      
+      if (data) {
+        setNotices([data[0], ...notices]);
       }
       setNewNoticeMessage("");
     } catch (err) {
-      console.error("Failed to save notice:", err);
-      alert("Failed to save notice!");
+      console.error(err);
     } finally {
       setSavingNotice(false);
     }
   };
 
-  const handleAddNotice = () => {
-    if (!newNoticeMessage.trim()) return;
-    const newNotice: Notice = {
-      id: Math.random().toString(36).substr(2, 9),
-      message: newNoticeMessage.trim(),
-      date: new Date().toISOString(),
-      isActive: true
-    };
-    saveAdminNotices([newNotice, ...notices]);
+  const handleDeleteNotice = async (id: string) => {
+    try {
+      const { error } = await supabase.from("notices").delete().eq("id", id);
+      if (error) {
+        alert("Error deleting notice: " + error.message);
+        throw error;
+      }
+      setNotices(notices.filter(n => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleDeleteNotice = (id: string) => {
-    saveAdminNotices(notices.filter(n => n.id !== id));
-  };
-
-  const handleToggleNotice = (id: string) => {
-    saveAdminNotices(notices.map(n => n.id === id ? { ...n, isActive: !n.isActive } : n));
+  const handleToggleNotice = async (id: string) => {
+    const notice = notices.find(n => n.id === id);
+    if (!notice) return;
+    
+    try {
+      const { error } = await supabase.from("notices").update({ is_active: !notice.is_active }).eq("id", id);
+      if (error) {
+        alert("Error updating notice: " + error.message);
+        throw error;
+      }
+      setNotices(notices.map(n => n.id === id ? { ...n, is_active: !notice.is_active } : n));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDownloadPDF = (messData: MessData) => {
@@ -359,18 +353,18 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               <div key={notice.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] text-zinc-500">
-                    {new Date(notice.date).toLocaleString()}
+                    {new Date(notice.created_at).toLocaleString()}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleNotice(notice.id)}
                       className={`px-2 py-1 text-[10px] font-bold rounded-full ${
-                        notice.isActive 
+                        notice.is_active 
                           ? "bg-emerald-500/20 text-emerald-400" 
                           : "bg-zinc-800 text-zinc-400"
                       }`}
                     >
-                      {notice.isActive ? "Active" : "Inactive"}
+                      {notice.is_active ? "Active" : "Inactive"}
                     </button>
                     <button
                       onClick={() => handleDeleteNotice(notice.id)}
@@ -381,7 +375,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
                 <p className="text-sm text-zinc-200 whitespace-pre-wrap leading-relaxed">
-                  {notice.message}
+                  {notice.content}
                 </p>
               </div>
             ))}

@@ -70,6 +70,7 @@ export default function App() {
   const [fixedMealCount, setFixedMealCount] = useState<number>(0);
   const [dutyAssignments, setDutyAssignments] = useState<DutyAssignment[]>([]);
   const [bazaarList, setBazaarList] = useState<BazaarItem[]>([]);
+  const [archives, setArchives] = useState<any[]>([]);
 
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
@@ -121,6 +122,7 @@ export default function App() {
         if (data.expenses && !Array.isArray(data.expenses)) {
           setExpenses(data.expenses.bazaar || []);
           setUtilities(data.expenses.utilities || []);
+          setArchives(data.expenses.archives || []);
         } else if (data.expenses) {
           setExpenses(data.expenses);
         }
@@ -157,6 +159,7 @@ export default function App() {
         if (data.expenses && !Array.isArray(data.expenses)) {
           setExpenses(data.expenses.bazaar || []);
           setUtilities(data.expenses.utilities || []);
+          setArchives(data.expenses.archives || []);
         } else if (data.expenses) {
           setExpenses(data.expenses);
         }
@@ -181,19 +184,16 @@ export default function App() {
         });
       }
     } finally {
-      // Fetch global notices from admin record
+            // Fetch global notices from notices table
       try {
-        const { data: adminData } = await supabase
-          .from("mess_data")
-          .select("expenses")
-          .in("user_email", ["zitu@admin.com", "Zitu@admin.com", "admin@mppd7x.com"]).limit(1);
-        if (adminData && adminData.length > 0 && adminData[0].expenses && adminData[0].expenses.notices) {
-           const notices = adminData[0].expenses.notices;
-           setGlobalNotices(notices);
-           if (notices.some((n: any) => n.isActive)) {
-             // Show popup only if there are active notices
-             setShowNoticePopup(true);
-           }
+        const { data: noticesData } = await supabase
+          .from("notices")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
+        if (noticesData && noticesData.length > 0) {
+           setGlobalNotices(noticesData);
+           setShowNoticePopup(true);
         }
       } catch (err) {
         console.error("Failed to load global notices", err);
@@ -228,6 +228,7 @@ export default function App() {
         bazaar: expensesList,
         utilities: utilitiesList,
         shared_list: bList || [],
+        archives: archives,
       },
       meals: { fixedMealCount: mealsCount, messName: nameOfMess },
       deposits: { balances: depositsMap, history: depositTxList },
@@ -342,6 +343,38 @@ export default function App() {
     return () => clearInterval(timeInterval);
   }, []);
 
+    // --- Real-time Notices Subscription ---
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:notices')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notices' },
+        (payload) => {
+          // Re-fetch all active notices when a change happens
+          supabase
+            .from("notices")
+            .select("*")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .then(({ data }) => {
+              if (data && data.length > 0) {
+                setGlobalNotices(data);
+                setShowNoticePopup(true);
+              } else {
+                setGlobalNotices([]);
+                setShowNoticePopup(false);
+              }
+            });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // --- Auth Observer ---
   useEffect(() => {
     if (
@@ -446,6 +479,70 @@ export default function App() {
   }, []);
 
   // Offline sync removed
+
+  
+  const handleNewSession = async (password: string) => {
+    if (!currentUser || !currentUser.email) return false;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: currentUser.email,
+        password: password,
+      });
+
+      if (error) {
+        toast.error("ভুল পাসওয়ার্ড। দয়া করে আবার চেষ্টা করুন।");
+        return false;
+      }
+
+      const newArchive = {
+        id: Date.now().toString(),
+        endDate: new Date().toISOString(),
+        expenses,
+        utilities,
+        deposits,
+        depositTransactions,
+        bazaarList,
+      };
+
+      const newArchives = [...archives, newArchive];
+      setArchives(newArchives);
+
+      setExpenses([]);
+      setUtilities([]);
+      setDepositTransactions([]);
+      setBazaarList([]);
+      setDeposits({});
+      
+      const updatedMembers = members.map(m => ({ ...m, meals: 0 }));
+      setMembers(updatedMembers);
+
+      const messPayload = {
+        user_email: currentUser.email,
+        members: updatedMembers,
+        expenses: {
+          bazaar: [],
+          utilities: [],
+          shared_list: [],
+          archives: newArchives,
+        },
+        meals: { fixedMealCount, messName },
+        deposits: { balances: {}, history: [] },
+        duties: dutyAssignments,
+        last_updated: new Date(),
+      };
+
+      await supabase
+        .from("mess_data")
+        .upsert(messPayload, { onConflict: "user_email" });
+
+      toast.success("নতুন সেশন শুরু হয়েছে। সকল খরচ ও জমা রিসেট করা হয়েছে।");
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("সেশন শুরু করতে সমস্যা হয়েছে।");
+      return false;
+    }
+  };
 
   // --- Real-time Actions Handlers with descriptive audit-trail notifications ---
 
@@ -1333,6 +1430,7 @@ export default function App() {
         {/* Slidable More Services Drawer Sheet */}
         <SideMenu
           isOpen={isMenuOpen}
+          archives={archives}
           onClose={() => setIsMenuOpen(false)}
           members={safeMembers}
           expenses={safeExpenses}
@@ -1345,6 +1443,7 @@ export default function App() {
           onAddDuty={handleAddDuty}
           onRemoveDuty={handleRemoveDuty}
           onClearAllData={handleClearAllData}
+          onNewSession={handleNewSession}
           onLogOut={handleLogOut}
           onAssignNfcTag={handleAssignNfcTag}
           onTabChange={(tabIdx) => {

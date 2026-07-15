@@ -51,7 +51,8 @@ export interface Attendance {
 
 export interface Notice {
   id: string;
-  message: string;
-  date: string;
-  isActive: boolean;
+  title: string;
+  content: string;
+  created_at: string;
+  is_active: boolean;
 }

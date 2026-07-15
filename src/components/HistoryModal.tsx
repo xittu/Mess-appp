@@ -58,7 +58,7 @@ export default function HistoryModal({
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Mess_History_${messName}_${monthName}.pdf`);
+      pdf.save(`Mess_History_${messName}.pdf`);
     } catch (e) {
       console.error("PDF generation failed:", e);
     }
