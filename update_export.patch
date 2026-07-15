@@ -1,0 +1,32 @@
+--- src/components/SideMenu.tsx
++++ src/components/SideMenu.tsx
+@@ -134,8 +134,23 @@
+-  const handleExportPDF = (isJobCycle: boolean = false) => {
++  const handleExportPDF = (isJobCycle: boolean = false, startDate?: string, endDate?: string) => {
++    let filteredExpenses = expenses;
++    let filteredDeposits = deposits;
++    if (startDate && endDate) {
++      filteredExpenses = expenses.filter(e => {
++        const ed = new Date(e.date);
++        return ed >= new Date(startDate) && ed <= new Date(endDate);
++      });
++      if (depositHistory) {
++        const fd = depositHistory.filter(d => {
++          const dd = new Date(d.date);
++          return dd >= new Date(startDate) && dd <= new Date(endDate);
++        });
++        const nd: Record<string, number> = {};
++        fd.forEach(d => { nd[d.memberId] = (nd[d.memberId] || 0) + d.amount; });
++        filteredDeposits = nd;
++      }
++    }
++
+     const printWindow = window.open("", "_blank");
+     if (!printWindow) {
+       alert(
+@@ -142,7 +157,7 @@
+     const membersTableRows = members
+       .map((member) => {
+-        const deposit = deposits[member.id] || 0;
++        const deposit = filteredDeposits[member.id] || 0;
+         const memberBazaarSpent = expenses

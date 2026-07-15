@@ -1,0 +1,48 @@
+--- src/components/SideMenu.tsx
++++ src/components/SideMenu.tsx
+@@ -204,7 +204,7 @@
+ 
+     const expensesList =
+-      expenses
++      filteredExpenses
+         .map(
+           (e) => `
+       <tr style="border-bottom: 1px solid #f1f5f9;">
+         <td style="padding: 8px 10px; color: #475569;">${e.date}</td>
+         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${e.desc}</td>
+         <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">৳${e.amount}</td>
+       </tr>
+     `,
+         )
+         .join("") ||
+       "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>চলমান মাসে কোনো বাজার খরচ যুক্ত করা হয়নি।</td></tr>";
+ 
+     const utilitiesList =
+       utilities
+         .map(
+           (u) => `
+       <tr style="border-bottom: 1px solid #f1f5f9;">
+         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${u.name}</td>
+         <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">৳${u.amount}</td>
+       </tr>
+     `,
+         )
+         .join("") ||
+       "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
+ 
+-    const reportTitle = isJobCycle
++    let reportTitle = isJobCycle
+       ? `${currentUserName} - জব সাইকেল রিপোর্ট (20th to 20th)`
+       : `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
+-    const reportSubtitle = isJobCycle
++    let reportSubtitle = isJobCycle
+       ? "পূর্ববর্তী মাসের ২০ তারিখ থেকে চলতি মাসের ২০ তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।"
+       : "চলমান মাসের মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।";
++
++    if (startDate && endDate) {
++      reportTitle = `${currentUserName} - কাস্টম রিপোর্ট (${startDate} থেকে ${endDate})`;
++      reportSubtitle = `${startDate} থেকে ${endDate} তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।`;
++    }
+ 
+     const htmlContent = `
+       <!DOCTYPE html>

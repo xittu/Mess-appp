@@ -37,7 +37,9 @@ import {
   DutyAssignment,
   Deposit,
   BazaarItem,
+  Notice,
 } from "./types";
+import NoticePopup from "./components/NoticePopup";
 
 export default function App() {
   const getMockUser = () => {
@@ -79,6 +81,8 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
+  const [globalNotices, setGlobalNotices] = useState<Notice[]>([]);
+  const [showNoticePopup, setShowNoticePopup] = useState<boolean>(false);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -176,6 +180,25 @@ export default function App() {
         });
       }
     } finally {
+      // Fetch global notices from admin record
+      try {
+        const { data: adminData } = await supabase
+          .from("mess_data")
+          .select("expenses")
+          .eq("user_email", "Zitu@admin.com")
+          .single();
+        if (adminData && adminData.expenses && adminData.expenses.notices) {
+           const notices = adminData.expenses.notices;
+           setGlobalNotices(notices);
+           if (notices.some((n: any) => n.isActive)) {
+             // Show popup only if there are active notices
+             setShowNoticePopup(true);
+           }
+        }
+      } catch (err) {
+        console.error("Failed to load global notices", err);
+      }
+      
       // Once loaded, setup is complete
       setAuthLoading(false);
     }
@@ -1283,7 +1306,7 @@ export default function App() {
           }
           currentUserId={currentUser?.id}
           currentUserEmail={currentUser?.email}
-          isAdmin={currentUser?.email === "admin@mppd7x.com"}
+          isAdmin={currentUser?.email?.toLowerCase() === "zitu@admin.com"}
           onOpenAdminPanel={() => {
             setIsMenuOpen(false);
             setShowAdminPanel(true);
@@ -1342,6 +1365,13 @@ export default function App() {
             </div>
           )}
         </AnimatePresence>
+        
+        {showNoticePopup && (
+          <NoticePopup
+            notices={globalNotices}
+            onClose={() => setShowNoticePopup(false)}
+          />
+        )}
       </div>
     </div>
   );

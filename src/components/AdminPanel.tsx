@@ -11,13 +11,17 @@ import {
   Download,
   ArrowLeft,
   Home,
+  Bell,
+  Plus,
+  Trash2,
 } from "lucide-react";
+import { Notice } from "../types";
 
 interface MessData {
   user_email: string;
   mess_name: string;
   members: any[];
-  expenses: { bazaar: any[]; utilities: any[] };
+  expenses: { bazaar: any[]; utilities: any[]; notices?: Notice[] };
   meals: { fixedMealCount: number; messName?: string };
   deposits: { balances: Record<string, number>; history: any[] };
   duties: any[];
@@ -29,10 +33,16 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedMess, setSelectedMess] = useState<MessData | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<"messes" | "notices">("messes");
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [newNoticeMessage, setNewNoticeMessage] = useState("");
+  const [savingNotice, setSavingNotice] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
 
   const fetchData = async () => {
     try {
@@ -48,12 +58,81 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         }
       } else if (records) {
         setData(records as MessData[]);
+        // Find admin's notices
+        const adminData = records.find((r) => r.user_email === "Zitu@admin.com" || r.user_email === "admin@mppd7x.com");
+        if (adminData && adminData.expenses && adminData.expenses.notices) {
+          setNotices(adminData.expenses.notices);
+        }
       }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveAdminNotices = async (newNotices: Notice[]) => {
+    setSavingNotice(true);
+    try {
+      let adminData = data.find((r) => r.user_email === "Zitu@admin.com" || r.user_email === "admin@mppd7x.com");
+      
+      let newAdminData: any;
+      if (!adminData) {
+         newAdminData = {
+           user_email: "Zitu@admin.com",
+           mess_name: "Admin System",
+           members: [],
+           expenses: { bazaar: [], utilities: [], notices: newNotices },
+           meals: { fixedMealCount: 0 },
+           deposits: { balances: {}, history: [] },
+           duties: [],
+           last_updated: new Date()
+         };
+      } else {
+         newAdminData = {
+           ...adminData,
+           expenses: {
+             ...(adminData.expenses || { bazaar: [], utilities: [] }),
+             notices: newNotices
+           },
+           last_updated: new Date()
+         };
+      }
+
+      const { error } = await supabase.from("mess_data").upsert(newAdminData, { onConflict: "user_email" });
+      if (error) throw error;
+      setNotices(newNotices);
+      // update local data list
+      setData(data.map(d => (d.user_email === "Zitu@admin.com" || d.user_email === "admin@mppd7x.com") ? newAdminData : d));
+      if (!adminData) {
+         setData([...data, newAdminData]);
+      }
+      setNewNoticeMessage("");
+    } catch (err) {
+      console.error("Failed to save notice:", err);
+      alert("Failed to save notice!");
+    } finally {
+      setSavingNotice(false);
+    }
+  };
+
+  const handleAddNotice = () => {
+    if (!newNoticeMessage.trim()) return;
+    const newNotice: Notice = {
+      id: Math.random().toString(36).substr(2, 9),
+      message: newNoticeMessage.trim(),
+      date: new Date().toISOString(),
+      isActive: true
+    };
+    saveAdminNotices([newNotice, ...notices]);
+  };
+
+  const handleDeleteNotice = (id: string) => {
+    saveAdminNotices(notices.filter(n => n.id !== id));
+  };
+
+  const handleToggleNotice = (id: string) => {
+    saveAdminNotices(notices.map(n => n.id === id ? { ...n, isActive: !n.isActive } : n));
   };
 
   const handleDownloadPDF = (messData: MessData) => {
@@ -117,7 +196,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
           <h2 className="text-sm font-bold text-white tracking-wide">
             {selectedMess
               ? `Mess Details: ${selectedMess.mess_name || selectedMess.meals?.messName || "Unknown"}`
-              : "Admin Data Monitor"}
+              : "Admin Hub"}
           </h2>
         </div>
         <button
@@ -127,6 +206,32 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {!selectedMess && (
+        <div className="flex items-center gap-2 p-4 pb-0">
+          <button
+            onClick={() => setActiveTab("messes")}
+            className={`flex-1 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === "messes"
+                ? "border-brand-amber text-brand-amber bg-brand-amber/10"
+                : "border-transparent text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            All Messes
+          </button>
+          <button
+            onClick={() => setActiveTab("notices")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
+              activeTab === "notices"
+                ? "border-purple-500 text-purple-400 bg-purple-500/10"
+                : "border-transparent text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <Bell className="w-4 h-4" />
+            Notice Board
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -171,7 +276,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         </div>
-      ) : (
+      ) : activeTab === "messes" ? (
         <div className="flex-1 flex flex-col p-4">
           {/* Search */}
           <div className="relative mb-4">
@@ -224,6 +329,65 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             {filteredData.length === 0 && (
               <div className="text-center text-sm text-zinc-500 py-10">
                 No records found.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-purple-900/30 p-4 rounded-xl mb-6">
+            <h3 className="text-sm font-bold text-white mb-3">Add New Notice</h3>
+            <textarea
+              value={newNoticeMessage}
+              onChange={(e) => setNewNoticeMessage(e.target.value)}
+              placeholder="Write an important notice for all users..."
+              className="w-full h-24 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3 resize-none"
+            />
+            <button
+              onClick={handleAddNotice}
+              disabled={!newNoticeMessage.trim() || savingNotice}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold rounded-lg transition-transform active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              {savingNotice ? "Publishing..." : "Publish Notice"}
+            </button>
+          </div>
+
+          <h3 className="text-sm font-bold text-zinc-400 mb-3 px-1">All Notices</h3>
+          <div className="space-y-3">
+            {notices.map((notice) => (
+              <div key={notice.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] text-zinc-500">
+                    {new Date(notice.date).toLocaleString()}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleNotice(notice.id)}
+                      className={`px-2 py-1 text-[10px] font-bold rounded-full ${
+                        notice.isActive 
+                          ? "bg-emerald-500/20 text-emerald-400" 
+                          : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {notice.isActive ? "Active" : "Inactive"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteNotice(notice.id)}
+                      className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                  {notice.message}
+                </p>
+              </div>
+            ))}
+            {notices.length === 0 && (
+              <div className="text-center text-sm text-zinc-500 py-10">
+                No notices published yet.
               </div>
             )}
           </div>

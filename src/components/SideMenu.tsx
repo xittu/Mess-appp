@@ -20,7 +20,7 @@ import {
   ChefHat,
   ShoppingBag,
 } from "lucide-react";
-import { Member, Expense, UtilityExpense, DutyAssignment } from "../types";
+import { Member, Expense, UtilityExpense, DutyAssignment, Deposit } from "../types";
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -29,6 +29,7 @@ interface SideMenuProps {
   expenses: Expense[];
   utilities: UtilityExpense[];
   deposits: Record<string, number>;
+  depositHistory?: Deposit[];
   fixedMealCount: number;
   dutyAssignments: DutyAssignment[];
   onAddDuty: (duty: DutyAssignment) => void;
@@ -53,6 +54,7 @@ export default function SideMenu({
   expenses,
   utilities,
   deposits,
+  depositHistory,
   fixedMealCount,
   dutyAssignments,
   onAddDuty,
@@ -74,6 +76,10 @@ export default function SideMenu({
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+
+  // Export Date Range States
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   // Duty Form States
   const [selectedDay, setSelectedDay] = useState("শনিবার");
@@ -127,7 +133,30 @@ export default function SideMenu({
     });
   };
 
-  const handleExportPDF = (isJobCycle: boolean = false) => {
+  const handleExportPDF = (isJobCycle: boolean = false, startDate?: string, endDate?: string) => {
+    let filteredExpenses = expenses;
+    let filteredDeposits = deposits;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      filteredExpenses = expenses.filter(e => {
+        const ed = new Date(e.date);
+        return ed >= start && ed <= end;
+      });
+      if (depositHistory) {
+        const nd: Record<string, number> = {};
+        depositHistory.filter(d => {
+          const dd = new Date(d.date);
+          return dd >= start && dd <= end;
+        }).forEach(d => {
+          nd[d.memberId] = (nd[d.memberId] || 0) + d.amount;
+        });
+        filteredDeposits = nd;
+      }
+    }
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert(
@@ -138,8 +167,8 @@ export default function SideMenu({
 
     const membersTableRows = members
       .map((member) => {
-        const deposit = deposits[member.id] || 0;
-        const memberBazaarSpent = expenses
+        const deposit = filteredDeposits[member.id] || 0;
+        const memberBazaarSpent = filteredExpenses
           .filter((e) => e.memberId === member.id)
           .reduce((sum, item) => sum + item.amount, 0);
         const totalContribution = deposit + memberBazaarSpent;
@@ -175,7 +204,7 @@ export default function SideMenu({
       .join("");
 
     const expensesList =
-      expenses
+      filteredExpenses
         .map(
           (e) => `
       <tr style="border-bottom: 1px solid #f1f5f9;">
@@ -201,13 +230,17 @@ export default function SideMenu({
         .join("") ||
       "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
 
-    const reportTitle = isJobCycle 
-      ? `${currentUserName} - জব সাইকেল রিপোর্ট (20th to 20th)` 
+    let reportTitle = isJobCycle
+      ? `${currentUserName} - জব সাইকেল রিপোর্ট (20th to 20th)`
       : `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
-
-    const reportSubtitle = isJobCycle 
-      ? "পূর্ববর্তী মাসের ২০ তারিখ থেকে চলতি মাসের ২০ তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।" 
+    let reportSubtitle = isJobCycle
+      ? "পূর্ববর্তী মাসের ২০ তারিখ থেকে চলতি মাসের ২০ তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।"
       : "চলমান মাসের মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।";
+      
+    if (startDate && endDate) {
+      reportTitle = `${currentUserName} - কাস্টম রিপোর্ট (${startDate} থেকে ${endDate})`;
+      reportSubtitle = `${startDate} থেকে ${endDate} তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।`;
+    }
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -1135,6 +1168,39 @@ export default function SideMenu({
                       className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-indigo-900/50"
                     >
                       জব সাইকেল রিপোর্ট (20th - 20th)
+                    </button>
+                  </div>
+                  
+                  <div className="mt-6 pt-6 border-t border-emerald-900/30 text-left">
+                    <h5 className="text-xs font-bold text-emerald-400 mb-3">কাস্টম তারিখ রিপোর্ট</h5>
+                    <div className="flex gap-2 mb-3">
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-zinc-400 mb-1">শুরু</label>
+                        <input
+                          type="date"
+                          value={exportStartDate}
+                          onChange={(e) => setExportStartDate(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs p-2 rounded-lg focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-zinc-400 mb-1">শেষ</label>
+                        <input
+                          type="date"
+                          value={exportEndDate}
+                          onChange={(e) => setExportEndDate(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs p-2 rounded-lg focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleExportPDF(false, exportStartDate, exportEndDate);
+                      }}
+                      disabled={!exportStartDate || !exportEndDate}
+                      className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-700"
+                    >
+                      কাস্টম পিডিএফ ডাউনলোড
                     </button>
                   </div>
                 </div>

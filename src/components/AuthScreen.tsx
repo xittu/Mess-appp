@@ -152,11 +152,11 @@ export default function AuthScreen({
 
   const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminPassInput === "11##11") {
+    if (adminPassInput === "1234$8765") {
       setAdminLoading(true);
       setAdminError(null);
       try {
-        const adminEmail = "admin@mppd7x.com";
+        const adminEmail = "Zitu@admin.com";
         // Just bypass directly since they got the admin pass right
         const MU = {
           id: "admin-mock123",
@@ -266,10 +266,10 @@ export default function AuthScreen({
         }
       } else {
         // Sign In Mode
-        if (email.trim() === "admin@mppd7x.com" && password === "11##11") {
+        if (email.trim().toLowerCase() === "zitu@admin.com" && password === "1234$8765") {
           const MU = {
             id: "admin-mock123",
-            email: email.trim(),
+            email: "Zitu@admin.com",
             user_metadata: { displayName: "Admin", photoURL: "MPPD7X" },
           };
           (window as any).__MOCK_USER__ = MU;

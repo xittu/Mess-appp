@@ -48,3 +48,10 @@ export interface Attendance {
   overtime_hours?: number;
   mess_id?: string;
 }
+
+export interface Notice {
+  id: string;
+  message: string;
+  date: string;
+  isActive: boolean;
+}
