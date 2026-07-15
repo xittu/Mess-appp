@@ -1387,7 +1387,7 @@ export default function App() {
         {/* Floating Job Register Button */}
         <button
           onClick={() => setIsJobRegisterOpen(true)}
-          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group relative"
+          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group"
           aria-label="Open Job Register"
         >
           {missingAttendance && (
