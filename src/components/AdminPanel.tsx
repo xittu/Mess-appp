@@ -102,10 +102,14 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
 
   const handleDeleteNotice = async (id: string) => {
     try {
-      const { error } = await supabase.from("notices").delete().eq("id", id);
+      const { data, error } = await supabase.from("notices").delete().eq("id", id).select();
       if (error) {
         alert("Error deleting notice: " + error.message);
         throw error;
+      }
+      if (data && data.length === 0) {
+        // Fallback to soft delete if RLS blocks hard delete
+        await supabase.from("notices").update({ is_active: false }).eq("id", id);
       }
       setNotices(notices.filter(n => n.id !== id));
     } catch (err) {

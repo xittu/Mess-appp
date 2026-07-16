@@ -193,7 +193,11 @@ export default function App() {
           .order("created_at", { ascending: false });
         if (noticesData && noticesData.length > 0) {
            setGlobalNotices(noticesData);
-           setShowNoticePopup(true);
+           const dismissed = JSON.parse(localStorage.getItem('dismissedNotices') || '[]');
+           const hasNew = noticesData.some(n => !dismissed.includes(n.id));
+           if (hasNew) {
+             setShowNoticePopup(true);
+           }
         }
       } catch (err) {
         console.error("Failed to load global notices", err);
@@ -312,28 +316,44 @@ export default function App() {
   }, [messId, members]);
 
   useEffect(() => {
-    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
+    try {
+      if ('Notification' in window) {
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+          Notification.requestPermission().catch(console.error);
+        }
+      }
+    } catch (e) {
+      console.error("Notification permission error:", e);
     }
 
     const checkTimeForNotification = () => {
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      
-      const timeKey = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate() + "-" + hours;
-      const lastNotified = localStorage.getItem("lastAttendanceNotify");
+      try {
+        if (!('Notification' in window)) return;
+        
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        
+        const timeKey = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate() + "-" + hours;
+        const lastNotified = localStorage.getItem("lastAttendanceNotify");
 
-      if (lastNotified === timeKey) return;
+        if (lastNotified === timeKey) return;
 
-      if ((hours === 7 || hours === 13 || hours === 18) && minutes === 0) {
-        if (Notification.permission === "granted") {
-          new Notification("হাজিরা রিমাইন্ডার", {
-            body: "অনুগ্রহ করে আপনার আজকের হাজিরা নিশ্চিত করুন।",
-            icon: "/pwa-192x192.png"
-          });
-          localStorage.setItem("lastAttendanceNotify", timeKey);
+        if ((hours === 7 || hours === 13 || hours === 18) && minutes === 0) {
+          if (Notification.permission === "granted") {
+            try {
+              new Notification("হাজিরা রিমাইন্ডার", {
+                body: "অনুগ্রহ করে আপনার আজকের হাজিরা নিশ্চিত করুন।",
+                icon: "/pwa-192x192.png"
+              });
+            } catch (err) {
+              console.error("Error showing notification:", err);
+            }
+            localStorage.setItem("lastAttendanceNotify", timeKey);
+          }
         }
+      } catch (err) {
+        console.error("Notification check error:", err);
       }
     };
 
@@ -360,7 +380,9 @@ export default function App() {
             .then(({ data }) => {
               if (data && data.length > 0) {
                 setGlobalNotices(data);
-                setShowNoticePopup(true);
+                if (payload.eventType === 'INSERT') {
+                  setShowNoticePopup(true);
+                }
               } else {
                 setGlobalNotices([]);
                 setShowNoticePopup(false);
@@ -1528,7 +1550,12 @@ export default function App() {
         {showNoticePopup && (
           <NoticePopup
             notices={globalNotices}
-            onClose={() => setShowNoticePopup(false)}
+            onClose={() => {
+              setShowNoticePopup(false);
+              const dismissed = JSON.parse(localStorage.getItem('dismissedNotices') || '[]');
+              const newDismissed = [...new Set([...dismissed, ...globalNotices.map(n => n.id)])];
+              localStorage.setItem('dismissedNotices', JSON.stringify(newDismissed));
+            }}
           />
         )}
       </div>
