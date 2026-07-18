@@ -380,7 +380,9 @@ export default function App() {
             .then(({ data }) => {
               if (data && data.length > 0) {
                 setGlobalNotices(data);
-                if (payload.eventType === 'INSERT') {
+                const dismissed = JSON.parse(localStorage.getItem('dismissedNotices') || '[]');
+                const hasNew = data.some((n: any) => !dismissed.includes(n.id));
+                if (hasNew) {
                   setShowNoticePopup(true);
                 }
               } else {

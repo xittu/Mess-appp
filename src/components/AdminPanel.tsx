@@ -36,7 +36,8 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   
   const [activeTab, setActiveTab] = useState<"messes" | "notices">("messes");
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [newNoticeMessage, setNewNoticeMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const [noticeText, setNoticeText] = useState("");
   const [savingNotice, setSavingNotice] = useState(false);
 
   useEffect(() => {
@@ -75,25 +76,29 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   };
 
     const handleAddNotice = async () => {
-    if (!newNoticeMessage.trim()) return;
+    if (!noticeText.trim() || !title.trim()) {
+      alert("Title and content are required.");
+      return;
+    }
     setSavingNotice(true);
     try {
       const { data, error } = await supabase.from("notices").insert([{
-        title: "Admin Notice",
-        content: newNoticeMessage.trim(),
+        title: title.trim(),
+        content: noticeText.trim(),
         is_active: true
       }]).select();
       
       if (error) {
-        alert("Error adding notice: " + error.message);
         throw error;
       }
       
       if (data) {
         setNotices([data[0], ...notices]);
       }
-      setNewNoticeMessage("");
-    } catch (err) {
+      setTitle("");
+      setNoticeText("");
+    } catch (err: any) {
+      alert("Submission error: " + err.message);
       console.error(err);
     } finally {
       setSavingNotice(false);
@@ -104,15 +109,18 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
     try {
       const { data, error } = await supabase.from("notices").delete().eq("id", id).select();
       if (error) {
-        alert("Error deleting notice: " + error.message);
         throw error;
       }
+      
+      // If data is empty, it means RLS blocked the delete operation
       if (data && data.length === 0) {
-        // Fallback to soft delete if RLS blocks hard delete
-        await supabase.from("notices").update({ is_active: false }).eq("id", id);
+        alert("Delete failed: RLS Policy blocking the action. \n\nPlease go to your Supabase Dashboard -> Database -> Policies (or Authentication -> Policies) and add a 'DELETE' policy for the 'notices' table to allow this action.");
+        return; // Don't remove from UI so user knows it failed
       }
+      
       setNotices(notices.filter(n => n.id !== id));
-    } catch (err) {
+    } catch (err: any) {
+      alert("Error deleting notice: " + err.message);
       console.error(err);
     }
   };
@@ -335,15 +343,22 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         <div className="flex-1 flex flex-col p-4 overflow-y-auto">
           <div className="bg-zinc-900 border border-purple-900/30 p-4 rounded-xl mb-6">
             <h3 className="text-sm font-bold text-white mb-3">Add New Notice</h3>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Notice Title (e.g., Update, Maintenance)"
+              className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3"
+            />
             <textarea
-              value={newNoticeMessage}
-              onChange={(e) => setNewNoticeMessage(e.target.value)}
+              value={noticeText}
+              onChange={(e) => setNoticeText(e.target.value)}
               placeholder="Write an important notice for all users..."
               className="w-full h-24 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3 resize-none"
             />
             <button
               onClick={handleAddNotice}
-              disabled={!newNoticeMessage.trim() || savingNotice}
+              disabled={!noticeText.trim() || !title.trim() || savingNotice}
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold rounded-lg transition-transform active:scale-95"
             >
               <Plus className="w-4 h-4" />
