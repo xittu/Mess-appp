@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import PasswordChangeModal from "./PasswordChangeModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "../contexts/LanguageContext";
+import { LanguageType } from "../i18n/translations";
+import { Globe } from "lucide-react";
 import {
   History, X,
   Calculator,
@@ -76,13 +79,14 @@ export default function SideMenu({
   archives = [],
 }: SideMenuProps) {
   const [activeModal, setActiveModal] = useState<
-    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | "new_session" | "old_sessions" | null
+    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | "new_session" | "old_sessions" | "language" | null
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [sessionPassword, setSessionPassword] = useState("");
   const [isSessionLoading, setIsSessionLoading] = useState(false);
 
+  const { language, setLanguage, t } = useLanguage();
   // Export Date Range States
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
@@ -90,7 +94,7 @@ export default function SideMenu({
   // Duty Form States
   const [selectedDay, setSelectedDay] = useState("শনিবার");
   const [selectedMember, setSelectedMember] = useState("");
-  const [selectedRole, setSelectedRole] = useState("বাজার দায়িত্ব");
+  const [selectedRole, setSelectedRole] = useState(t("sideMenuFixed.roleBazaar"));
 
   // Custom Dropdown Open States
   const [isDaySelectOpen, setIsDaySelectOpen] = useState(false);
@@ -176,7 +180,7 @@ export default function SideMenu({
       const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
       const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
       const isDue = balance < 0;
-      const statusText = isDue ? `ব্যালেন্স: - ৳${Math.abs(balance)}` : `ব্যালেন্স: ৳${balance}`;
+      const statusText = isDue ? `{t("sideMenuFixed.balance")}- ৳${Math.abs(balance)}` : `{t("sideMenuFixed.balance")}৳${balance}`;
       const statusColor = isDue ? "color: #e11d48; font-weight: bold;" : "color: #059669; font-weight: bold;";
 
       return `
@@ -205,7 +209,7 @@ export default function SideMenu({
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${u.name}</td>
         <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">৳${u.amount}</td>
       </tr>
-    `).join("") || "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো ইউটিলিটি খরচ নেই।</td></tr>";
+    `).join("") || `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো ${t("sideMenuFixed.utilityCost")} খরচ নেই।</td></tr>`;
 
     const endDateStr = new Date(archive.endDate).toLocaleDateString("bn-BD");
 
@@ -235,20 +239,20 @@ export default function SideMenu({
           
           <h1>পুরনো সেশন মেস হিসাব বিবরণী</h1>
           <div class="header-info">
-            তারিখ: ${endDateStr}
+            ${t("sideMenuFixed.dateCol")}: ${endDateStr}
           </div>
 
           <div class="summary-box">
             <div class="summary-item">
-              <div class="label">মোট বাজার খরচ</div>
+              <div class="label">{t("sideMenuFixed.totalBazaar")} খরচ</div>
               <div class="value">৳${arcTotalBazaar}</div>
             </div>
             <div class="summary-item">
-              <div class="label">মোট ইউটিলিটি খরচ</div>
+              <div class="label">মোট {t("sideMenuFixed.utilityCost")} খরচ</div>
               <div class="value">৳${arcTotalUtility}</div>
             </div>
             <div class="summary-item">
-              <div class="label">সর্বমোট খরচ</div>
+              <div class="label">সর্ব{t("sideMenuFixed.totalCost")}</div>
               <div class="value" style="color: #e11d48;">৳${arcTotalBazaar + arcTotalUtility}</div>
             </div>
           </div>
@@ -258,11 +262,11 @@ export default function SideMenu({
             <thead>
               <tr>
                 <th>নাম</th>
-                <th>জমা</th>
+                <th>{t("sideMenuFixed.deposit")}</th>
                 <th>নিজের বাজার</th>
                 <th>মিল</th>
                 <th>বাজার খরচ</th>
-                <th>ইউটিলিটি</th>
+                <th>{t("sideMenuFixed.utilityCost")}</th>
                 <th>বর্তমান অবস্থা</th>
               </tr>
             </thead>
@@ -277,7 +281,7 @@ export default function SideMenu({
               <table>
                 <thead>
                   <tr>
-                    <th>তারিখ</th>
+                    <th>${t("sideMenuFixed.dateCol")}</th>
                     <th>বিবরণ</th>
                     <th>টাকা</th>
                   </tr>
@@ -288,7 +292,7 @@ export default function SideMenu({
               </table>
             </div>
             <div>
-              <h2 class="section-title" style="margin-top: 0;">ইউটিলিটি খরচের তালিকা</h2>
+              <h2 class="section-title" style="margin-top: 0;">{t("sideMenuFixed.utilityCost")} খরচের তালিকা</h2>
               <table>
                 <thead>
                   <tr>
@@ -385,8 +389,8 @@ export default function SideMenu({
         );
         const isDue = balance < 0;
         const statusText = isDue
-          ? `ব্যালেন্স: - ৳${Math.abs(balance)}`
-          : `ব্যালেন্স: ৳${balance}`;
+          ? `{t("sideMenuFixed.balance")}- ৳${Math.abs(balance)}`
+          : `{t("sideMenuFixed.balance")}৳${balance}`;
         const statusColor = isDue
           ? "color: #e11d48; font-weight: bold;"
           : "color: #059669; font-weight: bold;";
@@ -430,18 +434,18 @@ export default function SideMenu({
     `,
         )
         .join("") ||
-      "<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ইউটিলিটি বিল যুক্ত করা হয়নি।</td></tr>";
+      `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ${t("sideMenuFixed.utilityCost")} বিল যুক্ত করা হয়নি।</td></tr>`;
 
     let reportTitle = isJobCycle
-      ? `${currentUserName} - জব সাইকেল রিপোর্ট (20th to 20th)`
-      : `${currentUserName} - মেস ফাইনাল হিসাব ও সেশন লেজার রিপোর্ট`;
+      ? `${currentUserName} - ${t("sideMenuFixed.reportTitleCycle")}`
+      : `${currentUserName} - ${t("sideMenuFixed.reportTitleFinal")}`;
     let reportSubtitle = isJobCycle
-      ? "পূর্ববর্তী মাসের ২০ তারিখ থেকে চলতি মাসের ২০ তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।"
-      : "চলমান মাসের মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।";
+      ? t("sideMenuFixed.reportSubCycle")
+      : t("sideMenuFixed.reportSubFinal");
       
     if (startDate && endDate) {
-      reportTitle = `${currentUserName} - কাস্টম রিপোর্ট (${startDate} থেকে ${endDate})`;
-      reportSubtitle = `${startDate} থেকে ${endDate} তারিখ পর্যন্ত মেসের বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী।`;
+      reportTitle = `${currentUserName} - ${t("sideMenuFixed.customReport")} (${startDate} - ${endDate})`;
+      reportSubtitle = `${startDate} - ${endDate} ${t("sideMenuFixed.customReportSub")}`;
     }
 
     const htmlContent = `
@@ -575,52 +579,52 @@ export default function SideMenu({
               <svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24">
                 <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
               </svg>
-              পিডিএফ ডাউনলোড করুন বা প্রিন্ট করুন
+              {t("sideMenuFixed.downloadOrPrint")}
             </button>
           </div>
           
           <div class="header-info">
             <h1>${reportTitle}</h1>
             <p style="font-size: 14px; font-weight: 500; color: #1e293b;">${reportSubtitle}</p>
-            <p>মেস সেশন আইডি: <b style="font-family: monospace; font-size:14px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${messId}</b></p>
-            <p style="font-size: 11px; color: #64748b; margin-top: 8px;">রিপোর্ট প্রকাশের সময়: ${new Date().toLocaleDateString("bn-BD")} | ${new Date().toLocaleTimeString("bn-BD")}</p>
+            <p>${t("sideMenuFixed.messSessionId")}: <b style="font-family: monospace; font-size:14px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${messId}</b></p>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px;">${t("sideMenuFixed.reportTime")}: ${new Date().toLocaleDateString("bn-BD")} | ${new Date().toLocaleTimeString("bn-BD")}</p>
           </div>
  
-          <div class="section-title">মেস পরিসংখ্যান ও চলমান সামারি</div>
+          <div class="section-title">${t("sideMenuFixed.messStats")}</div>
           <div class="stat-grid">
             <div class="stat-card">
-              <span class="stat-lbl">মোট বাজার খরচ</span>
+              <span class="stat-lbl">{t("sideMenuFixed.totalBazaar")} খরচ</span>
               <div class="stat-val" style="color: #4f46e5;">৳${totalBazaar}</div>
             </div>
             <div class="stat-card">
-              <span class="stat-lbl">মেস ইউটিলিটি বিল</span>
+              <span class="stat-lbl">মেস {t("sideMenuFixed.utilityCost")} বিল</span>
               <div class="stat-val" style="color: #4f46e5;">৳${totalUtility}</div>
             </div>
             <div class="stat-card">
-              <span class="stat-lbl">সর্বমোট মেস মিল</span>
+              <span class="stat-lbl">${t("sideMenuFixed.totalMessMeal")}</span>
               <div class="stat-val">${totalMeals} টি</div>
             </div>
             <div class="stat-card">
-              <span class="stat-lbl">হিসাবকৃত মিল রেট</span>
+              <span class="stat-lbl">${t("sideMenuFixed.calculatedMealRate")}</span>
               <div class="stat-val" style="color: #d97706;">৳${mealRate}</div>
             </div>
             <div class="stat-card">
-              <span class="stat-lbl">ইউটিলিটি/মেম্বার</span>
+              <span class="stat-lbl">{t("sideMenuFixed.utilityPerMember")}</span>
               <div class="stat-val" style="color: #0d9488;">৳${utilitySharePerMember}</div>
             </div>
           </div>
  
-          <div class="section-title">সদস্যদের ফাইনাল রিফান্ড ও বকেয়া লেজার বিবরণী</div>
+          <div class="section-title">${t("sideMenuFixed.finalLedger")}</div>
           <table>
             <thead>
               <tr>
-                <th style="border-top-left-radius: 8px;">সদস্যের নাম</th>
-                <th>জমা ফান্ড</th>
-                <th>ব্যক্তিগত বাজার</th>
-                <th>মোট মিল</th>
+                <th style="border-top-left-radius: 8px;">${t("sideMenuFixed.memberName")}</th>
+                <th>{t("sideMenuFixed.deposit")} ফান্ড</th>
+                <th>${t("sideMenuFixed.personalBazaar")}</th>
+                <th>${t("sideMenuFixed.totalMealCol")}</th>
                 <th>মিল বাবদ খরচ</th>
-                <th>বিল ও ইউটিলিটি</th>
-                 <th style="border-top-right-radius: 8px;">পরিস্থিতি ও ব্যালেন্স</th>
+                <th>বিল ও {t("sideMenuFixed.utilityCost")}</th>
+                 <th style="border-top-right-radius: 8px;">${t("sideMenuFixed.statusBalance")}</th>
               </tr>
             </thead>
             <tbody>
@@ -630,13 +634,13 @@ export default function SideMenu({
  
           <div class="dual-grid" style="page-break-inside: avoid;">
             <div>
-              <div class="section-title">দৈনিক বাজার বিস্তারিত রিপোর্ট</div>
+              <div class="section-title">${t("sideMenuFixed.dailyBazaarReport")}</div>
               <table>
                 <thead>
                   <tr>
-                    <th style="border-top-left-radius: 6px;">তারিখ</th>
-                    <th>খরচের খাত/বিবরণ</th>
-                    <th style="border-top-right-radius: 6px;">খরচের পরিমাণ</th>
+                    <th style="border-top-left-radius: 6px;">${t("sideMenuFixed.dateCol")}</th>
+                    <th>${t("sideMenuFixed.expenseSector")}</th>
+                    <th style="border-top-right-radius: 6px;">${t("sideMenuFixed.expenseAmount")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -646,12 +650,12 @@ export default function SideMenu({
             </div>
  
             <div>
-              <div class="section-title">মেস অতিরিক্ত সাব-বিল বিবরণী</div>
+              <div class="section-title">${t("sideMenuFixed.subBillReport")}</div>
               <table>
                 <thead>
                   <tr>
-                    <th style="border-top-left-radius: 6px;">বিলের বিবরণী</th>
-                    <th style="border-top-right-radius: 6px;">টাকার অঙ্ক</th>
+                    <th style="border-top-left-radius: 6px;">${t("sideMenuFixed.billDetails")}</th>
+                    <th style="border-top-right-radius: 6px;">${t("sideMenuFixed.billAmountCol")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -662,8 +666,8 @@ export default function SideMenu({
           </div>
  
           <div class="footer">
-            <p>মেস মিল ও খরচ হিসাব ডিজিটাল ম্যানেজার দ্বারা সংগৃহীত ও প্রক্রিয়াজাতকৃত রিপোর্ট।</p>
-            <p style="font-size: 9px; margin-top: 4px; color: #94a3b8;">© ২০২৬ মেস ডিজিটাল সিস্টেম - সর্বস্বত্ব সংরক্ষিত</p>
+            <p>${t("sideMenuFixed.digitalManagerNote")}</p>
+            <p style="font-size: 9px; margin-top: 4px; color: #94a3b8;">{t("sideMenuFixed.footerCopyright")}</p>
           </div>
  
           <script>
@@ -738,10 +742,10 @@ export default function SideMenu({
                   </div>
                   <div>
                     <span className="text-sm font-bold text-zinc-100 block">
-                      হিসাব (Final Ledger)
+                      {t("sideMenu.finalLedgerBtn")}
                     </span>
                     <span className="text-[11px] text-zinc-400 block mt-0.5">
-                      রিয়েল-টাইম মেস ক্যালকুলেটর ও রিফান্ড ড্যাশবোর্ড
+                      {t("sideMenu.finalLedgerDesc")}
                     </span>
                   </div>
                 </div>
@@ -767,12 +771,9 @@ export default function SideMenu({
                   </div>
                   <div>
                     <span className="text-sm font-bold text-zinc-100 block">
-                      মেস ডিউটি রুটিন (Mess Duty Schedule)
+                      {t("sideMenuFixed.dutySchedule")}
                     </span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">
-                      কার কোন দিন কি দায়িত্ব (বাজার, মিল ম্যানেজার, ক্লিনার) তার
-                      রুটিন
-                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">{t("sideMenuFixed.dutyScheduleDesc")}</span>
                   </div>
                 </div>
                 <div className="text-[11px] text-indigo-400 bg-indigo-950/15 border border-indigo-950/30 px-2 py-0.5 rounded font-mono">
@@ -793,10 +794,10 @@ export default function SideMenu({
                   </div>
                   <div>
                     <span className="text-sm font-bold text-orange-300 block font-sans">
-                      নতুন সেশন শুরু (New Session)
+                      {t("sideMenu.newSession")}
                     </span>
                     <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
-                      হিসাব রিসেট করে নতুন সেশন শুরু করুন
+                      {t("sideMenu.newSessionDesc")}
                     </span>
                   </div>
                 </div>
@@ -813,10 +814,10 @@ export default function SideMenu({
                   </div>
                   <div>
                     <span className="text-sm font-bold text-blue-300 block font-sans">
-                      পুরনো সেশন (Old Sessions)
+                      {t("sideMenu.oldSessions")}
                     </span>
                     <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
-                      পূর্ববর্তী সেশনের ডাটা পুনরুদ্ধার করুন
+                      {t("sideMenu.oldSessionsDesc")}
                     </span>
                   </div>
                 </div>
@@ -832,11 +833,10 @@ export default function SideMenu({
                   </div>
                   <div>
                     <span className="text-sm font-bold text-emerald-300 block font-sans">
-                      পিডিএফ হিসাব এক্সপোর্ট (PDF Export)
+                      {t("sideMenu.pdfExport")}
                     </span>
                     <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
-                      মেস বাজার খরচ ও সকল সদস্যদের চূড়ান্ত হিসাব বিবরণী ডাউনলোড
-                      করুন
+                      {t("sideMenu.pdfExportDesc")}
                     </span>
                   </div>
                 </div>
@@ -854,10 +854,10 @@ export default function SideMenu({
                     </div>
                     <div>
                       <span className="text-sm font-bold text-brand-amber block font-sans">
-                        সুপার অ্যাডমিন প্যানেল
+                        {t("sideMenu.superAdmin")}
                       </span>
                       <span className="text-[11px] text-zinc-400 block mt-0.5 leading-relaxed">
-                        সকল ইউজার ও মেসের ডাটা দেখুন এবং পিডিএফ ডাউনলোড করুন
+                        {t("sideMenu.superAdminDesc")}
                       </span>
                     </div>
                   </div>
@@ -868,39 +868,37 @@ export default function SideMenu({
             <div className="space-y-2 border-t border-zinc-900/40 pt-3">
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => {
-                    onClose();
-                    onTabChange(0); // Go home (Members register)
-                  }}
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer"
+                  onClick={() => setActiveModal("language")}
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-zinc-800 text-brand-amber transition-colors cursor-pointer"
                 >
-                  সদস্য তালিকা
+                  <Globe className="w-3.5 h-3.5" />
+                  {t("sideMenu.changeLang")}
                 </button>
                 <button
                   onClick={() => {
                     if (currentUserEmail) {
                       setShowPasswordChange(true);
                     } else {
-                      alert("ইউজার ইমেইল পাওয়া যায়নি। পুনরায় লগইন করুন।");
+                      alert(t("sideMenuFixed.emailNotFound"));
                     }
                   }}
                   className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer"
                 >
-                  পাসওয়ার্ড পরিবর্তন
+                  {t("sideMenu.changePassword")}
                 </button>
               </div>
               <button
                 onClick={onLogOut}
                 className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-red-950/20 text-red-400 transition-colors cursor-pointer"
               >
-                লগ আউট
+                {t("sideMenuFixed.logout")}
               </button>
               <button
                 onClick={() => setShowResetConfirm(true)}
                 className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-950 border border-zinc-900 text-[10px] font-sans font-semibold text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                সকল মেস ডাটা রিসেট করুন
+                {t("sideMenuFixed.resetAllData")}
               </button>
             </div>
           </div>
@@ -912,12 +910,12 @@ export default function SideMenu({
                 onClick={() => setActiveModal(null)}
                 className="flex items-center gap-1 text-[11px] font-bold text-brand-accent hover:text-purple-400 font-sans cursor-pointer"
               >
-                ← মূল মেনু ফিরে যান
+                ← {t("sideMenu.backToMenu")}
               </button>
               <span className="text-xs font-extrabold font-mono uppercase tracking-widest text-brand-amber">
                 {activeModal === "ledger"
-                  ? "চূড়ান্ত হিসাব"
-                  : "মেস ডিউটি ও দায়িত্ব"}
+                  ? t("sideMenu.ledgerTitle")
+                  : t("sideMenu.dutyTitle")}
               </span>
             </div>
 
@@ -935,7 +933,7 @@ export default function SideMenu({
                     <div className="grid grid-cols-3 gap-2 px-0.5 shrink-0">
                       <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
                         <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
-                          মোট বাজার
+                          {t("sideMenuFixed.totalBazaar")}
                         </span>
                         <span className="text-sm font-bold font-mono text-zinc-100 mt-1.5 block">
                           ৳{totalBazaar}
@@ -943,7 +941,7 @@ export default function SideMenu({
                       </div>
                       <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
                         <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
-                          মিল রেট
+                          {t("sideMenuFixed.mealRate")}
                         </span>
                         <span className="text-sm font-bold font-mono text-brand-amber mt-1.5 block">
                           ৳{mealRate.toFixed(2)}
@@ -951,7 +949,7 @@ export default function SideMenu({
                       </div>
                       <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
                         <span className="text-[9px] text-zinc-400 block font-semibold leading-none">
-                          ইউটিলিটি/মেম্বার
+                          {t("sideMenuFixed.utilityPerMember")}
                         </span>
                         <span className="text-sm font-bold font-mono text-indigo-400 mt-1.5 block">
                           ৳{utilitySharePerMember}
@@ -963,10 +961,10 @@ export default function SideMenu({
                     <div className="flex items-center justify-between bg-zinc-900/20 border border-purple-950/5 px-3.5 py-2.5 rounded-xl shrink-0">
                       <div className="text-left">
                         <span className="text-[11px] font-bold text-zinc-200 block">
-                          সদস্যদের ফাইল লেজার
+                          {t("sideMenuFixed.memberFileLedger")}
                         </span>
                         <span className="text-[9px] text-zinc-400 block mt-0.5">
-                          সব হিসাব সহ প্রিন্ট কপি
+                          {t("sideMenuFixed.printCopyDesc")}
                         </span>
                       </div>
                       <button
@@ -974,7 +972,7 @@ export default function SideMenu({
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all border border-emerald-500/25 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        পিডিএফ ডাউনলোড
+                        {t("sideMenuFixed.pdfDownload")}
                       </button>
                     </div>
 
@@ -982,7 +980,7 @@ export default function SideMenu({
                     <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-1">
                       {members.length === 0 ? (
                         <div className="text-center py-10 text-xs text-zinc-500">
-                          কোন মেম্বার রেকর্ড পাওয়া যায়নি!
+                          {t("sideMenuFixed.noMemberRecord")}
                         </div>
                       ) : (
                         members.map((member) => {
@@ -1015,19 +1013,19 @@ export default function SideMenu({
                                   {dueMemberIds?.includes(member.id) && (
                                     <span
                                       className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                                      title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                      title={t("sideMenuFixed.balanceDue")}
                                     ></span>
                                   )}
                                 </span>
                                 {balance < 0 ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400">
                                     <TrendingDown className="w-3.5 h-3.5" />
-                                    ব্যালেন্স: - ৳{Math.abs(balance)}
+                                    {t("sideMenuFixed.balance")}- ৳{Math.abs(balance)}
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                                     <TrendingUp className="w-3.5 h-3.5" />
-                                    ব্যালেন্স: ৳{balance}
+                                    {t("sideMenuFixed.balance")}৳{balance}
                                   </span>
                                 )}
                               </div>
@@ -1035,7 +1033,7 @@ export default function SideMenu({
                               <div className="grid grid-cols-5 gap-2 text-center border-t border-purple-950/5 pt-3">
                                 <div className="flex flex-col">
                                   <span className="text-[10px] text-zinc-400 font-medium">
-                                    জমা
+                                    {t("sideMenuFixed.deposit")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
                                     ৳{deposit}
@@ -1043,7 +1041,7 @@ export default function SideMenu({
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-[10px] text-zinc-400 font-medium">
-                                    ব্রেড/বাজার
+                                    {t("sideMenuFixed.bazaarSpent")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-emerald-400 mt-1">
                                     ৳{memberBazaarSpent}
@@ -1051,7 +1049,7 @@ export default function SideMenu({
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-[10px] text-zinc-400 font-medium font-sans">
-                                    মিল খরচ
+                                    {t("sideMenuFixed.mealCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
                                     ৳{bazaarCost}
@@ -1059,7 +1057,7 @@ export default function SideMenu({
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-[10px] text-zinc-400 font-medium font-sans font-sans">
-                                    ইউটিলিটি
+                                    {t("sideMenuFixed.utilityCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
                                     ৳{utilityCost}
@@ -1067,7 +1065,7 @@ export default function SideMenu({
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-[10px] text-zinc-400 font-medium font-sans">
-                                    মোট খরচ
+                                    {t("sideMenuFixed.totalCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-brand-amber mt-1">
                                     ৳{totalMemberCost}
@@ -1083,10 +1081,10 @@ export default function SideMenu({
                     <div className="bg-amber-950/15 border border-amber-900/30 rounded-xl p-3 flex gap-2 shrink-0">
                       <AlertCircle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
                       <p className="text-[10px] text-zinc-400 leading-normal">
-                        মেসের মিল রেট ফর্মুলা:{" "}
-                        <b>(মোট বাজার খরচ / মোট মিল সংখ্যা)</b>। ইউটিলিটি চার্জ
-                        যেমন বিদ্যুৎ ও পানি বিল সকল মেম্বারদের মাঝে সমান ভাগ করা
-                        হয়েছে।
+                        {t("sideMenuFixed.mealRateFormula")}{" "}
+                        <b>({t("sideMenuFixed.totalBazaar")} খরচ / ${t("sideMenuFixed.totalMealCol")} সংখ্যা)</b>। {t("sideMenuFixed.utilityCost")} চার্জ
+                        
+                        {t("sideMenuFixed.utilityChargeDesc")}
                       </p>
                     </div>
                   </div>
@@ -1103,14 +1101,14 @@ export default function SideMenu({
                 >
                   <span className="text-xs font-bold text-zinc-200 block flex items-center gap-1.5 pb-1 border-b border-purple-950/5">
                     <ClipboardList className="w-4 h-4 text-brand-accent" />
-                    নতুন ডিউটি শিডিউল যোগ করুন
+                    {t("sideMenuFixed.addNewDuty")}
                   </span>
 
                   <div className="grid grid-cols-2 gap-3 relative">
                     {/* Custom Day Dropdown */}
                     <div className="relative">
                       <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">
-                        সপ্তাহের দিন
+                        {t("sideMenuFixed.dayOfWeek")}
                       </label>
                       <button
                         type="button"
@@ -1152,7 +1150,7 @@ export default function SideMenu({
                     {/* Custom Member Dropdown */}
                     <div className="relative">
                       <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">
-                        মেস সদস্য
+                        {t("sideMenuFixed.messMember")}
                       </label>
                       <button
                         type="button"
@@ -1164,7 +1162,7 @@ export default function SideMenu({
                       >
                         <span className="truncate">
                           {members.find((m) => m.id === selectedMember)?.name ||
-                            "সদস্য নির্বাচন"}
+                            t("sideMenuFixed.selectMember")}
                         </span>
                         <ChevronDown
                           className={`w-3.5 h-3.5 transition-transform duration-200 text-zinc-500 ${isMemberSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
@@ -1175,7 +1173,7 @@ export default function SideMenu({
                         <div className="absolute z-40 mt-1.5 w-full bg-[#18142c] border border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
                           {members.length === 0 ? (
                             <div className="px-3 py-2 text-[10px] text-zinc-500">
-                              কোনো সদস্য নেই
+                              {t("sideMenuFixed.noMembers")}
                             </div>
                           ) : (
                             members.map((member) => (
@@ -1196,7 +1194,7 @@ export default function SideMenu({
                                 {dueMemberIds?.includes(member.id) && (
                                   <span
                                     className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                                    title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                    title={t("sideMenuFixed.balanceDue")}
                                   ></span>
                                 )}
                               </button>
@@ -1210,34 +1208,34 @@ export default function SideMenu({
                   {/* Modern Segmented Role Selector */}
                   <div className="space-y-1.5">
                     <label className="block text-[10px] text-zinc-400 font-semibold">
-                      দায়িত্বরত কাজ নির্বাচন করুন
+                      {t("sideMenuFixed.selectRole")}
                     </label>
                     <div className="grid grid-cols-2 gap-2.5">
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedRole("বাজার দায়িত্ব");
+                          setSelectedRole(t("sideMenuFixed.roleBazaar"));
                           setIsDaySelectOpen(false);
                           setIsMemberSelectOpen(false);
                         }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left cursor-pointer focus:outline-none ${
-                          selectedRole === "বাজার দায়িত্ব" ||
-                          selectedRole !== "রান্নার ডেট"
+                          selectedRole === t("sideMenuFixed.roleBazaar") ||
+                          selectedRole !== t("sideMenuFixed.roleCooking")
                             ? "bg-purple-950/25 border-purple-500/50 text-zinc-100 shadow-md ring-1 ring-purple-500/20"
                             : "bg-zinc-900/40 border-zinc-900 text-zinc-400 hover:bg-zinc-900/70"
                         }`}
                       >
                         <div
-                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === "বাজার দায়িত্ব" || selectedRole !== "রান্নার ডেট" ? "bg-brand-accent/25 text-brand-accent" : "bg-zinc-850 text-zinc-500"}`}
+                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === t("sideMenuFixed.roleBazaar") || selectedRole !== t("sideMenuFixed.roleCooking") ? "bg-brand-accent/25 text-brand-accent" : "bg-zinc-850 text-zinc-500"}`}
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
                         </div>
                         <div>
                           <span className="text-[10px] font-extrabold block leading-tight">
-                            বাজার দায়িত্ব
+                            {t("sideMenuFixed.roleBazaar")}
                           </span>
                           <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">
-                            সাপ্তাহিক বাজার দায়িত্ব
+                            {t("sideMenuFixed.roleBazaarDesc")}
                           </span>
                         </div>
                       </button>
@@ -1245,27 +1243,27 @@ export default function SideMenu({
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedRole("রান্নার ডেট");
+                          setSelectedRole(t("sideMenuFixed.roleCooking"));
                           setIsDaySelectOpen(false);
                           setIsMemberSelectOpen(false);
                         }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left cursor-pointer focus:outline-none ${
-                          selectedRole === "রান্নার ডেট"
+                          selectedRole === t("sideMenuFixed.roleCooking")
                             ? "bg-amber-950/20 border-amber-500/40 text-zinc-100 shadow-md ring-1 ring-amber-500/20"
                             : "bg-zinc-900/40 border-zinc-900 text-zinc-400 hover:bg-zinc-900/70"
                         }`}
                       >
                         <div
-                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === "রান্নার ডেট" ? "bg-brand-amber/25 text-brand-amber" : "bg-zinc-850 text-zinc-500"}`}
+                          className={`p-1.5 rounded-lg shrink-0 ${selectedRole === t("sideMenuFixed.roleCooking") ? "bg-brand-amber/25 text-brand-amber" : "bg-zinc-850 text-zinc-500"}`}
                         >
                           <ChefHat className="w-3.5 h-3.5" />
                         </div>
                         <div>
                           <span className="text-[10px] font-extrabold block leading-tight">
-                            রান্নার ডেট
+                            {t("sideMenuFixed.roleCooking")}
                           </span>
                           <span className="text-[8px] text-zinc-400 block mt-0.5 whitespace-nowrap">
-                            মিল রান্না করার দায়িত্ব
+                            {t("sideMenuFixed.roleCookingDesc")}
                           </span>
                         </div>
                       </button>
@@ -1278,19 +1276,19 @@ export default function SideMenu({
                     className="w-full py-2.5 bg-brand-accent text-white hover:bg-purple-600 rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50 transition-all active:scale-[0.98] shadow-md shadow-purple-950/30 font-sans"
                     id="btn-add-duty-item"
                   >
-                    তালিকাভুক্ত করুন
+                    {t("sideMenuFixed.listDutyBtn")}
                   </button>
                 </form>
 
                 {/* Duty List */}
                 <div className="space-y-2 max-h-[35vh] overflow-y-auto">
                   <span className="text-xs font-semibold text-zinc-350 block">
-                    সাপ্তাহিক মেস ডিউটি রুটিন (বাজার ও রান্নার ডেট)
+                    {t("sideMenuFixed.weeklyDutyRoutine")}
                   </span>
 
                   {dutyAssignments.length === 0 ? (
                     <div className="text-center py-6 text-xs text-zinc-500">
-                      কোনো সাপ্তাহিক ডিউটি শিডিউল সেট করা নেই।
+                      {t("sideMenuFixed.noWeeklyDuty")}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
@@ -1313,7 +1311,7 @@ export default function SideMenu({
                                   {dueMemberIds?.includes(duty.memberId) && (
                                     <span
                                       className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                                      title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                      title={t("sideMenuFixed.balanceDue")}
                                     ></span>
                                   )}
                                 </span>
@@ -1324,20 +1322,20 @@ export default function SideMenu({
                                   onRemoveDuty(duty.day, duty.role)
                                 }
                                 className="text-zinc-500 hover:text-rose-450 p-1 rounded-md hover:bg-rose-950/15 transition-all text-[11px] cursor-pointer"
-                                title="ডিউটি মুছে ফেলুন"
+                                title={t("sideMenuFixed.deleteDutyTitle")}
                                 id={`btn-del-duty-${idx}`}
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
                             <div className="mt-2 text-right">
-                              {duty.role === "রান্নার ডেট" ? (
+                              {duty.role === t("sideMenuFixed.roleCooking") ? (
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-brand-amber font-sans font-bold inline-block">
-                                  রান্নার ডেট
+                                  {t("sideMenuFixed.roleCooking")}
                                 </span>
                               ) : (
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-sans font-bold inline-block">
-                                  বাজার দায়িত্ব
+                                  {t("sideMenuFixed.roleBazaar")}
                                 </span>
                               )}
                             </div>
@@ -1360,23 +1358,23 @@ export default function SideMenu({
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <h4 className="font-bold text-sm">নতুন সেশন শুরু</h4>
+                  <h4 className="font-bold text-sm">{t("sideMenu.newSession")}</h4>
                 </div>
                 
                 <div className="bg-orange-950/20 border border-orange-900/30 rounded-xl p-4 text-center">
                   <RotateCcw className="w-8 h-8 text-orange-400 mx-auto mb-3" />
                   <p className="text-xs text-zinc-300 mb-5 leading-relaxed">
-                    সতর্কতা: নতুন সেশন শুরু করলে সকল খরচের হিসাব জিরো হয়ে যাবে। এই প্রক্রিয়াটি পূর্বাবস্থায় ফেরানো সম্ভব নয়।
+                    {t("sideMenu.newSessionWarning")}
                   </p>
                   
                   <div className="space-y-3 text-left">
-                    <label className="block text-xs font-bold text-zinc-400">আপনার পাসওয়ার্ড দিন</label>
+                    <label className="block text-xs font-bold text-zinc-400">{t("sideMenu.passwordPrompt")}</label>
                     <input
                       type="password"
                       value={sessionPassword}
                       onChange={(e) => setSessionPassword(e.target.value)}
                       className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs p-3 rounded-xl focus:outline-none focus:border-orange-500"
-                      placeholder="পাসওয়ার্ড..."
+                      placeholder={t("sideMenuFixed.passwordPlaceholder")}
                     />
                     
                     <button
@@ -1396,7 +1394,7 @@ export default function SideMenu({
                       className="w-full py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-orange-900/50 flex items-center justify-center gap-2 mt-4"
                     >
                       {isSessionLoading && <RotateCcw className="w-4 h-4 animate-spin" />}
-                      নিশ্চিত করুন
+                      {t("sideMenu.confirm")}
                     </button>
                   </div>
                 </div>
@@ -1413,12 +1411,12 @@ export default function SideMenu({
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <h4 className="font-bold text-sm">পুরনো সেশন (Old Sessions)</h4>
+                  <h4 className="font-bold text-sm">{t("sideMenu.oldSessionsList")}</h4>
                 </div>
 
                 {(!archives || archives.length === 0) ? (
                   <div className="text-center py-10 bg-zinc-900/30 rounded-xl border border-zinc-800">
-                    <p className="text-zinc-500 text-sm">কোনো পুরনো সেশন পাওয়া যায়নি।</p>
+                    <p className="text-zinc-500 text-sm">{t("sideMenuFixed.noOldSessions")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1427,14 +1425,14 @@ export default function SideMenu({
                        return (
                          <div key={arc.id || index} className="bg-zinc-900 border border-blue-900/30 rounded-xl p-4 flex flex-col gap-3">
                            <div>
-                             <h5 className="font-bold text-blue-300 text-sm">সেশন শেষ: {endDateStr}</h5>
-                             <p className="text-xs text-zinc-500 mt-0.5">খরচ এবং অন্যান্য হিসাব ডাউনলোড করুন</p>
+                             <h5 className="font-bold text-blue-300 text-sm">{t("sideMenuFixed.sessionEnd")} {endDateStr}</h5>
+                             <p className="text-xs text-zinc-500 mt-0.5">{t("sideMenuFixed.downloadCosts")}</p>
                            </div>
                            <button
                              onClick={() => handleExportArchivePDF(arc)}
                              className="w-full flex items-center justify-center gap-2 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-lg shadow-blue-900/50"
                            >
-                             <Download className="w-4 h-4" /> ডাউনলোড করুন (PDF)
+                             <Download className="w-4 h-4" /> {t("sideMenuFixed.downloadPdfBtn")}
                            </button>
                          </div>
                        );
@@ -1443,6 +1441,42 @@ export default function SideMenu({
                 )}
               </div>
             )}
+
+            {activeModal === "language" && (
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="flex items-center gap-3 text-zinc-100 mb-2">
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <h4 className="font-bold text-sm">{t("sideMenu.langTitle")}</h4>
+                </div>
+                
+                <div className="space-y-2 mt-4">
+                  {(['en', 'bn', 'ar', 'hi'] as LanguageType[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        setLanguage(lang);
+                        setActiveModal(null);
+                        onClose();
+                      }}
+                      className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${language === lang ? 'bg-purple-900/40 border-purple-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm">
+                          {lang === 'en' ? t("sideMenu.langEn") : lang === 'bn' ? t("sideMenu.langBn") : lang === 'ar' ? t("sideMenu.langAr") : t("sideMenu.langHi")}
+                        </span>
+                        {language === lang && <div className="w-2 h-2 rounded-full bg-brand-accent"></div>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {activeModal === "export_pdf" && (
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
                 <div className="flex items-center gap-3 text-zinc-100 mb-2">
@@ -1452,13 +1486,13 @@ export default function SideMenu({
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <h4 className="font-bold text-sm">পিডিএফ ডাউনলোড</h4>
+                  <h4 className="font-bold text-sm">{t("sideMenu.pdfExport")}</h4>
                 </div>
                 
                 <div className="bg-emerald-950/20 border border-emerald-900/30 rounded-xl p-4 text-center">
                   <Download className="w-8 h-8 text-emerald-400 mx-auto mb-3 animate-bounce" />
                   <p className="text-xs text-zinc-300 mb-5 leading-relaxed">
-                    আপনার মেসের সকল বাজার খরচ, জমা ও যাবতীয় হিসাবের পূর্ণাঙ্গ রিপোর্ট ডাউনলোড করতে নিচের যেকোনো একটি অপশন নির্বাচন করুন।
+                    {t("sideMenuFixed.downloadPrompt")}
                   </p>
                   
                   <div className="space-y-3">
@@ -1468,7 +1502,7 @@ export default function SideMenu({
                       }}
                       className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-emerald-900/50"
                     >
-                      ফুল মাস রিপোর্ট (1st - End)
+                      {t("sideMenuFixed.fullMonthReport")}
                     </button>
                     <button
                       onClick={() => {
@@ -1476,15 +1510,15 @@ export default function SideMenu({
                       }}
                       className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold transition-all cursor-pointer shadow-lg shadow-indigo-900/50"
                     >
-                      জব সাইকেল রিপোর্ট (20th - 20th)
+                      {t("sideMenuFixed.jobCycleBtn")}
                     </button>
                   </div>
                   
                   <div className="mt-6 pt-6 border-t border-emerald-900/30 text-left">
-                    <h5 className="text-xs font-bold text-emerald-400 mb-3">কাস্টম তারিখ রিপোর্ট</h5>
+                    <h5 className="text-xs font-bold text-emerald-400 mb-3">কাস্টম ${t("sideMenuFixed.dateCol")} রিপোর্ট</h5>
                     <div className="flex gap-2 mb-3">
                       <div className="flex-1">
-                        <label className="block text-[10px] text-zinc-400 mb-1">শুরু</label>
+                        <label className="block text-[10px] text-zinc-400 mb-1">{t("sideMenuFixed.startLabel")}</label>
                         <input
                           type="date"
                           value={exportStartDate}
@@ -1493,7 +1527,7 @@ export default function SideMenu({
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-[10px] text-zinc-400 mb-1">শেষ</label>
+                        <label className="block text-[10px] text-zinc-400 mb-1">{t("sideMenuFixed.endLabel")}</label>
                         <input
                           type="date"
                           value={exportEndDate}
@@ -1509,7 +1543,7 @@ export default function SideMenu({
                       disabled={!exportStartDate || !exportEndDate}
                       className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-700"
                     >
-                      কাস্টম পিডিএফ ডাউনলোড
+                      {t("sideMenuFixed.customPdfDownload")}
                     </button>
                   </div>
                 </div>
@@ -1536,13 +1570,9 @@ export default function SideMenu({
               </div>
 
               <h4 className="text-sm font-extrabold text-white mb-2 font-sans">
-                ডাটা রিসেট করার সতর্কতা!
+                {t("sideMenuFixed.resetDataWarningTitle")}
               </h4>
-              <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-6">
-                আপনি কি ডাটা রিসেট করতে চান? তাহলে কিন্তু আপনার মেসের সদস্যদের
-                তথ্য, বিগত জমা এবং যাবতীয় খরচের সকল ডাটা চিরতরে কেটে যাবে এবং
-                এটি আর পুনরুদ্ধার করা যাবে না।
-              </p>
+              <p className="text-xs text-zinc-300 leading-relaxed font-sans mb-6">{t("sideMenuFixed.resetDataWarningDesc")}</p>
 
               <div className="flex flex-col gap-2">
                 <button
@@ -1553,13 +1583,13 @@ export default function SideMenu({
                   }}
                   className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
-                  হ্যাঁ, সব ডিলিট করুন
+                  {t("sideMenuFixed.btnResetYes")}
                 </button>
                 <button
                   onClick={() => setShowResetConfirm(false)}
                   className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 font-bold rounded-xl text-xs border border-zinc-800 cursor-pointer"
                 >
-                  না, বাতিল করুন
+                  {t("sideMenuFixed.btnResetNo")}
                 </button>
               </div>
             </div>

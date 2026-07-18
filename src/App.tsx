@@ -19,6 +19,7 @@ import { supabase } from "./lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { sendNotification, MessNotification } from "./lib/notifications";
 import Header from "./components/Header";
+import { useLanguage } from "./contexts/LanguageContext";
 import MembersTab from "./components/MembersTab";
 import ExpensesTab from "./components/ExpensesTab";
 import MealsTab from "./components/MealsTab";
@@ -81,6 +82,7 @@ export default function App() {
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const { t } = useLanguage();
   const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
   const [globalNotices, setGlobalNotices] = useState<Notice[]>([]);
   const [showNoticePopup, setShowNoticePopup] = useState<boolean>(false);
@@ -1362,7 +1364,7 @@ export default function App() {
               id="nav-tab-members"
             >
               <Users className="w-5 h-5" />
-              <span className="text-[10px] font-sans">সদস্য</span>
+              <span className="text-[10px] font-sans">{t("nav.members")}</span>
             </button>
 
             {/* Tab 1 - Expenses */}
@@ -1378,7 +1380,7 @@ export default function App() {
               id="nav-tab-expenses"
             >
               <ReceiptText className="w-5 h-5" />
-              <span className="text-[10px] font-sans">খরচ</span>
+              <span className="text-[10px] font-sans">{t("nav.expenses")}</span>
             </button>
 
             {/* Tab 2 - Meals */}
@@ -1397,7 +1399,7 @@ export default function App() {
                 <span className="absolute top-1.5 right-4 w-2.5 h-2.5 bg-amber-500 rounded-full border border-zinc-950 animate-ping"></span>
               )}
               <UtensilsCrossed className="w-5 h-5" />
-              <span className="text-[10px] font-sans">মিল</span>
+              <span className="text-[10px] font-sans">{t("nav.meals")}</span>
             </button>
 
             {/* Tab 3 - Deposits */}
@@ -1413,7 +1415,7 @@ export default function App() {
               id="nav-tab-deposits"
             >
               <HandCoins className="w-5 h-5" />
-              <span className="text-[10px] font-sans">জমা</span>
+              <span className="text-[10px] font-sans">{t("nav.deposits")}</span>
             </button>
 
             {/* Tab 4 - Bazaar */}
@@ -1446,7 +1448,7 @@ export default function App() {
                 <circle cx="19" cy="21" r="1" />
                 <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
               </svg>
-              <span className="text-[10px] font-sans">বাজার</span>
+              <span className="text-[10px] font-sans">{t("nav.bazaar")}</span>
             </button>
           </div>
         </nav>

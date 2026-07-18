@@ -8,6 +8,7 @@ import {
   Info,
 } from "lucide-react";
 import { Member } from "../types";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface MealsTabProps {
   members: Member[];
@@ -22,6 +23,7 @@ export default function MealsTab({
   onSetFixedMealCount,
   dueMemberIds,
 }: MealsTabProps) {
+  const { t } = useLanguage();
   const [mealInput, setMealInput] = useState<string>(
     fixedMealCount ? fixedMealCount.toString() : "",
   );
@@ -49,11 +51,10 @@ export default function MealsTab({
           </div>
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-brand-amber font-sans">
-              নির্ধারিত মিল এখনো সেট করা হয়নি!
+              {t("meals.noMealsSet")}
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-              এই মাসের জন্য কোনো নির্দিষ্ট ডাবল বা সিঙ্গেল মিল রেট নির্ধারণ করা
-              হয়নি। সঠি হিসাব নিকাশের জন্য নির্ধারিত মিল যোগ করুন।
+              {t("meals.noMealsDesc")}
             </p>
           </div>
         </div>
@@ -64,11 +65,11 @@ export default function MealsTab({
           </div>
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-emerald-400 font-sans">
-              নির্ধারিত মিল অত্যন্ত সফলভাবে সেট আছে
+              {t("meals.configuredTitle")}
             </h4>
             <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-              প্রতিটি মেম্বারের বর্তমান নির্ধারিত মাসিক মিল সংখ্যা হচ্ছে{" "}
-              <b>{fixedMealCount} টি</b>।
+              {t("meals.configuredDesc1")}{" "}
+              <b>{fixedMealCount} {t("meals.configuredDesc2")}</b>।
             </p>
           </div>
         </div>
@@ -81,20 +82,19 @@ export default function MealsTab({
         <div className="flex items-center gap-2 mb-3">
           <Settings className="w-4 h-4 text-brand-amber" />
           <h3 className="text-sm font-bold text-white font-sans">
-            নির্ধারিত মিল সেট করুন
+            {t("meals.setMealsTitle")}
           </h3>
         </div>
 
         <p className="text-xs text-zinc-400 mb-4 leading-relaxed font-sans">
-          নির্ধারণকৃত মিল সংখ্যা চলমান মেস সেশনের অন্তর্ভুক্ত সকল সক্রিয়
-          মেম্বারদের জন্য সমানভাবে কার্যকর করা হবে।
+          {t("meals.setMealsDesc")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 font-sans">
-                মিল সংখ্যা (টোটাল বা দৈনিক গড়)
+                {t("meals.mealRateLabel")}
               </label>
               <div className="relative">
                 <input
@@ -113,13 +113,13 @@ export default function MealsTab({
 
             <div className="w-1/2 bg-black/20 border border-purple-950/20 rounded-xl p-3 text-center">
               <span className="text-[10px] text-zinc-500 font-semibold block uppercase">
-                মোট মিল সংখ্যা
+                {t("meals.totalMeals")}
               </span>
               <span className="text-xl font-extrabold text-white font-mono block mt-1">
                 {totalMeals}
               </span>
               <span className="text-[9px] text-zinc-400 font-sans block mt-0.5">
-                ({members.length} জন সক্রিয়)
+                ({members.length} {t("meals.activeMembers")})
               </span>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function MealsTab({
             ) : (
               <>
                 <FlameKindling className="w-4 h-4" />
-                নির্ধারিত মিল সেট করুন
+                {t("meals.setFixedMealsBtn")}
               </>
             )}
           </button>
@@ -148,10 +148,10 @@ export default function MealsTab({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-semibold text-zinc-200">
-            সদস্যদের মিল ওভারভিউ
+            {t("meals.membersMealOverview")}
           </h4>
           <span className="text-xs text-brand-amber font-mono font-medium">
-            মিল সংখ্যা: {fixedMealCount}
+            {t("meals.mealCountLabel")}{fixedMealCount}
           </span>
         </div>
 

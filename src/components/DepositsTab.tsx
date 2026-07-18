@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   HandCoins,
   Sparkles,
@@ -31,6 +32,7 @@ export default function DepositsTab({
   onDeleteDeposit,
   dueMemberIds,
 }: DepositsTabProps) {
+  const { t } = useLanguage();
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositDate, setDepositDate] = useState(() => {
@@ -80,7 +82,7 @@ export default function DepositsTab({
       <div className="bg-gradient-to-tr from-[#1E1236] to-[#2B1B4A] border border-purple-950/45 rounded-2xl p-4 flex items-center justify-between shadow-lg">
         <div className="space-y-1">
           <span className="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase block font-sans">
-            মেস ফান্ডের মোট জমা
+            {t("deposits.totalDepositsTitle")}
           </span>
           <span className="text-2xl font-extrabold text-brand-amber font-mono tracking-tight block">
             ৳ {totalDeposits.toLocaleString()}
@@ -94,14 +96,14 @@ export default function DepositsTab({
       {/* Grid instruction header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-200">
-          সদস্যদের সর্বমোট জমা
+          {t("deposits.membersTotal")}
         </h3>
       </div>
 
       {members.length === 0 ? (
         <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
           <p className="text-sm text-zinc-400">
-            মেসে জমা আপডেট করার জন্য প্রথমে সদস্য যোগ করুন।
+            {t("deposits.addMemberFirst")}
           </p>
         </div>
       ) : (
@@ -123,7 +125,7 @@ export default function DepositsTab({
                     {dueMemberIds?.includes(member.id) && (
                       <span
                         className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                        title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                        title={t("deposits.balanceDueTitle")}
                       ></span>
                     )}
                   </span>
@@ -144,7 +146,7 @@ export default function DepositsTab({
               <span className="bg-emerald-500/20 p-1 rounded-md border border-emerald-500/30">
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
               </span>
-              নতুন জমা কনফার্ম করুন
+              {t("deposits.confirmNewDeposit")}
             </h3>
             <form
               onSubmit={handleDepositSubmit}
@@ -153,7 +155,7 @@ export default function DepositsTab({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-[10px] text-zinc-400 font-semibold uppercase">
-                    কার জমার এন্ট্রি?
+                    {t("deposits.depositEntryFor")}?
                   </label>
                   <select
                     value={selectedMemberId}
@@ -162,7 +164,7 @@ export default function DepositsTab({
                     required
                   >
                     <option value="" disabled>
-                      সদস্য বাছাই করুন
+                      {t("deposits.selectMember")}
                     </option>
                     {members.map((m) => (
                       <option key={`opt-${m.id}`} value={m.id}>
@@ -174,7 +176,7 @@ export default function DepositsTab({
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] text-zinc-400 font-semibold uppercase">
-                    জমার তারিখ
+                    {t("deposits.depositDate")}
                   </label>
                   <div className="relative">
                     <CalendarCheck className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -197,7 +199,7 @@ export default function DepositsTab({
                     type="number"
                     min="1"
                     step="any"
-                    placeholder="হিসাব দিন..."
+                    placeholder={t("deposits.amountPlaceholder")}
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     className="w-full pl-7 pr-3 py-2.5 text-sm rounded-lg bg-emerald-950/20 border border-emerald-900/40 text-zinc-100 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
@@ -207,9 +209,7 @@ export default function DepositsTab({
                 <button
                   type="submit"
                   className="px-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-semibold text-xs rounded-lg shadow-md whitespace-nowrap font-sans"
-                >
-                  জমা দিন
-                </button>
+                >{t("deposits.btnDeposit")}</button>
               </div>
             </form>
           </div>
@@ -219,12 +219,12 @@ export default function DepositsTab({
               <span className="bg-indigo-500/20 p-1 rounded-md border border-indigo-500/30">
                 <Clock className="w-4 h-4 text-indigo-400" />
               </span>
-              জমার রেকর্ডস
+              {t("deposits.depositRecords")}
             </h3>
             {safeDepositHistory.length === 0 ? (
               <div className="bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl p-5 text-center">
                 <p className="text-[11px] text-zinc-500">
-                  এখনো কোনো জমার ট্রানজেকশন নেই
+                  {t("deposits.noDepositRecords")}
                 </p>
               </div>
             ) : (
@@ -253,7 +253,7 @@ export default function DepositsTab({
                               {dueMemberIds?.includes(entry.memberId) && (
                                 <span
                                   className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                                  title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                                  title={t("deposits.balanceDueTitle")}
                                 ></span>
                               )}
                             </span>
@@ -273,13 +273,13 @@ export default function DepositsTab({
                                   onClick={handleEditSubmit}
                                   className="text-[10px] bg-emerald-600 px-2 py-1 rounded font-bold text-white"
                                 >
-                                  সেভ
+                                  {t("deposits.save")}
                                 </button>
                                 <button
                                   onClick={() => setEditingId(null)}
                                   className="text-[10px] bg-zinc-700 px-2 py-1 rounded font-bold text-white"
                                 >
-                                  বাতিল
+                                  {t("deposits.cancel")}
                                 </button>
                               </div>
                             ) : (
@@ -308,7 +308,7 @@ export default function DepositsTab({
                                   }}
                                   className="hover:text-emerald-400 transition-colors flex items-center gap-1"
                                 >
-                                  <Pen className="w-3 h-3" /> এডিট
+                                  <Pen className="w-3 h-3" /> {t("deposits.edit")}
                                 </button>
                                 <button
                                   onClick={() =>
@@ -339,8 +339,8 @@ export default function DepositsTab({
       <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex items-start gap-2.5 mt-8">
         <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
         <p className="text-[10px] text-zinc-400 leading-relaxed">
-          সকল ট্রানজেকশন ডেটা আপনার ফায়ারবেস ক্লাউড ডাটাবেজে (Firebase Cloud
-          Database) স্বয়ংক্রিয়ভাবে সেভ ও রিয়েল-টাইম সিঙ্ক হচ্ছে।
+          {t("deposits.sync1")}
+          
         </p>
       </div>
     </div>

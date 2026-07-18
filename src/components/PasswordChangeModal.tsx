@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import { supabase } from "../lib/supabase";
 import { KeyRound, X, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +13,7 @@ export default function PasswordChangeModal({
   onClose,
   userEmail,
 }: PasswordChangeModalProps) {
+  const { t } = useLanguage();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,15 +24,15 @@ export default function PasswordChangeModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setError("সকল ফিল্ড পূরণ করুন");
+      setError(t("passwordModal.fillAll"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না");
+      setError(t("passwordModal.passMismatch"));
       return;
     }
     if (newPassword.length < 6) {
-      setError("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে");
+      setError(t("passwordModal.passLength"));
       return;
     }
 
@@ -41,7 +43,7 @@ export default function PasswordChangeModal({
       // For mock admin user
       const isMockUser = localStorage.getItem("__MOCK_USER__");
       if (isMockUser) {
-        throw new Error("ডেমো অ্যাডমিন অ্যাকাউন্টের পাসওয়ার্ড পরিবর্তন সম্ভব নয়");
+        throw new Error(t("passwordModal.demoError"));
       }
 
       // First verify old password by attempting to sign in
@@ -51,7 +53,7 @@ export default function PasswordChangeModal({
       });
 
       if (signInError) {
-        throw new Error("বর্তমান পাসওয়ার্ড সঠিক নয়");
+        throw new Error(t("passwordModal.wrongOldPass"));
       }
 
       // If successful, update the password
@@ -69,7 +71,7 @@ export default function PasswordChangeModal({
       }, 2000);
     } catch (err: any) {
       console.error("Password update error:", err);
-      setError(err.message || "পাসওয়ার্ড পরিবর্তন করা সম্ভব হয়নি");
+      setError(err.message || t("passwordModal.errorTitle"));
     } finally {
       setLoading(false);
     }
@@ -90,7 +92,7 @@ export default function PasswordChangeModal({
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-zinc-100">
             <KeyRound className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-semibold">পাসওয়ার্ড পরিবর্তন</h3>
+            <h3 className="font-semibold">{t("passwordModal.title")}</h3>
           </div>
           <button
             onClick={onClose}
@@ -107,8 +109,8 @@ export default function PasswordChangeModal({
                 <CheckCircle2 className="w-6 h-6 text-emerald-400" />
               </div>
               <div>
-                <h4 className="text-emerald-400 font-semibold mb-1">সফল হয়েছে!</h4>
-                <p className="text-zinc-400 text-sm">আপনার পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে।</p>
+                <h4 className="text-emerald-400 font-semibold mb-1">{t("passwordModal.successTitle")}</h4>
+                <p className="text-zinc-400 text-sm">{t("passwordModal.successDesc")}</p>
               </div>
             </div>
           ) : (
@@ -132,37 +134,37 @@ export default function PasswordChangeModal({
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
-                    বর্তমান পাসওয়ার্ড
+                    {t("passwordModal.oldPass")}
                   </label>
                   <input
                     type="password"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    placeholder="বর্তমান পাসওয়ার্ড দিন"
+                    placeholder={t("passwordModal.oldPassPlaceholder")}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
-                    নতুন পাসওয়ার্ড
+                    {t("passwordModal.newPass")}
                   </label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="নতুন পাসওয়ার্ড দিন (কমপক্ষে ৬ অক্ষর)"
+                    placeholder={t("passwordModal.newPassPlaceholder")}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
-                    কনফার্ম নতুন পাসওয়ার্ড
+                    {t("passwordModal.confirmPass")}
                   </label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="নতুন পাসওয়ার্ড আবার দিন"
+                    placeholder={t("passwordModal.confirmPassPlaceholder")}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
@@ -177,10 +179,10 @@ export default function PasswordChangeModal({
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      অপেক্ষা করুন...
+                      {t("passwordModal.wait")}
                     </>
                   ) : (
-                    "পাসওয়ার্ড পরিবর্তন করুন"
+                    t("passwordModal.submit")
                   )}
                 </button>
               </div>

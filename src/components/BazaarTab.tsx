@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Check, Trash2, Plus, CalendarDays } from "lucide-react";
 import { BazaarItem, DutyAssignment, Member } from "../types";
@@ -20,6 +21,7 @@ export default function BazaarTab({
   onToggleBazaarItem,
   onDeleteBazaarItem,
 }: BazaarTabProps) {
+  const { t } = useLanguage();
   const [newItemName, setNewItemName] = useState("");
 
   const handleAdd = (e: React.FormEvent) => {
@@ -31,7 +33,7 @@ export default function BazaarTab({
   };
 
   const getMemberName = (id: string) =>
-    members.find((m) => m.id === id)?.name || "অজানা";
+    members.find((m) => m.id === id)?.name || t("sideMenuFixed.member");
 
   return (
     <motion.div
@@ -43,11 +45,11 @@ export default function BazaarTab({
       <div className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-brand-amber font-sans flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
-          সাপ্তাহিক বাজার ডিউটি
+          {t("bazaar.weeklyDuty")}
         </h2>
         {dutyAssignments.length === 0 ? (
           <p className="text-xs text-zinc-500">
-            কোনো ডিউটি সেট করা হয়নি। 'আরও' মেনু থেকে রুটিন সেট করুন।
+            {t("bazaar.noDuty")}
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-2">
@@ -74,7 +76,7 @@ export default function BazaarTab({
       <div className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-emerald-400 font-sans flex items-center gap-2">
           <ShoppingCart className="w-4 h-4" />
-          বাজারের শেয়ার্ড লিস্ট
+          {t("bazaar.sharedList")}
         </h2>
 
         <form onSubmit={handleAdd} className="flex gap-2">
@@ -82,7 +84,7 @@ export default function BazaarTab({
             type="text"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
-            placeholder="নতুন বাজার আইটেম..."
+            placeholder={t("bazaar.newItem")}
             className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-brand-accent"
           />
           <button
@@ -131,7 +133,7 @@ export default function BazaarTab({
             ))}
             {bazaarList.length === 0 && (
               <div className="text-center py-6 text-xs text-zinc-500">
-                লিস্টটি ফাঁকা আছে।
+                {t("bazaar.emptyList")}
               </div>
             )}
           </AnimatePresence>

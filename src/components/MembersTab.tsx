@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { UserPlus, Copy, Check, Trash2, ShieldAlert } from "lucide-react";
 import { Member } from "../types";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface MembersTabProps {
   members: Member[];
@@ -15,6 +16,7 @@ export default function MembersTab({
   onRemoveMember,
   dueMemberIds,
 }: MembersTabProps) {
+  const { t } = useLanguage();
   const [memberName, setMemberName] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ export default function MembersTab({
       <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-4 shadow-md">
         <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-brand-amber" />
-          নতুন সদস্য যোগ করুন
+          {t("members.addMemberTitle")}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
@@ -45,7 +47,7 @@ export default function MembersTab({
               type="text"
               value={memberName}
               onChange={(e) => setMemberName(e.target.value)}
-              placeholder="সদস্যের নাম (যেমন: Zitu, Shahadat, Sagor)"
+              placeholder={t("members.memberNamePlaceholder")}
               className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-all font-sans"
               id="input-member-name"
             />
@@ -57,7 +59,7 @@ export default function MembersTab({
             id="btn-add-member"
           >
             <UserPlus className="w-4 h-4" />
-            সদস্য যোগ করুন
+            {t("members.addMemberBtn")}
           </button>
         </form>
       </div>
@@ -65,10 +67,10 @@ export default function MembersTab({
       {/* Member List Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-zinc-200">
-          মেস সদস্য তালিকা ({members.length} জন)
+          {t("members.memberListTitle")} ({members.length} {t("members.peopleCount")})
         </h3>
         <span className="text-xs text-zinc-400 font-medium">
-          নিবন্ধিত ব্যবহারকারী
+          {t("members.registeredUsers")}
         </span>
       </div>
 
@@ -77,10 +79,10 @@ export default function MembersTab({
         <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
           <ShieldAlert className="w-8 h-8 text-brand-amber mx-auto mb-2 opacity-80" />
           <p className="text-sm text-zinc-300 font-medium font-sans">
-            কোনো সদস্য পাওয়া যায়নি!
+            {t("members.noMembersFound")}
           </p>
           <p className="text-xs text-zinc-500 mt-1">
-            উপরে নাম দিয়ে প্রথম মেস মেম্বার যুক্ত করুন।
+            {t("members.firstMemberPrompt")}
           </p>
         </div>
       ) : (
@@ -102,7 +104,7 @@ export default function MembersTab({
                     {dueMemberIds?.includes(member.id) && (
                       <span
                         className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                        title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                        title={t("members.lowBalance")}
                       ></span>
                     )}
                   </span>

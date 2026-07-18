@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   ShoppingCart,
   LayoutGrid,
@@ -37,6 +38,7 @@ export default function ExpensesTab({
   members,
   dueMemberIds,
 }: ExpensesTabProps) {
+  const { t } = useLanguage();
   // Bazaar Form States
   const [bazaarDate, setBazaarDate] = useState(() => {
     const d = new Date();
@@ -118,7 +120,7 @@ export default function ExpensesTab({
         const amt = parseFloat(fallbackMatch[0]);
         let d = normalized.replace(fallbackMatch[0], "").replace(/taka|টাকা/gi, "").trim();
         if (amt > 0) {
-           setPendingVoiceItems([{ amount: amt, desc: d || "বাজার" }]);
+           setPendingVoiceItems([{ amount: amt, desc: d || t("expenses.voiceDefaultDesc") }]);
            setShowVoicePreview(true);
            return;
         }
@@ -155,7 +157,7 @@ export default function ExpensesTab({
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
           <span className="text-[11px] text-zinc-400 font-medium">
-            মোট বাজার খরচ
+            {t("expenses.totalBazaarExpense")}
           </span>
           <span className="text-lg font-bold text-brand-amber font-mono mt-1">
             ৳ {totalBazaar.toLocaleString()}
@@ -163,7 +165,7 @@ export default function ExpensesTab({
         </div>
         <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
           <span className="text-[11px] text-zinc-400 font-medium">
-            অন্যান্য ও ইউটিলিটি বিল
+            {t("expenses.otherUtilityBills")}
           </span>
           <span className="text-lg font-bold text-brand-accent font-mono mt-1">
             ৳ {totalUtility.toLocaleString()}
@@ -176,7 +178,7 @@ export default function ExpensesTab({
         <div className="flex items-center justify-between mb-3.5">
           <h3 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-brand-amber" />
-            দৈনিক বাজার যোগ করুন
+            {t("expenses.addDailyBazaar")}
           </h3>
           <button
             type="button"
@@ -184,7 +186,7 @@ export default function ExpensesTab({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20'}`}
           >
             <Mic className="w-3.5 h-3.5" />
-            {isListening ? 'বলুন...' : 'ভয়েস এন্ট্রি'}
+            {isListening ? t("expenses.voiceListening") : t("expenses.voiceInput")}
           </button>
         </div>
         
@@ -200,7 +202,7 @@ export default function ExpensesTab({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                তারিখ নির্বাচন করুন
+                {t("expenses.selectDate")}
               </label>
               <div className="relative">
                 <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -215,7 +217,7 @@ export default function ExpensesTab({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                টাকার পরিমাণ (৳)
+                {t("expenses.amountAmount")}
               </label>
               <input
                 type="number"
@@ -234,7 +236,7 @@ export default function ExpensesTab({
           {/* Buyer Selector Custom Dropdown */}
           <div className="relative">
             <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-              বাজারকারী নির্বাচন করুন (কে খরচ করেছেন?)
+              {t("expenses.selectBuyer")}
             </label>
             <button
               type="button"
@@ -244,8 +246,8 @@ export default function ExpensesTab({
               <span className="truncate">
                 {selectedBuyerId
                   ? members.find((m) => m.id === selectedBuyerId)?.name ||
-                    "সদস্য"
-                  : "সাধারণ / মেস ফান্ড (কেউ ব্যক্তিগতভাবে দেয়নি)"}
+                    t("sideMenuFixed.member")
+                  : t("expensesTab.commonFund")}
               </span>
               <ChevronDown
                 className={`w-4 h-4 text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
@@ -266,7 +268,7 @@ export default function ExpensesTab({
                       : "text-zinc-300 hover:bg-zinc-850/50"
                   }`}
                 >
-                  সাধারণ / মেস ফান্ড (কেউ ব্যক্তিগতভাবে দেয়নি)
+                  {t("expensesTab.commonFund")}
                 </button>
                 {members.map((member) => (
                   <button
@@ -286,7 +288,7 @@ export default function ExpensesTab({
                     {dueMemberIds?.includes(member.id) && (
                       <span
                         className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                        title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                        title={t("expenses.balanceDueTitle")}
                       ></span>
                     )}
                   </button>
@@ -297,13 +299,13 @@ export default function ExpensesTab({
 
           <div>
             <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-              বাজার বিবরণ (ঐচ্ছিক)
+              {t("expenses.bazaarDetailsOptional")}
             </label>
             <input
               type="text"
               value={bazaarDesc}
               onChange={(e) => setBazaarDesc(e.target.value)}
-              placeholder="যেমন: আলু, চাল, মুরগি..."
+              placeholder={t("expenses.itemDescPlaceholder")}
               className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
               id="bazaar-desc-input"
             />
@@ -316,7 +318,7 @@ export default function ExpensesTab({
             id="btn-add-bazaar"
           >
             <ShoppingCart className="w-4 h-4" />
-            খরচ যোগ করুন
+            {t("expenses.addExpenseBtn")}
           </button>
         </form>
       </div>
@@ -325,26 +327,26 @@ export default function ExpensesTab({
       <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-4 shadow-md">
         <h3 className="text-sm font-semibold text-zinc-300 mb-3.5 flex items-center gap-2">
           <LayoutGrid className="w-4 h-4 text-brand-amber" />
-          ইউটিলিটি ও অন্যান্য বিল (বিদ্যুৎ, পানি ইত্যাদি)
+          {t("expensesTab.utilityBillsTitle")}
         </h3>
         <form onSubmit={handleUtilitySubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                বিলের বিবরণ
+                {t("expenses.billDescLabel")}
               </label>
               <input
                 type="text"
                 value={utilityName}
                 onChange={(e) => setUtilityName(e.target.value)}
-                placeholder="যেমন: বিদ্যুৎ বিল, পানি বিল"
+                placeholder={t("expenses.billDescPlaceholder")}
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
                 id="utility-name-input"
               />
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
-                বিলের পরিমাণ (৳)
+                {t("expenses.billAmountLabel")}
               </label>
               <input
                 type="number"
@@ -367,7 +369,7 @@ export default function ExpensesTab({
             id="btn-add-utility"
           >
             <LogIn className="w-4 h-4 rotate-90" />
-            অন্যান্য বিল যোগ করুন
+            {t("expenses.addOtherBillBtn")}
           </button>
         </form>
       </div>
@@ -375,14 +377,14 @@ export default function ExpensesTab({
       {/* Expense History List */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-zinc-200 flex items-center gap-1.5">
-          <span>বাজার খরচের বিবরণী ({expenses.length})</span>
+          <span>{t("expenses.bazaarHistoryTitle")} ({expenses.length})</span>
         </h3>
 
         {expenses.length === 0 ? (
           <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
             <ShieldAlert className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
             <p className="text-xs text-zinc-400">
-              মেসে এখনো কোনো বাজার খরচ এন্ট্রি করা হয়নি।
+              {t("expenses.noBazaarEntry")}
             </p>
           </div>
         ) : (
@@ -395,17 +397,17 @@ export default function ExpensesTab({
                 <div className="flex flex-col max-w-[70%]">
                   <div className="flex items-start flex-col gap-1">
                     <span className="text-sm font-bold text-zinc-100 font-sans leading-tight">
-                      {item.desc || "টুকটাক বাজার খরচ"}
+                      {item.desc || t("expenses.defaultExpenseDesc")}
                     </span>
                     {item.memberId && (
                       <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-sans tracking-wide">
-                        ক্রেতা:{" "}
+                        {t("expenses.buyerLabel")}
                         {members.find((m) => m.id === item.memberId)?.name ||
-                          "সদস্য"}
+                          t("sideMenuFixed.member")}
                         {dueMemberIds?.includes(item.memberId) && (
                           <span
                             className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1.5 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                            title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                            title={t("expenses.balanceDueTitle")}
                           ></span>
                         )}
                       </span>
@@ -423,7 +425,7 @@ export default function ExpensesTab({
                     onClick={() => onRemoveExpense(item.id)}
                     className="p-1.5 rounded-lg bg-red-950/10 text-red-400 hover:bg-red-950/30 transition-all cursor-pointer"
                     id={`btn-del-expense-${item.id}`}
-                    title="মুছে ফেলুন"
+                    title={t("expenses.deleteTitle")}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -438,7 +440,7 @@ export default function ExpensesTab({
       {utilities.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-zinc-200">
-            বিদ্যুৎ ও ইউটিলিটি বিবরণী
+            {t("expenses.utilityHistoryTitle")}
           </h3>
           <div className="space-y-2">
             {utilities.map((item) => (
@@ -451,7 +453,7 @@ export default function ExpensesTab({
                     {item.name}
                   </span>
                   <span className="text-[10px] text-zinc-500 font-sans mt-0.5">
-                    গাসিক ভিলা ইউটিলিটি
+                    {t("expenses.utilityDefaultName")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -462,7 +464,7 @@ export default function ExpensesTab({
                     onClick={() => onRemoveUtility(item.id)}
                     className="p-1.5 rounded-lg bg-red-950/10 text-red-400 hover:bg-red-950/30 transition-all cursor-pointer"
                     id={`btn-del-utility-${item.id}`}
-                    title="মুছে ফেলুন"
+                    title={t("expenses.deleteTitle")}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -477,7 +479,7 @@ export default function ExpensesTab({
       {showVoicePreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-zinc-900 border border-purple-500/30 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-5 animate-in zoom-in-95 duration-200">
-            <h3 className="font-bold text-white mb-4 text-lg">ভয়েস ইনপুট প্রিভিউ</h3>
+            <h3 className="font-bold text-white mb-4 text-lg">{t("expenses.voicePreviewTitle")}</h3>
             <div className="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
               {pendingVoiceItems.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-zinc-950 p-3 rounded-xl border border-zinc-800">
@@ -487,7 +489,7 @@ export default function ExpensesTab({
               ))}
             </div>
             <div className="flex justify-between items-center p-3 bg-brand-card border border-brand-accent/20 rounded-xl mb-5">
-               <span className="text-sm font-bold text-zinc-300">মোট খরচ:</span>
+               <span className="text-sm font-bold text-zinc-300">{t("expenses.totalExpenseLabel")}</span>
                <span className="text-lg font-bold text-brand-accent font-mono">
                  ৳ {pendingVoiceItems.reduce((sum, item) => sum + item.amount, 0)}
                </span>
@@ -500,20 +502,20 @@ export default function ExpensesTab({
                  }}
                  className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-colors"
                >
-                 বাতিল করুন
+                 {t("expenses.cancelBtn")}
                </button>
                <button
                  onClick={() => {
                    pendingVoiceItems.forEach(item => {
                      onAddExpense(bazaarDate, item.amount, item.desc, selectedBuyerId);
                    });
-                   setVoiceSuccessMessage(`✅ যোগ করা হয়েছে: ${pendingVoiceItems.length} টি আইটেম`);
+                   setVoiceSuccessMessage(`${t("expenses.addedSuccess")} ${pendingVoiceItems.length} টি আইটেম`);
                    setPendingVoiceItems([]);
                    setShowVoicePreview(false);
                  }}
                  className="flex-1 py-2.5 bg-brand-accent hover:bg-purple-600 text-white text-sm font-bold rounded-xl transition-transform active:scale-95"
                >
-                 নিশ্চিত করুন
+                 {t("expenses.confirmBtn")}
                </button>
             </div>
           </div>

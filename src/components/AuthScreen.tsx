@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useLanguage } from "../contexts/LanguageContext";
+import { LanguageType } from "../i18n/translations";
 import {
   AlertCircle,
   Eye,
@@ -41,6 +43,7 @@ export default function AuthScreen({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResendEmail, setShowResendEmail] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   const handleResendEmail = async () => {
     if (!email.trim()) return;
@@ -448,9 +451,7 @@ export default function AuthScreen({
         ) : isForgotPasswordMode ? (
           <form onSubmit={handleForgotPassword} className="space-y-3">
             <div className="space-y-1 text-left">
-              <label className="text-xs font-semibold text-zinc-300 tracking-wide">
-                Email
-              </label>
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">{t("auth.email")}</label>
               <input
                 type="email"
                 required
@@ -486,9 +487,7 @@ export default function AuthScreen({
               <>
                 {/* Your Name */}
                 <div className="space-y-1 text-left">
-                  <label className="text-xs font-semibold text-zinc-300 tracking-wide">
-                    Your Name
-                  </label>
+                  <label className="text-xs font-semibold text-zinc-300 tracking-wide">{t("auth.name")}</label>
                   <input
                     type="text"
                     required={isRegisterMode}
@@ -533,9 +532,7 @@ export default function AuthScreen({
 
             {/* Password with Eye icon toggle */}
             <div className="space-y-1 text-left relative">
-              <label className="text-xs font-semibold text-zinc-300 tracking-wide">
-                Password
-              </label>
+              <label className="text-xs font-semibold text-zinc-300 tracking-wide">{t("auth.password")}</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -569,7 +566,7 @@ export default function AuthScreen({
                     }}
                     className="text-[10px] text-purple-400 hover:text-purple-300 font-medium transition-colors"
                   >
-                    Forgot Password?
+                    {t("auth.forgotPass")}
                   </button>
                 </div>
               )}
@@ -644,11 +641,27 @@ export default function AuthScreen({
                 className="text-[#9879C5] hover:text-purple-300 font-semibold cursor-pointer underline hover:no-underline"
                 type="button"
               >
-                {isRegisterMode ? "Sign in" : "Create Account"}
+                {isRegisterMode ? t("auth.loginBtn") : t("auth.signupBtn")}
               </button>
             </p>
           </div>
         )}
+      </div>
+
+
+      {/* Facebook-style language switcher */}
+      <div className="mt-6 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[10px] md:text-[11px] text-zinc-500 max-w-sm px-4">
+        {(['en', 'bn', 'ar', 'hi'] as LanguageType[]).map((lang, idx) => (
+          <React.Fragment key={lang}>
+            <button
+              onClick={() => setLanguage(lang)}
+              className={`hover:underline cursor-pointer transition-colors ${language === lang ? 'text-purple-400 font-bold' : 'hover:text-purple-300'}`}
+            >
+              {lang === 'en' ? 'English' : lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'हिन्दी'}
+            </button>
+            {idx < 3 && <span className="text-zinc-700">•</span>}
+          </React.Fragment>
+        ))}
       </div>
 
       {/* Back to Home decorative button matching screenshot */}

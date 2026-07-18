@@ -14,6 +14,9 @@ import {
   Menu,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "../contexts/LanguageContext";
+import { LanguageType } from "../i18n/translations";
+import { Globe } from "lucide-react";
 
 interface HeaderProps {
   messName: string;
@@ -29,31 +32,7 @@ interface HeaderProps {
   onOpenMenu: () => void;
 }
 
-// Highly stylized mapping for months with Bengali values, short codes, and individual gradient theme styles
-const MONTH_DETAILS = [
-  { id: "January 2026", enShort: "JAN", bnFull: "জানুয়ারি", bnShort: "জানু" },
-  {
-    id: "February 2026",
-    enShort: "FEB",
-    bnFull: "ফেব্রুয়ারি",
-    bnShort: "ফেব্রু",
-  },
-  { id: "March 2026", enShort: "MAR", bnFull: "মার্চ", bnShort: "মার্চ" },
-  { id: "April 2026", enShort: "APR", bnFull: "এপ্রিল", bnShort: "এপ্রিল" },
-  { id: "May 2026", enShort: "MAY", bnFull: "মে", bnShort: "মে" },
-  { id: "June 2026", enShort: "JUN", bnFull: "জুন", bnShort: "জুন" },
-  { id: "July 2026", enShort: "JUL", bnFull: "জুলাই", bnShort: "জুলাই" },
-  { id: "August 2026", enShort: "AUG", bnFull: "আগস্ট", bnShort: "আগস্ট" },
-  {
-    id: "September 2026",
-    enShort: "SEP",
-    bnFull: "সেপ্টেম্বর",
-    bnShort: "সেপ্টে",
-  },
-  { id: "October 2026", enShort: "OCT", bnFull: "অক্টোবর", bnShort: "অক্টো" },
-  { id: "November 2026", enShort: "NOV", bnFull: "নভেম্বর", bnShort: "নভে" },
-  { id: "December 2026", enShort: "DEC", bnFull: "ডিসেম্বর", bnShort: "ডিসে" },
-];
+
 
 export default function Header({
   messName,
@@ -71,6 +50,24 @@ export default function Header({
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(messName);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+  const MONTH_DETAILS = [
+    { id: "January 2026", enShort: "JAN", bnFull: t("header.jan"), bnShort: t("header.janShort") },
+    { id: "February 2026", enShort: "FEB", bnFull: t("header.feb"), bnShort: t("header.febShort") },
+    { id: "March 2026", enShort: "MAR", bnFull: t("header.mar"), bnShort: t("header.marShort") },
+    { id: "April 2026", enShort: "APR", bnFull: t("header.apr"), bnShort: t("header.aprShort") },
+    { id: "May 2026", enShort: "MAY", bnFull: t("header.may"), bnShort: t("header.mayShort") },
+    { id: "June 2026", enShort: "JUN", bnFull: t("header.jun"), bnShort: t("header.junShort") },
+    { id: "July 2026", enShort: "JUL", bnFull: t("header.jul"), bnShort: t("header.julShort") },
+    { id: "August 2026", enShort: "AUG", bnFull: t("header.aug"), bnShort: t("header.augShort") },
+    { id: "September 2026", enShort: "SEP", bnFull: t("header.sep"), bnShort: t("header.sepShort") },
+    { id: "October 2026", enShort: "OCT", bnFull: t("header.oct"), bnShort: t("header.octShort") },
+    { id: "November 2026", enShort: "NOV", bnFull: t("header.nov"), bnShort: t("header.novShort") },
+    { id: "December 2026", enShort: "DEC", bnFull: t("header.dec"), bnShort: t("header.decShort") },
+  ];
+
+  const langRef = useRef<HTMLDivElement>(null);
 
   // Custom calendar selector states
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -86,6 +83,12 @@ export default function Header({
         !pickerRef.current.contains(event.target as Node)
       ) {
         setIsPickerOpen(false);
+      }
+      if (
+        langRef.current &&
+        !langRef.current.contains(event.target as Node)
+      ) {
+        setIsLangOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -137,7 +140,7 @@ export default function Header({
                 <button
                   type="submit"
                   className="p-1 text-emerald-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                  title="সংরক্ষণ করুন"
+                  title={t("header.save")}
                 >
                   <Check className="w-3.5 h-3.5" />
                 </button>
@@ -145,7 +148,7 @@ export default function Header({
                   type="button"
                   onClick={() => setIsEditing(false)}
                   className="p-1 text-rose-500 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                  title="বাতিল করুন"
+                  title={t("header.cancel")}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -161,7 +164,7 @@ export default function Header({
                     setIsEditing(true);
                   }}
                   className="p-1 text-zinc-400 hover:text-brand-amber transition-colors cursor-pointer"
-                  title="মেসের নাম পরিবর্তন করুন"
+                  title={t("header.changeName")}
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
@@ -192,17 +195,17 @@ export default function Header({
               {isSyncing ? (
                 <div className="text-[9.5px] text-amber-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
-                  <span>ক্লাউড ব্যাকআপ হচ্ছে...</span>
+                  <span>{t("header.cloudSyncing")}</span>
                 </div>
               ) : lastCloudSync ? (
                 <div className="text-[9.5px] text-emerald-400 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                  <span>ব্যাকআপ নিরাপদ আছে ({lastCloudSync})</span>
+                  <span>{t("header.cloudSecure")} ({lastCloudSync})</span>
                 </div>
               ) : (
                 <div className="text-[9.5px] text-emerald-500/80 font-sans flex items-center gap-1 leading-none select-none tracking-tight">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 inline-block" />
-                  <span>ক্লাউডে সেভড</span>
+                  <span>{t("header.cloudSaved")}</span>
                 </div>
               )}
             </div>
@@ -247,11 +250,11 @@ export default function Header({
                     <div className="flex items-center gap-1.5">
                       <CalendarDays className="w-3.5 h-3.5 text-brand-amber" />
                       <h4 className="text-xs font-bold font-sans text-brand-amber">
-                        সেশন মাস নির্বাচন করুন
+                        {t("header.selectSession")}
                       </h4>
                     </div>
                     <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
-                      ২০২৬
+                      {t("header.year26")}
                     </span>
                   </div>
 
@@ -309,7 +312,7 @@ export default function Header({
                   <div className="mt-3 pt-2.5 border-t border-purple-950/20 text-center flex items-center justify-center gap-1 text-[9px] text-zinc-405">
                     <Sparkles className="w-2.5 h-2.5 text-brand-amber" />
                     <span className="text-zinc-400">
-                      নতুন মাস সিলেক্ট করলে ঐ মাসের রিপোর্ট লোড হবে
+                      {t("header.sessionInfo")}
                     </span>
                   </div>
                 </motion.div>
@@ -321,10 +324,46 @@ export default function Header({
           <button
             onClick={onShowHistory}
             className="p-2 rounded-lg bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]"
-            title="৩ মাসের হিস্টোরি ও পিডিএফ"
+            title={t("header.historyPdf")}
           >
             <History className="w-4 h-4" />
           </button>
+
+
+          {/* Language Selector */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className={`p-2 rounded-lg transition-all cursor-pointer ${isLangOpen ? 'bg-purple-900/40 text-purple-400 border border-purple-500/30' : 'bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-brand-amber'}`}
+              title={t("nav.changeLang")}
+            >
+              <Globe className="w-4 h-4" />
+            </button>
+            <AnimatePresence>
+              {isLangOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute right-0 mt-2 w-32 bg-brand-card border border-purple-950/80 rounded-2xl p-2 shadow-xl z-50 overflow-hidden"
+                >
+                  {(['en', 'bn', 'ar', 'hi'] as LanguageType[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        setLanguage(lang);
+                        setIsLangOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${language === lang ? 'bg-purple-600 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                    >
+                      {lang === 'en' ? 'English' : lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'हिन्दी'}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Theme Toggle */}
           <button
