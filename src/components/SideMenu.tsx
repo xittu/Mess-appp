@@ -86,7 +86,7 @@ export default function SideMenu({
   const [sessionPassword, setSessionPassword] = useState("");
   const [isSessionLoading, setIsSessionLoading] = useState(false);
 
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, currencySymbol } = useLanguage();
   // Export Date Range States
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
@@ -151,7 +151,7 @@ export default function SideMenu({
     }
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("পিডিএফ জেনারেট সম্পন্ন করতে অনুগ্রহ করে ব্রাউজারের পপ-আপ এলাউ করুন।");
+      alert(t("sideMenuFixed.pdfPopupAllow"));
       return;
     }
 
@@ -180,17 +180,17 @@ export default function SideMenu({
       const totalMemberCost = parseFloat((bazaarCost + utilityCost).toFixed(2));
       const balance = parseFloat((totalContribution - totalMemberCost).toFixed(2));
       const isDue = balance < 0;
-      const statusText = isDue ? `{t("sideMenuFixed.balance")}- ৳${Math.abs(balance)}` : `{t("sideMenuFixed.balance")}৳${balance}`;
+      const statusText = isDue ? `{t("sideMenuFixed.balance")}- ${currencySymbol}${Math.abs(balance)}` : `{t("sideMenuFixed.balance")}${currencySymbol}${balance}`;
       const statusColor = isDue ? "color: #e11d48; font-weight: bold;" : "color: #059669; font-weight: bold;";
 
       return `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 12px 10px; font-weight: 600; color: #0f172a;">${member.name}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${deposit}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${memberBazaarSpent}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${memberMeals} টি</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${bazaarCost}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${utilityCost}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${currencySymbol}${deposit}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${currencySymbol}${memberBazaarSpent}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${memberMeals} ${t("meals.individualMeals")}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">{currencySymbol}${bazaarCost}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">{currencySymbol}${utilityCost}</td>
           <td style="padding: 12px 10px; font-family: monospace; ${statusColor}">${statusText}</td>
         </tr>
       `;
@@ -200,16 +200,16 @@ export default function SideMenu({
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #475569;">${e.date}</td>
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${e.desc}</td>
-        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">৳${e.amount}</td>
+        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">${currencySymbol}${e.amount}</td>
       </tr>
-    `).join("") || "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো বাজার খরচ নেই।</td></tr>";
+    `).join("") || `<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>${t("sideMenuFixed.noBazaarAdded")}</td></tr>`;
 
     const utilitiesList = arcUtilities.map((u: any) => `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${u.name}</td>
-        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">৳${u.amount}</td>
+        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">${currencySymbol}${u.amount}</td>
       </tr>
-    `).join("") || `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো ${t("sideMenuFixed.utilityCost")} খরচ নেই।</td></tr>`;
+    `).join("") || `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>${t("sideMenuFixed.noUtilityAdded")}</td></tr>`;
 
     const endDateStr = new Date(archive.endDate).toLocaleDateString("bn-BD");
 
@@ -237,37 +237,37 @@ export default function SideMenu({
             <button onclick="window.print()" style="background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Print / Save PDF</button>
           </div>
           
-          <h1>পুরনো সেশন মেস হিসাব বিবরণী</h1>
+          <h1>${t("sideMenuFixed.oldSessionReport")}</h1>
           <div class="header-info">
             ${t("sideMenuFixed.dateCol")}: ${endDateStr}
           </div>
 
           <div class="summary-box">
             <div class="summary-item">
-              <div class="label">{t("sideMenuFixed.totalBazaar")} খরচ</div>
-              <div class="value">৳${arcTotalBazaar}</div>
+              <div class="label">${t("sideMenuFixed.totalBazaar")}</div>
+              <div class="value">${currencySymbol}${arcTotalBazaar}</div>
             </div>
             <div class="summary-item">
-              <div class="label">মোট {t("sideMenuFixed.utilityCost")} খরচ</div>
-              <div class="value">৳${arcTotalUtility}</div>
+              <div class="label">${t("sideMenuFixed.totalUtilityCost")}</div>
+              <div class="value">${currencySymbol}${arcTotalUtility}</div>
             </div>
             <div class="summary-item">
-              <div class="label">সর্ব{t("sideMenuFixed.totalCost")}</div>
-              <div class="value" style="color: #e11d48;">৳${arcTotalBazaar + arcTotalUtility}</div>
+              <div class="label">${t("sideMenuFixed.grandTotal")}</div>
+              <div class="value" style="color: #e11d48;">{currencySymbol}${arcTotalBazaar + arcTotalUtility}</div>
             </div>
           </div>
 
-          <h2 class="section-title">সদস্যদের চূড়ান্ত হিসাব</h2>
+          <h2 class="section-title">${t("sideMenuFixed.finalAccountMembers")}</h2>
           <table>
             <thead>
               <tr>
-                <th>নাম</th>
+                <th>${t("sideMenuFixed.nameCol")}</th>
                 <th>{t("sideMenuFixed.deposit")}</th>
-                <th>নিজের বাজার</th>
-                <th>মিল</th>
-                <th>বাজার খরচ</th>
+                <th>${t("sideMenuFixed.ownBazaar")}</th>
+                <th>${t("sideMenuFixed.mealsCol")}</th>
+                <th>${t("sideMenuFixed.bazaarCostCol")}</th>
                 <th>{t("sideMenuFixed.utilityCost")}</th>
-                <th>বর্তমান অবস্থা</th>
+                <th>${t("sideMenuFixed.currentStatus")}</th>
               </tr>
             </thead>
             <tbody>
@@ -277,13 +277,13 @@ export default function SideMenu({
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
             <div>
-              <h2 class="section-title" style="margin-top: 0;">বাজার খরচের তালিকা</h2>
+              <h2 class="section-title" style="margin-top: 0;">${t("sideMenuFixed.bazaarList")}</h2>
               <table>
                 <thead>
                   <tr>
                     <th>${t("sideMenuFixed.dateCol")}</th>
-                    <th>বিবরণ</th>
-                    <th>টাকা</th>
+                    <th>${t("sideMenuFixed.descCol")}</th>
+                    <th>${t("sideMenuFixed.amountCol")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,12 +292,12 @@ export default function SideMenu({
               </table>
             </div>
             <div>
-              <h2 class="section-title" style="margin-top: 0;">{t("sideMenuFixed.utilityCost")} খরচের তালিকা</h2>
+              <h2 class="section-title" style="margin-top: 0;">${t("sideMenuFixed.utilityList")}</h2>
               <table>
                 <thead>
                   <tr>
-                    <th>খাতের নাম</th>
-                    <th>টাকা</th>
+                    <th>${t("sideMenuFixed.sectorCol")}</th>
+                    <th>${t("sideMenuFixed.amountCol")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -366,7 +366,7 @@ export default function SideMenu({
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert(
-        "পিডিএফ জেনারেট সম্পন্ন করতে অনুগ্রহ করে ব্রাউজারের পপ-আপ এলাউ করুন।",
+        t("sideMenuFixed.pdfPopupAllow"),
       );
       return;
     }
@@ -389,8 +389,8 @@ export default function SideMenu({
         );
         const isDue = balance < 0;
         const statusText = isDue
-          ? `{t("sideMenuFixed.balance")}- ৳${Math.abs(balance)}`
-          : `{t("sideMenuFixed.balance")}৳${balance}`;
+          ? `{t("sideMenuFixed.balance")}- ${currencySymbol}${Math.abs(balance)}`
+          : `{t("sideMenuFixed.balance")}${currencySymbol}${balance}`;
         const statusColor = isDue
           ? "color: #e11d48; font-weight: bold;"
           : "color: #059669; font-weight: bold;";
@@ -398,11 +398,11 @@ export default function SideMenu({
         return `
         <tr style="border-bottom: 1px solid #e2e8f0;">
           <td style="padding: 12px 10px; font-weight: 600; color: #0f172a;">${member.name}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${deposit}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${memberBazaarSpent}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${memberMeals} টি</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${bazaarCost}</td>
-          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">৳${utilityCost}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${currencySymbol}${deposit}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${currencySymbol}${memberBazaarSpent}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">${memberMeals} ${t("meals.individualMeals")}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">{currencySymbol}${bazaarCost}</td>
+          <td style="padding: 12px 10px; font-family: monospace; color: #334155;">{currencySymbol}${utilityCost}</td>
           <td style="padding: 12px 10px; font-family: monospace; ${statusColor}">${statusText}</td>
         </tr>
       `;
@@ -416,12 +416,12 @@ export default function SideMenu({
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #475569;">${e.date}</td>
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${e.desc}</td>
-        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">৳${e.amount}</td>
+        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0f172a;">${currencySymbol}${e.amount}</td>
       </tr>
     `,
         )
         .join("") ||
-      "<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>চলমান মাসে কোনো বাজার খরচ যুক্ত করা হয়নি।</td></tr>";
+      `<tr><td colspan='3' style='padding: 20px; text-align: center; color: #94a3b8;'>${t("sideMenuFixed.noBazaarCurrent")}</td></tr>`;
 
     const utilitiesList =
       utilities
@@ -429,12 +429,12 @@ export default function SideMenu({
           (u) => `
       <tr style="border-bottom: 1px solid #f1f5f9;">
         <td style="padding: 8px 10px; color: #1e293b; font-weight: 500;">${u.name}</td>
-        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">৳${u.amount}</td>
+        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #4f46e5;">${currencySymbol}${u.amount}</td>
       </tr>
     `,
         )
         .join("") ||
-      `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>কোনো আলাদা ${t("sideMenuFixed.utilityCost")} বিল যুক্ত করা হয়নি।</td></tr>`;
+      `<tr><td colspan='2' style='padding: 20px; text-align: center; color: #94a3b8;'>${t("sideMenuFixed.noUtilityCurrent")}</td></tr>`;
 
     let reportTitle = isJobCycle
       ? `${currentUserName} - ${t("sideMenuFixed.reportTitleCycle")}`
@@ -593,24 +593,24 @@ export default function SideMenu({
           <div class="section-title">${t("sideMenuFixed.messStats")}</div>
           <div class="stat-grid">
             <div class="stat-card">
-              <span class="stat-lbl">{t("sideMenuFixed.totalBazaar")} খরচ</span>
-              <div class="stat-val" style="color: #4f46e5;">৳${totalBazaar}</div>
+              <span class="stat-lbl">${t("sideMenuFixed.totalBazaar")}</span>
+              <div class="stat-val" style="color: #4f46e5;">${currencySymbol}${totalBazaar}</div>
             </div>
             <div class="stat-card">
-              <span class="stat-lbl">মেস {t("sideMenuFixed.utilityCost")} বিল</span>
-              <div class="stat-val" style="color: #4f46e5;">৳${totalUtility}</div>
+              <span class="stat-lbl">${t("sideMenuFixed.messUtilityBill")}</span>
+              <div class="stat-val" style="color: #4f46e5;">${currencySymbol}${totalUtility}</div>
             </div>
             <div class="stat-card">
               <span class="stat-lbl">${t("sideMenuFixed.totalMessMeal")}</span>
-              <div class="stat-val">${totalMeals} টি</div>
+              <div class="stat-val">${totalMeals} ${t("meals.individualMeals")}</div>
             </div>
             <div class="stat-card">
               <span class="stat-lbl">${t("sideMenuFixed.calculatedMealRate")}</span>
-              <div class="stat-val" style="color: #d97706;">৳${mealRate}</div>
+              <div class="stat-val" style="color: #d97706;">{currencySymbol}${mealRate}</div>
             </div>
             <div class="stat-card">
               <span class="stat-lbl">{t("sideMenuFixed.utilityPerMember")}</span>
-              <div class="stat-val" style="color: #0d9488;">৳${utilitySharePerMember}</div>
+              <div class="stat-val" style="color: #0d9488;">{currencySymbol}${utilitySharePerMember}</div>
             </div>
           </div>
  
@@ -619,11 +619,11 @@ export default function SideMenu({
             <thead>
               <tr>
                 <th style="border-top-left-radius: 8px;">${t("sideMenuFixed.memberName")}</th>
-                <th>{t("sideMenuFixed.deposit")} ফান্ড</th>
+                <th>${t("sideMenuFixed.deposit")}</th>
                 <th>${t("sideMenuFixed.personalBazaar")}</th>
                 <th>${t("sideMenuFixed.totalMealCol")}</th>
-                <th>মিল বাবদ খরচ</th>
-                <th>বিল ও {t("sideMenuFixed.utilityCost")}</th>
+                <th>${t("sideMenuFixed.mealCost")}</th>
+                <th>${t("sideMenuFixed.utilityCost")}</th>
                  <th style="border-top-right-radius: 8px;">${t("sideMenuFixed.statusBalance")}</th>
               </tr>
             </thead>
@@ -750,7 +750,7 @@ export default function SideMenu({
                   </div>
                 </div>
                 <div className="text-[11px] font-semibold text-zinc-500 bg-zinc-900 border border-zinc-850 px-2 py-0.5 rounded">
-                  ৳ {totalCostCombined.toLocaleString()}
+                  {currencySymbol} {totalCostCombined.toLocaleString()}
                 </div>
               </button>
 
@@ -777,7 +777,7 @@ export default function SideMenu({
                   </div>
                 </div>
                 <div className="text-[11px] text-indigo-400 bg-indigo-950/15 border border-indigo-950/30 px-2 py-0.5 rounded font-mono">
-                  {dutyAssignments.length} Days Assigned
+                  {dutyAssignments.length} {t("sideMenu.daysAssigned")}
                 </div>
               </button>
 
@@ -936,7 +936,7 @@ export default function SideMenu({
                           {t("sideMenuFixed.totalBazaar")}
                         </span>
                         <span className="text-sm font-bold font-mono text-zinc-100 mt-1.5 block">
-                          ৳{totalBazaar}
+                          {currencySymbol}{totalBazaar}
                         </span>
                       </div>
                       <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
@@ -944,7 +944,7 @@ export default function SideMenu({
                           {t("sideMenuFixed.mealRate")}
                         </span>
                         <span className="text-sm font-bold font-mono text-brand-amber mt-1.5 block">
-                          ৳{mealRate.toFixed(2)}
+                          {currencySymbol}{mealRate.toFixed(2)}
                         </span>
                       </div>
                       <div className="bg-zinc-900/40 border border-purple-950/10 p-2.5 rounded-xl flex flex-col justify-between items-center text-center shadow-sm">
@@ -952,7 +952,7 @@ export default function SideMenu({
                           {t("sideMenuFixed.utilityPerMember")}
                         </span>
                         <span className="text-sm font-bold font-mono text-indigo-400 mt-1.5 block">
-                          ৳{utilitySharePerMember}
+                          {currencySymbol}{utilitySharePerMember}
                         </span>
                       </div>
                     </div>
@@ -1020,12 +1020,12 @@ export default function SideMenu({
                                 {balance < 0 ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-rose-500/10 border border-rose-500/20 text-rose-400">
                                     <TrendingDown className="w-3.5 h-3.5" />
-                                    {t("sideMenuFixed.balance")}- ৳{Math.abs(balance)}
+                                    {t("sideMenuFixed.balance")}- {currencySymbol}{Math.abs(balance)}
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-sans font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                                     <TrendingUp className="w-3.5 h-3.5" />
-                                    {t("sideMenuFixed.balance")}৳{balance}
+                                    {t("sideMenuFixed.balance")}{currencySymbol}{balance}
                                   </span>
                                 )}
                               </div>
@@ -1036,7 +1036,7 @@ export default function SideMenu({
                                     {t("sideMenuFixed.deposit")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
-                                    ৳{deposit}
+                                    {currencySymbol}{deposit}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -1044,7 +1044,7 @@ export default function SideMenu({
                                     {t("sideMenuFixed.bazaarSpent")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-emerald-400 mt-1">
-                                    ৳{memberBazaarSpent}
+                                    {currencySymbol}{memberBazaarSpent}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -1052,7 +1052,7 @@ export default function SideMenu({
                                     {t("sideMenuFixed.mealCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
-                                    ৳{bazaarCost}
+                                    {currencySymbol}{bazaarCost}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -1060,7 +1060,7 @@ export default function SideMenu({
                                     {t("sideMenuFixed.utilityCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-zinc-200 mt-1">
-                                    ৳{utilityCost}
+                                    {currencySymbol}{utilityCost}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -1068,7 +1068,7 @@ export default function SideMenu({
                                     {t("sideMenuFixed.totalCost")}
                                   </span>
                                   <span className="text-xs font-bold font-mono text-brand-amber mt-1">
-                                    ৳{totalMemberCost}
+                                    {currencySymbol}{totalMemberCost}
                                   </span>
                                 </div>
                               </div>
@@ -1082,8 +1082,7 @@ export default function SideMenu({
                       <AlertCircle className="w-4 h-4 text-brand-amber shrink-0 mt-0.5" />
                       <p className="text-[10px] text-zinc-400 leading-normal">
                         {t("sideMenuFixed.mealRateFormula")}{" "}
-                        <b>({t("sideMenuFixed.totalBazaar")} খরচ / ${t("sideMenuFixed.totalMealCol")} সংখ্যা)</b>। {t("sideMenuFixed.utilityCost")} চার্জ
-                        
+                        <b>{t("sideMenuFixed.mealRateFormulaBold")}</b>
                         {t("sideMenuFixed.utilityChargeDesc")}
                       </p>
                     </div>
@@ -1515,7 +1514,7 @@ export default function SideMenu({
                   </div>
                   
                   <div className="mt-6 pt-6 border-t border-emerald-900/30 text-left">
-                    <h5 className="text-xs font-bold text-emerald-400 mb-3">কাস্টম ${t("sideMenuFixed.dateCol")} রিপোর্ট</h5>
+                    <h5 className="text-xs font-bold text-emerald-400 mb-3">{t("sideMenuFixed.customDateReport")}</h5>
                     <div className="flex gap-2 mb-3">
                       <div className="flex-1">
                         <label className="block text-[10px] text-zinc-400 mb-1">{t("sideMenuFixed.startLabel")}</label>

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+const fs = require('fs');
+
+const code = `import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, LanguageType } from '../i18n/translations';
 
 type LanguageContextType = {
@@ -79,3 +81,6 @@ export const useLanguage = () => {
   }
   return context;
 };
+`;
+
+fs.writeFileSync('src/contexts/LanguageContext.tsx', code);

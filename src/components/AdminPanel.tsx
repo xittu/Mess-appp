@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import { supabase } from "../lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -29,6 +30,7 @@ interface MessData {
 }
 
 export default function AdminPanel({ onClose }: { onClose: () => void }) {
+  const { currencySymbol } = useLanguage();
   const [data, setData] = useState<MessData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -261,7 +263,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               Total Market Expenses
             </div>
             <div className="text-sm font-bold text-emerald-400 mb-3">
-              ৳
+              {currencySymbol}
               {selectedMess.expenses?.bazaar?.reduce(
                 (sum, e) => sum + e.amount,
                 0,

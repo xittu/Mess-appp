@@ -38,7 +38,7 @@ export default function ExpensesTab({
   members,
   dueMemberIds,
 }: ExpensesTabProps) {
-  const { t } = useLanguage();
+  const { t, currencySymbol } = useLanguage();
   // Bazaar Form States
   const [bazaarDate, setBazaarDate] = useState(() => {
     const d = new Date();
@@ -160,7 +160,7 @@ export default function ExpensesTab({
             {t("expenses.totalBazaarExpense")}
           </span>
           <span className="text-lg font-bold text-brand-amber font-mono mt-1">
-            ৳ {totalBazaar.toLocaleString()}
+            ${currencySymbol} {totalBazaar.toLocaleString()}
           </span>
         </div>
         <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
@@ -168,7 +168,7 @@ export default function ExpensesTab({
             {t("expenses.otherUtilityBills")}
           </span>
           <span className="text-lg font-bold text-brand-accent font-mono mt-1">
-            ৳ {totalUtility.toLocaleString()}
+            ${currencySymbol} {totalUtility.toLocaleString()}
           </span>
         </div>
       </div>
@@ -419,7 +419,7 @@ export default function ExpensesTab({
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-amber font-mono">
-                    ৳ {item.amount}
+                    ${currencySymbol} {item.amount}
                   </span>
                   <button
                     onClick={() => onRemoveExpense(item.id)}
@@ -458,7 +458,7 @@ export default function ExpensesTab({
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-accent font-mono">
-                    ৳ {item.amount}
+                    ${currencySymbol} {item.amount}
                   </span>
                   <button
                     onClick={() => onRemoveUtility(item.id)}
@@ -484,14 +484,14 @@ export default function ExpensesTab({
               {pendingVoiceItems.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-zinc-950 p-3 rounded-xl border border-zinc-800">
                   <span className="text-sm text-zinc-200">{item.desc}</span>
-                  <span className="text-sm font-bold text-brand-amber font-mono">৳ {item.amount}</span>
+                  <span className="text-sm font-bold text-brand-amber font-mono">${currencySymbol} {item.amount}</span>
                 </div>
               ))}
             </div>
             <div className="flex justify-between items-center p-3 bg-brand-card border border-brand-accent/20 rounded-xl mb-5">
                <span className="text-sm font-bold text-zinc-300">{t("expenses.totalExpenseLabel")}</span>
                <span className="text-lg font-bold text-brand-accent font-mono">
-                 ৳ {pendingVoiceItems.reduce((sum, item) => sum + item.amount, 0)}
+                 ${currencySymbol} {pendingVoiceItems.reduce((sum, item) => sum + item.amount, 0)}
                </span>
             </div>
             <div className="flex gap-3">
@@ -509,7 +509,7 @@ export default function ExpensesTab({
                    pendingVoiceItems.forEach(item => {
                      onAddExpense(bazaarDate, item.amount, item.desc, selectedBuyerId);
                    });
-                   setVoiceSuccessMessage(`${t("expenses.addedSuccess")} ${pendingVoiceItems.length} টি আইটেম`);
+                   setVoiceSuccessMessage(`${t("expenses.addedSuccess")} ${pendingVoiceItems.length} ${t("expenses.items")}`);
                    setPendingVoiceItems([]);
                    setShowVoicePreview(false);
                  }}

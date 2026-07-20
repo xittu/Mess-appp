@@ -82,7 +82,7 @@ export default function App() {
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const { t } = useLanguage();
+  const { t, currencySymbol } = useLanguage();
   const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
   const [globalNotices, setGlobalNotices] = useState<Notice[]>([]);
   const [showNoticePopup, setShowNoticePopup] = useState<boolean>(false);
@@ -700,8 +700,8 @@ export default function App() {
       ? members.find((m) => m.id === memberId)?.name || ""
       : "";
     const msg = buyerName
-      ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
-      : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ৳${amount} টাকা যোগ করা হয়েছে।`;
+      ? `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ${currencySymbol}${amount} টাকা যোগ করা হয়েছে (ক্রেতা: ${buyerName})।`
+      : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ${currencySymbol}${amount} টাকা যোগ করা হয়েছে।`;
 
     sendNotification(messId, "বাজার খরচ যোগ হয়েছে", msg, "info").catch(
       console.error,
@@ -731,7 +731,7 @@ export default function App() {
       sendNotification(
         messId,
         "বাজার খরচ বাদ দেওয়া হয়েছে",
-        `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ৳${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
+        `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ${currencySymbol}${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
         "warning",
       ).catch(console.error);
     }
@@ -760,7 +760,7 @@ export default function App() {
     sendNotification(
       messId,
       "ইউটিলিটি ও অন্যান্য বিল",
-      `একটি নতুন সাব-বিল "${name}" মূল্য ৳${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
+      `একটি নতুন সাব-বিল "${name}" মূল্য ${currencySymbol}${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
       "info",
     ).catch(console.error);
   };
@@ -788,7 +788,7 @@ export default function App() {
       sendNotification(
         messId,
         "ইউটিলিটি বিল বাদ দেওয়া হয়েছে",
-        `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ৳${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
+        `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ${currencySymbol}${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
         "warning",
       ).catch(console.error);
     }
@@ -831,7 +831,7 @@ export default function App() {
     sendNotification(
       messId,
       "নতুন জমা কনফার্ম",
-      `সদস্য "${memberName}" নতুন ৳${amount} টাকা ফান্ডে জমা দিয়েছেন।`,
+      `সদস্য "${memberName}" নতুন ${currencySymbol}${amount} টাকা ফান্ডে জমা দিয়েছেন।`,
       "success",
     ).catch(console.error);
   };

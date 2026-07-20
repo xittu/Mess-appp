@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import { Download, Calendar, Activity, X } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -35,6 +36,7 @@ export default function HistoryModal({
   dutyAssignments,
   messName,
 }: HistoryModalProps) {
+  const { currencySymbol } = useLanguage();
   const contentRef = useRef<HTMLDivElement>(null);
   const [reportTitle, setReportTitle] = React.useState(messName);
   const [startDate, setStartDate] = React.useState('');
@@ -199,7 +201,7 @@ export default function HistoryModal({
                     <tr className="bg-gray-100">
                       <th className="border border-gray-300 p-2">নাম</th>
                       <th className="border border-gray-300 p-2">আইডি</th>
-                      <th className="border border-gray-300 p-2">জমা (৳)</th>
+                      <th className="border border-gray-300 p-2">জমা ({currencySymbol})</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -1,4 +1,6 @@
-import React, { useRef, useState } from "react";
+const fs = require('fs');
+
+const newCode = `import React, { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -49,7 +51,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
     <div className="min-h-screen bg-[#0F0C15] text-zinc-100 flex flex-col font-sans overflow-x-hidden pt-4 md:pt-0">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/20 via-purple-900/5 to-[#0F0C15] pointer-events-none"></div>
 
-      <header className="relative z-50 p-6 md:px-12 flex justify-between items-center bg-transparent">
+      <header className="relative z-10 p-6 md:px-12 flex justify-between items-center bg-transparent">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -96,7 +98,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="absolute end-0 mt-2 w-32 bg-brand-card border border-purple-950/80 rounded-2xl p-2 shadow-xl z-50 overflow-hidden"
+                  className="absolute right-0 mt-2 w-32 bg-brand-card border border-purple-950/80 rounded-2xl p-2 shadow-xl z-50 overflow-hidden"
                 >
                   {(['en', 'bn', 'ar', 'hi'] as LanguageType[]).map((lang) => (
                     <button
@@ -105,7 +107,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                         setLanguage(lang);
                         setIsLangOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors cursor-pointer ${language === lang ? 'bg-purple-600 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                      className={\`w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors cursor-pointer \${language === lang ? 'bg-purple-600 text-white' : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}\`}
                     >
                       {lang === 'en' ? 'English' : lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'हिन्दी'}
                     </button>
@@ -320,3 +322,6 @@ function SparkleIcon(props: any) {
     </svg>
   );
 }
+`;
+
+fs.writeFileSync('src/components/LandingPage.tsx', newCode);

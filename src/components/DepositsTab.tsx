@@ -32,7 +32,7 @@ export default function DepositsTab({
   onDeleteDeposit,
   dueMemberIds,
 }: DepositsTabProps) {
-  const { t } = useLanguage();
+  const { t, currencySymbol } = useLanguage();
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [depositDate, setDepositDate] = useState(() => {
@@ -85,7 +85,7 @@ export default function DepositsTab({
             {t("deposits.totalDepositsTitle")}
           </span>
           <span className="text-2xl font-extrabold text-brand-amber font-mono tracking-tight block">
-            ৳ {totalDeposits.toLocaleString()}
+            {currencySymbol} {totalDeposits.toLocaleString()}
           </span>
         </div>
         <div className="p-3 rounded-xl bg-brand-accent/15 border border-brand-accent/20 text-brand-accent shadow-inner">
@@ -131,7 +131,7 @@ export default function DepositsTab({
                   </span>
                 </div>
                 <div className="text-lg font-mono font-bold text-emerald-400 text-right">
-                  ৳ {amount.toLocaleString()}
+                  ${currencySymbol} {amount.toLocaleString()}
                 </div>
               </div>
             );
@@ -193,7 +193,7 @@ export default function DepositsTab({
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 font-medium">
-                    ৳
+                    {currencySymbol}
                   </span>
                   <input
                     type="number"
@@ -284,7 +284,7 @@ export default function DepositsTab({
                               </div>
                             ) : (
                               <span className="text-sm font-mono font-bold text-emerald-400 shrink-0">
-                                ৳ {entry.amount}
+                                {currencySymbol} {entry.amount}
                               </span>
                             )}
                           </div>

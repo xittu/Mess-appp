@@ -119,7 +119,7 @@ export default function MealsTab({
                 {totalMeals}
               </span>
               <span className="text-[9px] text-zinc-400 font-sans block mt-0.5">
-                ({members.length} {t("meals.activeMembers")})
+                ({members.length} {t("meals.activeCount")})
               </span>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function MealsTab({
             {saveSuccess ? (
               <>
                 <CheckCircle2 className="w-4 h-4 text-white" />
-                মিল সেভ করা হয়েছে!
+                {t("meals.mealSaved")}
               </>
             ) : (
               <>
@@ -157,7 +157,7 @@ export default function MealsTab({
 
         {members.length === 0 ? (
           <div className="bg-brand-card/50 border border-zinc-800/80 rounded-xl p-6 text-center">
-            <p className="text-xs text-zinc-500">মেসে এখনো কোনো সদস্য নেই।</p>
+            <p className="text-xs text-zinc-500">{t("meals.noMembers")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2">
@@ -176,7 +176,7 @@ export default function MealsTab({
                       {dueMemberIds?.includes(member.id) && (
                         <span
                           className="w-2 h-2 rounded-full bg-rose-500 animate-[pulse_1s_ease-in-out_infinite] inline-block ml-1 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                          title="জমা টাকা শেষ! ব্যালেন্স বকেয়া"
+                          title={t("deposits.balanceDueTitle")}
                         ></span>
                       )}
                     </span>
@@ -188,10 +188,10 @@ export default function MealsTab({
 
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-zinc-400 font-sans">
-                    মিল হিসাব:
+                    {t("meals.mealCount")}
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-zinc-800 font-mono text-xs font-bold text-brand-amber">
-                    {fixedMealCount} টি
+                    {fixedMealCount} {t("meals.individualMeals")}
                   </span>
                 </div>
               </div>
@@ -202,9 +202,7 @@ export default function MealsTab({
         <div className="bg-purple-950/10 border border-purple-950/25 rounded-xl p-3.5 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
           <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
-            ব্যক্তিগত বা দৈনিক মিল কম-বেশি পরিবর্তনের জন্য নির্ধারিত মিলের
-            জায়গায় আপনার মেসের মোট মিল বা কাস্টম লিমিট সেট করে নিন। এই সিস্টেমটি
-            সহজ ও সরল গণনার জন্য ডিজাইন করা হয়েছে।
+            {t("meals.mealCalcDesc")}
           </p>
         </div>
       </div>
