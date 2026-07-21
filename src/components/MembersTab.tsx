@@ -36,8 +36,8 @@ export default function MembersTab({
   return (
     <div className="space-y-4 px-4 pb-20">
       {/* Add Member Card */}
-      <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-4 shadow-md">
-        <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
+      <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-slate-200 dark:border-purple-950/40 p-4 shadow-md">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-brand-amber" />
           {t("members.addMemberTitle")}
         </h3>
@@ -48,7 +48,7 @@ export default function MembersTab({
               value={memberName}
               onChange={(e) => setMemberName(e.target.value)}
               placeholder={t("members.memberNamePlaceholder")}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-all font-sans"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent transition-all font-sans"
               id="input-member-name"
             />
           </div>
@@ -66,22 +66,22 @@ export default function MembersTab({
 
       {/* Member List Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-200">
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
           {t("members.memberListTitle")} ({members.length} {t("members.peopleCount")})
         </h3>
-        <span className="text-xs text-zinc-400 font-medium">
+        <span className="text-xs text-slate-600 dark:text-zinc-400 font-medium">
           {t("members.registeredUsers")}
         </span>
       </div>
 
       {/* Member List */}
       {members.length === 0 ? (
-        <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
+        <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 p-8 text-center">
           <ShieldAlert className="w-8 h-8 text-brand-amber mx-auto mb-2 opacity-80" />
-          <p className="text-sm text-zinc-300 font-medium font-sans">
+          <p className="text-sm text-slate-700 dark:text-zinc-300 font-medium font-sans">
             {t("members.noMembersFound")}
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1">
             {t("members.firstMemberPrompt")}
           </p>
         </div>
@@ -90,7 +90,7 @@ export default function MembersTab({
           {members.map((member, index) => (
             <div
               key={member.id}
-              className="group flex items-center justify-between bg-brand-card border border-purple-950/30 p-3 rounded-xl hover:border-brand-accent/50 transition-all duration-300 shadow-sm"
+              className="group flex items-center justify-between bg-white dark:bg-brand-card shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/30 p-3 rounded-xl hover:border-brand-accent/50 transition-all duration-300 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 {/* Index badge */}
@@ -99,7 +99,7 @@ export default function MembersTab({
                 </span>
 
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-zinc-100 font-sans group-hover:text-white transition-colors">
+                  <span className="text-sm font-bold text-slate-900 dark:text-zinc-100 font-sans group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                     {member.name}
                     {dueMemberIds?.includes(member.id) && (
                       <span
@@ -108,7 +108,7 @@ export default function MembersTab({
                       ></span>
                     )}
                   </span>
-                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">
                     <span className="font-mono">ID: {member.id}</span>
                     <button
                       onClick={() => handleCopyId(member.id)}

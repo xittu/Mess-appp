@@ -80,23 +80,23 @@ export default function PasswordChangeModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-200 dark:bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-sm bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-zinc-100">
+        <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-zinc-100">
             <KeyRound className="w-5 h-5 text-indigo-400" />
             <h3 className="font-semibold">{t("passwordModal.title")}</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -110,7 +110,7 @@ export default function PasswordChangeModal({
               </div>
               <div>
                 <h4 className="text-emerald-400 font-semibold mb-1">{t("passwordModal.successTitle")}</h4>
-                <p className="text-zinc-400 text-sm">{t("passwordModal.successDesc")}</p>
+                <p className="text-slate-600 dark:text-zinc-400 text-sm">{t("passwordModal.successDesc")}</p>
               </div>
             </div>
           ) : (
@@ -133,7 +133,7 @@ export default function PasswordChangeModal({
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-zinc-400 mb-1.5 ml-1">
                     {t("passwordModal.oldPass")}
                   </label>
                   <input
@@ -141,11 +141,11 @@ export default function PasswordChangeModal({
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
                     placeholder={t("passwordModal.oldPassPlaceholder")}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                    className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-zinc-400 mb-1.5 ml-1">
                     {t("passwordModal.newPass")}
                   </label>
                   <input
@@ -153,11 +153,11 @@ export default function PasswordChangeModal({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder={t("passwordModal.newPassPlaceholder")}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                    className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5 ml-1">
+                  <label className="block text-xs font-medium text-slate-600 dark:text-zinc-400 mb-1.5 ml-1">
                     {t("passwordModal.confirmPass")}
                   </label>
                   <input
@@ -165,7 +165,7 @@ export default function PasswordChangeModal({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder={t("passwordModal.confirmPassPlaceholder")}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                    className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                   />
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default function PasswordChangeModal({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>

@@ -101,16 +101,16 @@ export default function HistoryModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-black/60 backdrop-blur-sm">
       <div className="bg-[#0F0C15] w-full max-w-2xl rounded-2xl border border-purple-900/40 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-4 border-b border-purple-900/30 flex items-center justify-between bg-zinc-950/80">
+        <div className="p-4 border-b border-purple-900/30 flex items-center justify-between bg-slate-100 dark:bg-zinc-950/80">
           <div className="flex items-center gap-2 text-brand-amber">
             <Activity className="w-5 h-5" />
             <h2 className="text-sm font-bold font-sans">হিস্টোরি ও আর্কাইভ</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded bg-zinc-900 text-zinc-400 hover:text-white"
+            className="p-1 rounded bg-slate-50 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -119,29 +119,29 @@ export default function HistoryModal({
         <div className="p-4 flex-1 overflow-y-auto">
           {/* Section 1: Dashboard UI Request Details */}
           <div className="flex flex-col gap-4 mb-6">
-            <div className="flex items-center gap-3 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-slate-200 dark:border-zinc-800">
               <Calendar className="w-6 h-6 text-brand-accent mx-auto" />
               <div className="flex-1">
-                <h3 className="text-zinc-200 font-bold font-sans">
+                <h3 className="text-slate-800 dark:text-zinc-200 font-bold font-sans">
                   লাস্ট ৩ মাসের রিপোর্ট
                 </h3>
-                <p className="text-xs text-zinc-400 font-sans mt-1">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 font-sans mt-1">
                   আলাদা আলাদা মাসের রিপোর্ট ডাউনলোড করুন
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              <div className="flex flex-col gap-2 p-4 bg-zinc-950 rounded-xl border border-zinc-800/80">
+              <div className="flex flex-col gap-2 p-4 bg-slate-100 dark:bg-zinc-950 rounded-xl border border-slate-200 dark:border-zinc-800/80">
                 <span className="text-emerald-100/90 font-bold font-sans text-sm">কাস্টম তারিখ রিপোর্ট</span>
                 <div className="flex gap-2">
-                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="flex-1 bg-zinc-900 text-white text-xs p-2 rounded border border-zinc-800" />
-                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="flex-1 bg-zinc-900 text-white text-xs p-2 rounded border border-zinc-800" />
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="flex-1 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-white text-xs p-2 rounded border border-slate-200 dark:border-zinc-800" />
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="flex-1 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-white text-xs p-2 rounded border border-slate-200 dark:border-zinc-800" />
                 </div>
                 <button
                   onClick={() => handleDownloadPDF(`${startDate} to ${endDate}`, true)}
                   disabled={!startDate || !endDate}
-                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-2 px-3 rounded-lg flex justify-center items-center gap-2 transition-all font-sans text-xs shadow-lg"
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 dark:text-white font-bold py-2 px-3 rounded-lg flex justify-center items-center gap-2 transition-all font-sans text-xs shadow-lg"
                 >
                   <Download className="w-4 h-4" />
                   কাস্টম PDF ডাউনলোড
@@ -152,14 +152,14 @@ export default function HistoryModal({
                 return (
                   <div
                     key={monthOffset}
-                    className="flex items-center justify-between bg-zinc-950 p-4 rounded-xl border border-zinc-800/80"
+                    className="flex items-center justify-between bg-slate-100 dark:bg-zinc-950 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80"
                   >
                     <span className="text-emerald-100/90 font-bold font-sans text-sm">
                       {monthName}
                     </span>
                     <button
                       onClick={() => handleDownloadPDF(monthName, false)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-2 transition-all font-sans text-xs shadow-lg"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-slate-900 dark:text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-2 transition-all font-sans text-xs shadow-lg"
                     >
                       <Download className="w-4 h-4" />
                       PDF
@@ -172,8 +172,8 @@ export default function HistoryModal({
 
           {/* Hidden Detailed Report specifically targeted for PDF Export */}
           <div className="relative">
-            <div className="bg-zinc-950 rounded-xl p-4 border border-zinc-800 shadow-inner">
-              <p className="text-xs text-zinc-400 text-center mb-4 font-sans">
+            <div className="bg-slate-100 dark:bg-zinc-950 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-inner">
+              <p className="text-xs text-slate-600 dark:text-zinc-400 text-center mb-4 font-sans">
                 পিডিএফ রিপোর্টে বিস্তারিত ডাটা অন্তর্ভুক্ত করা হবে
               </p>
             </div>

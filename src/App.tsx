@@ -76,6 +76,15 @@ export default function App() {
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
   const [darkMode, setDarkMode] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
@@ -1146,9 +1155,9 @@ export default function App() {
   // --- Render Loading Interface ---
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0F0C15] text-white flex flex-col items-center justify-center p-6 select-none font-sans">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0F0C15] text-slate-900 dark:text-white flex flex-col items-center justify-center p-6 select-none font-sans">
         <Sparkles className="w-8 h-8 text-brand-amber animate-spin mb-3" />
-        <span className="text-xs font-semibold text-zinc-400 tracking-widest uppercase">
+        <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 tracking-widest uppercase">
           মেস নেটওয়ার্ক সংযোগ হচ্ছে...
         </span>
       </div>
@@ -1194,12 +1203,10 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full overflow-x-hidden ${
-        darkMode ? "bg-brand-bg text-zinc-100" : "bg-[#FAFAFE] text-zinc-800"
-      }`}
+      className="min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full overflow-x-hidden"
     >
       {/* Viewport alignment */}
-      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-zinc-950/20 border-x border-purple-950/15 overflow-x-hidden">
+      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-slate-100 dark:bg-zinc-950/20 border-x border-slate-200 dark:border-purple-950/15 overflow-x-hidden">
         {/* Real-time floating Notification Toast Alert Banner */}
         <Toaster position="top-right" richColors />
 
@@ -1223,7 +1230,7 @@ export default function App() {
           <div className="absolute right-16 top-3 ml-2">
             <button
               onClick={() => setShowNotificationCenter(!showNotificationCenter)}
-              className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-brand-amber transition-all cursor-pointer relative"
+              className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 hover:text-brand-amber transition-all cursor-pointer relative"
               title="ইন-অ্যাপ নোটিফিকেশন"
               id="header-notification-bell"
             >
@@ -1237,15 +1244,15 @@ export default function App() {
 
         {/* Real-time In-App Notification Center Alert Shelf */}
         {showNotificationCenter && (
-          <div className="bg-[#151020] border-b border-purple-950/50 p-4 relative z-30 shadow-lg">
-            <div className="flex items-center justify-between mb-3 border-b border-purple-950/20 pb-2">
+          <div className="bg-[#151020] border-b border-slate-200 dark:border-purple-950/50 p-4 relative z-30 shadow-lg">
+            <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-purple-950/20 pb-2">
               <span className="text-xs font-bold text-brand-amber flex items-center gap-1.5 font-sans">
                 <Bell className="w-4 h-4 animate-bounce" />
                 মেস নোটিফিকেশন এলার্ট
               </span>
               <button
                 onClick={() => setShowNotificationCenter(false)}
-                className="text-[11px] font-bold text-zinc-400 hover:text-white cursor-pointer"
+                className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               >
                 বন্ধ করুন
               </button>
@@ -1253,7 +1260,7 @@ export default function App() {
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
               {notifications.length === 0 ? (
-                <div className="text-center py-6 text-xs text-zinc-500">
+                <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500">
                   কোনো নোটিফিকেশন সতর্কতা নেই।
                 </div>
               ) : (
@@ -1267,21 +1274,21 @@ export default function App() {
                           ? "bg-red-950/10 border-red-950/30 text-red-300"
                           : log.type === "warning"
                             ? "bg-amber-950/10 border-amber-950/30 text-amber-200"
-                            : "bg-zinc-900/30 border-zinc-800 text-zinc-300"
+                            : "bg-slate-50 dark:bg-zinc-900/30 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300"
                     }`}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-bold text-[11px] block">
                         {log.title}
                       </span>
-                      <span className="text-[9px] text-zinc-500 font-mono">
+                      <span className="text-[9px] text-slate-500 dark:text-zinc-500 font-mono">
                         {new Date(log.timestamp).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </span>
                     </div>
-                    <span className="text-[10.5px] leading-relaxed block text-zinc-200">
+                    <span className="text-[10.5px] leading-relaxed block text-slate-800 dark:text-zinc-200">
                       {log.message}
                     </span>
                   </div>
@@ -1349,7 +1356,7 @@ export default function App() {
         </main>
 
         {/* Premium Sticky Bottom Navbar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-purple-950/45 bg-zinc-950/95 backdrop-blur-md px-2 py-2 select-none">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-slate-200 dark:border-purple-950/45 bg-slate-100 dark:bg-zinc-950/95 backdrop-blur-md px-2 py-2 select-none">
           <div className="flex items-center justify-around">
             {/* Tab 0 - Members */}
             <button
@@ -1359,7 +1366,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 0
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-members"
             >
@@ -1375,7 +1382,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 1
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-expenses"
             >
@@ -1391,7 +1398,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
                 activeTab === 2
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-meals"
             >
@@ -1410,7 +1417,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 3
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-deposits"
             >
@@ -1427,7 +1434,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
                 activeTab === 4 && !isMenuOpen
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
             >
               {bazaarList.some((i) => !i.isChecked) && (
@@ -1512,7 +1519,7 @@ export default function App() {
         {/* Floating Job Register Button */}
         <button
           onClick={() => setIsJobRegisterOpen(true)}
-          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group"
+          className="fixed bottom-24 right-6 bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white p-4 rounded-full shadow-xl shadow-indigo-500/20 flex items-center justify-center z-40 transition-transform active:scale-95 group"
           aria-label="Open Job Register"
         >
           {missingAttendance && (
@@ -1527,12 +1534,12 @@ export default function App() {
         {/* Job Register Modal */}
         <AnimatePresence>
           {isJobRegisterOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-200 dark:bg-black/60 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="w-full max-w-4xl h-[90vh] bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+                className="w-full max-w-4xl h-[90vh] bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
               >
                 <JobRegisterTab
                   members={safeMembers}

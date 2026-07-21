@@ -11,18 +11,33 @@
 }
 
 /* Global Font Application and Anti-aliasing */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html,
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background-color: var(--color-brand-bg);
-  color: #fff;
+  background-color: #FAFAFE;
+  color: #1E293B;
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
 }
+
+html.dark body {
+  background-color: var(--color-brand-bg);
+  color: #fff;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #0F0C15;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2D243F;
+}
+
 
 button,
 input,
@@ -49,10 +64,10 @@ h6 {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0F0C15;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2D243F;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {

@@ -189,19 +189,19 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-[#0F0C15] flex flex-col font-sans overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-purple-950/40 bg-zinc-950/80">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-purple-950/40 bg-slate-100 dark:bg-zinc-950/80">
         <div className="flex items-center gap-2">
           {selectedMess ? (
             <button
               onClick={() => setSelectedMess(null)}
-              className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+              className="p-1 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-700 dark:text-zinc-300"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           ) : (
             <Activity className="w-5 h-5 text-brand-amber" />
           )}
-          <h2 className="text-sm font-bold text-white tracking-wide">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide">
             {selectedMess
               ? `Mess Details: ${selectedMess.mess_name || selectedMess.meals?.messName || "Unknown"}`
               : "Admin Hub"}
@@ -209,7 +209,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-slate-900 dark:hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -222,7 +222,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             className={`flex-1 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
               activeTab === "messes"
                 ? "border-brand-amber text-brand-amber bg-brand-amber/10"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                : "border-transparent text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             All Messes
@@ -232,7 +232,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
               activeTab === "notices"
                 ? "border-purple-500 text-purple-400 bg-purple-500/10"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                : "border-transparent text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             <Bell className="w-4 h-4" />
@@ -246,20 +246,20 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
           <Activity className="w-8 h-8 text-brand-amber animate-spin" />
         </div>
       ) : selectedMess ? (
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-zinc-200">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-slate-800 dark:text-zinc-200">
           {/* Detailed View */}
-          <div className="bg-zinc-900 border border-purple-900/30 p-4 rounded-xl">
-            <div className="text-xs text-zinc-400 mb-1">Account Email</div>
-            <div className="text-sm font-bold text-white mb-3">
+          <div className="bg-slate-50 dark:bg-zinc-900 border border-purple-900/30 p-4 rounded-xl">
+            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Account Email</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white mb-3">
               {selectedMess.user_email}
             </div>
 
-            <div className="text-xs text-zinc-400 mb-1">Total Members</div>
-            <div className="text-sm font-bold text-white mb-3">
+            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Total Members</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white mb-3">
               {selectedMess.members?.length || 0} Members
             </div>
 
-            <div className="text-xs text-zinc-400 mb-1">
+            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">
               Total Market Expenses
             </div>
             <div className="text-sm font-bold text-emerald-400 mb-3">
@@ -270,14 +270,14 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               ) || 0}
             </div>
 
-            <div className="text-xs text-zinc-400 mb-1">Fixed Meal Count</div>
+            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Fixed Meal Count</div>
             <div className="text-sm font-bold text-brand-amber mb-3">
               {selectedMess.meals?.fixedMealCount || 0} Meals
             </div>
 
             <button
               onClick={() => handleDownloadPDF(selectedMess)}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl active:scale-95 transition-transform"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-purple-600 hover:bg-purple-500 text-slate-900 dark:text-white font-bold rounded-xl active:scale-95 transition-transform"
             >
               <Download className="w-4 h-4" />
               Download Data PDF
@@ -288,13 +288,13 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         <div className="flex-1 flex flex-col p-4">
           {/* Search */}
           <div className="relative mb-4">
-            <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-500 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by email or mess name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-sm text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500"
             />
           </div>
 
@@ -305,17 +305,17 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               return (
                 <div
                   key={i}
-                  className="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center justify-between"
+                  className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3 rounded-xl flex items-center justify-between"
                 >
                   <div>
-                    <div className="font-bold text-sm text-white flex items-center gap-1.5">
+                    <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
                       <Home className="w-3.5 h-3.5 text-brand-accent" />
                       {MName}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                    <div className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5">
                       {d.user_email}
                     </div>
-                    <div className="text-[10px] text-zinc-500 mt-1 flex items-center gap-2">
+                    <div className="text-[10px] text-slate-500 dark:text-zinc-500 mt-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" /> {d.members?.length || 0}
                       </span>
@@ -335,7 +335,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               );
             })}
             {filteredData.length === 0 && (
-              <div className="text-center text-sm text-zinc-500 py-10">
+              <div className="text-center text-sm text-slate-500 dark:text-zinc-500 py-10">
                 No records found.
               </div>
             )}
@@ -343,37 +343,37 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         </div>
       ) : (
         <div className="flex-1 flex flex-col p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-purple-900/30 p-4 rounded-xl mb-6">
-            <h3 className="text-sm font-bold text-white mb-3">Add New Notice</h3>
+          <div className="bg-slate-50 dark:bg-zinc-900 border border-purple-900/30 p-4 rounded-xl mb-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Add New Notice</h3>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Notice Title (e.g., Update, Maintenance)"
-              className="w-full p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3"
+              className="w-full p-3 bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-sm text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3"
             />
             <textarea
               value={noticeText}
               onChange={(e) => setNoticeText(e.target.value)}
               placeholder="Write an important notice for all users..."
-              className="w-full h-24 p-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3 resize-none"
+              className="w-full h-24 p-3 bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg text-sm text-slate-900 dark:text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 mb-3 resize-none"
             />
             <button
               onClick={handleAddNotice}
               disabled={!noticeText.trim() || !title.trim() || savingNotice}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold rounded-lg transition-transform active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-slate-900 dark:text-white font-bold rounded-lg transition-transform active:scale-95"
             >
               <Plus className="w-4 h-4" />
               {savingNotice ? "Publishing..." : "Publish Notice"}
             </button>
           </div>
 
-          <h3 className="text-sm font-bold text-zinc-400 mb-3 px-1">All Notices</h3>
+          <h3 className="text-sm font-bold text-slate-600 dark:text-zinc-400 mb-3 px-1">All Notices</h3>
           <div className="space-y-3">
             {notices.map((notice) => (
-              <div key={notice.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+              <div key={notice.id} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-500">
                     {new Date(notice.created_at).toLocaleString()}
                   </span>
                   <div className="flex items-center gap-2">
@@ -382,26 +382,26 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
                       className={`px-2 py-1 text-[10px] font-bold rounded-full ${
                         notice.is_active 
                           ? "bg-emerald-500/20 text-emerald-400" 
-                          : "bg-zinc-800 text-zinc-400"
+                          : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                       }`}
                     >
                       {notice.is_active ? "Active" : "Inactive"}
                     </button>
                     <button
                       onClick={() => handleDeleteNotice(notice.id)}
-                      className="p-1 text-zinc-500 hover:text-red-400 transition-colors"
+                      className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                <p className="text-sm text-slate-800 dark:text-zinc-200 whitespace-pre-wrap leading-relaxed">
                   {notice.content}
                 </p>
               </div>
             ))}
             {notices.length === 0 && (
-              <div className="text-center text-sm text-zinc-500 py-10">
+              <div className="text-center text-sm text-slate-500 dark:text-zinc-500 py-10">
                 No notices published yet.
               </div>
             )}

@@ -79,10 +79,21 @@ export default function ExpensesTab({
       parseTranscript(transcript);
     };
 
+    recognition.onnomatch = () => {
+      setIsListening(false);
+      alert("No speech recognized. Please try again.");
+    };
+
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
-      alert("Error recognizing speech: " + event.error);
+      if (event.error === 'not-allowed') {
+        alert("মাইক্রোফোন পারমিশন ব্লক করা আছে!\n\n১. Address bar এর lock আইকনে ক্লিক করে মাইক্রোফোন Allow করুন।\n২. আপনি যদি Messenger বা Facebook অ্যাপের ভেতরে থাকেন, তবে 'Open in Chrome' করুন।\n৩. ফোনের 'Google' অ্যাপের মাইক্রোফোন পারমিশন Allow করা আছে কিনা চেক করুন।");
+      } else if (event.error === 'no-speech') {
+        alert("কোনো কথা শোনা যায়নি। দয়া করে আবার চেষ্টা করুন। (No speech detected)");
+      } else {
+        alert("Error recognizing speech: " + event.error);
+      }
     };
 
     recognition.onend = () => {
@@ -93,41 +104,48 @@ export default function ExpensesTab({
   };
 
   const parseTranscript = (transcript: string) => {
-    // Convert Bengali digits to English
+    // 1. Convert Bengali digits to English
     const bnToEn = (s: string) => s.replace(/[০-৯]/g, (d) => "0123456789"["০১২৩৪৫৬৭৮৯".indexOf(d)]);
-    const normalized = bnToEn(transcript);
+    let normalized = bnToEn(transcript);
+    
+    console.log("Speech recognized:", transcript, "Normalized:", normalized);
 
-    // regex to match: number + taka/টাকা + item name
-    const regex = /(\d+(?:\.\d+)?)\s*(?:taka|টাকা|Taka)\s*([a-zA-Z\u0980-\u09FF\s]+?)(?=\d+\s*(?:taka|টাকা|Taka)|$)/gi;
-    let match;
-    const parsedItems: {amount: number, desc: string}[] = [];
+    // 2. Map some common Bengali number words to digits for better fallback
+    const wordToNumber: Record<string, string> = {
+      "এক": "1", "দুই": "2", "তিন": "3", "চার": "4", "পাঁচ": "5", "ছয়": "6", "সাত": "7", "আট": "8", "নয়": "9", "দশ": "10",
+      "বিশ": "20", "ত্রিশ": "30", "তিরিশ": "30", "চল্লিশ": "40", "পঞ্চাশ": "50", "ষাট": "60", "সত্তর": "70", "আশি": "80", "নব্বই": "90", "একশ": "100", "শ": "100"
+    };
+    
+    // Replace whole words
+    Object.keys(wordToNumber).forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      normalized = normalized.replace(regex, wordToNumber[word]);
+    });
 
-    while ((match = regex.exec(normalized)) !== null) {
-      const amount = parseFloat(match[1]);
-      const desc = match[2].trim();
-      if (!isNaN(amount) && amount > 0 && desc) {
-        parsedItems.push({ amount, desc });
+    // Try to find a number in the transcript
+    const numberMatch = normalized.match(/(\d+(\.\d+)?)/);
+    
+    if (numberMatch) {
+      const amount = parseFloat(numberMatch[0]);
+      // Remove the number and currency words
+      let desc = normalized
+        .replace(numberMatch[0], "")
+        .replace(/taka|টাকা|Taka|tk|টিক/gi, "")
+        .replace(/tar|এর/gi, "") // optional trailing words like "takar"
+        .replace(/^[\s,.]+|[\s,.]+$/g, "") // trim spaces/punctuation
+        .trim();
+        
+      if (amount > 0) {
+        setPendingVoiceItems([{ amount, desc: desc || t("expenses.voiceDefaultDesc") }]);
+        setShowVoicePreview(true);
+        return;
       }
     }
-
-    if (parsedItems.length > 0) {
-      setPendingVoiceItems(parsedItems);
-      setShowVoicePreview(true);
-    } else {
-      // Fallback: try to just grab the first number as amount and the rest as desc
-      const fallbackMatch = normalized.match(/(\d+(\.\d+)?)/);
-      if (fallbackMatch) {
-        const amt = parseFloat(fallbackMatch[0]);
-        let d = normalized.replace(fallbackMatch[0], "").replace(/taka|টাকা/gi, "").trim();
-        if (amt > 0) {
-           setPendingVoiceItems([{ amount: amt, desc: d || t("expenses.voiceDefaultDesc") }]);
-           setShowVoicePreview(true);
-           return;
-        }
-      }
-      alert(`Could not parse properly from: "${transcript}". Please try saying like "40 taka alu"`);
-    }
+    
+    alert(`শোনা গেছে: "${transcript}"\nকিন্তু কোনো টাকার পরিমাণ বোঝা যায়নি। দয়া করে আবার বলুন, যেমন: "৪০ টাকা আলু"`);
   };
+
+
 
   const handleBazaarSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,28 +173,28 @@ export default function ExpensesTab({
     <div className="space-y-5 px-4 pb-20">
       {/* Quick Visual Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-zinc-400 font-medium">
+        <div className="bg-white dark:bg-brand-card/75 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
+          <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium">
             {t("expenses.totalBazaarExpense")}
           </span>
           <span className="text-lg font-bold text-brand-amber font-mono mt-1">
-            ${currencySymbol} {totalBazaar.toLocaleString()}
+            {currencySymbol} {totalBazaar.toLocaleString()}
           </span>
         </div>
-        <div className="bg-brand-card/75 border border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-zinc-400 font-medium">
+        <div className="bg-white dark:bg-brand-card/75 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
+          <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium">
             {t("expenses.otherUtilityBills")}
           </span>
           <span className="text-lg font-bold text-brand-accent font-mono mt-1">
-            ${currencySymbol} {totalUtility.toLocaleString()}
+            {currencySymbol} {totalUtility.toLocaleString()}
           </span>
         </div>
       </div>
 
       {/* Bazaar Form Card */}
-      <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-4 shadow-md">
+      <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-slate-200 dark:border-purple-950/40 p-4 shadow-md">
         <div className="flex items-center justify-between mb-3.5">
-          <h3 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-brand-amber" />
             {t("expenses.addDailyBazaar")}
           </h3>
@@ -201,22 +219,22 @@ export default function ExpensesTab({
         <form onSubmit={handleBazaarSubmit} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
                 {t("expenses.selectDate")}
               </label>
               <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-zinc-500" />
                 <input
                   type="date"
                   value={bazaarDate}
                   onChange={(e) => setBazaarDate(e.target.value)}
-                  className="w-full pl-8 pr-2.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans cursor-text"
+                  className="w-full pl-8 pr-2.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans cursor-text"
                   id="bazaar-date-input"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
                 {t("expenses.amountAmount")}
               </label>
               <input
@@ -227,7 +245,7 @@ export default function ExpensesTab({
                 onChange={(e) => setBazaarAmount(e.target.value)}
                 onClick={() => bazaarAmount === "0" && setBazaarAmount("")}
                 placeholder="0"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
                 id="bazaar-amount-input"
               />
             </div>
@@ -235,13 +253,13 @@ export default function ExpensesTab({
 
           {/* Buyer Selector Custom Dropdown */}
           <div className="relative">
-            <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+            <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
               {t("expenses.selectBuyer")}
             </label>
             <button
               type="button"
               onClick={() => setIsBuyerSelectOpen(!isBuyerSelectOpen)}
-              className="w-full flex items-center justify-between text-xs font-bold py-2.5 px-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-850/80 border border-zinc-800 text-zinc-200 transition-all text-left cursor-pointer"
+              className="w-full flex items-center justify-between text-xs font-bold py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-zinc-900 hover:bg-zinc-850/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 transition-all text-left cursor-pointer"
             >
               <span className="truncate">
                 {selectedBuyerId
@@ -250,12 +268,12 @@ export default function ExpensesTab({
                   : t("expensesTab.commonFund")}
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
+                className={`w-4 h-4 text-slate-500 dark:text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
               />
             </button>
 
             {isBuyerSelectOpen && (
-              <div className="absolute z-45 mt-1.5 w-full bg-[#18142c] border border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
+              <div className="absolute z-45 mt-1.5 w-full bg-[#18142c] border border-slate-200 dark:border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
                 <button
                   type="button"
                   onClick={() => {
@@ -265,7 +283,7 @@ export default function ExpensesTab({
                   className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
                     selectedBuyerId === ""
                       ? "bg-brand-accent/25 text-brand-amber font-bold"
-                      : "text-zinc-300 hover:bg-zinc-850/50"
+                      : "text-slate-700 dark:text-zinc-300 hover:bg-zinc-850/50"
                   }`}
                 >
                   {t("expensesTab.commonFund")}
@@ -281,7 +299,7 @@ export default function ExpensesTab({
                     className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
                       selectedBuyerId === member.id
                         ? "bg-brand-accent/25 text-brand-amber font-bold"
-                        : "text-zinc-300 hover:bg-zinc-850/50"
+                        : "text-slate-700 dark:text-zinc-300 hover:bg-zinc-850/50"
                     }`}
                   >
                     {member.name}
@@ -298,7 +316,7 @@ export default function ExpensesTab({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+            <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
               {t("expenses.bazaarDetailsOptional")}
             </label>
             <input
@@ -306,7 +324,7 @@ export default function ExpensesTab({
               value={bazaarDesc}
               onChange={(e) => setBazaarDesc(e.target.value)}
               placeholder={t("expenses.itemDescPlaceholder")}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
               id="bazaar-desc-input"
             />
           </div>
@@ -324,15 +342,15 @@ export default function ExpensesTab({
       </div>
 
       {/* Utility Grid Form Card */}
-      <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-4 shadow-md">
-        <h3 className="text-sm font-semibold text-zinc-300 mb-3.5 flex items-center gap-2">
+      <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-slate-200 dark:border-purple-950/40 p-4 shadow-md">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300 mb-3.5 flex items-center gap-2">
           <LayoutGrid className="w-4 h-4 text-brand-amber" />
           {t("expensesTab.utilityBillsTitle")}
         </h3>
         <form onSubmit={handleUtilitySubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
                 {t("expenses.billDescLabel")}
               </label>
               <input
@@ -340,12 +358,12 @@ export default function ExpensesTab({
                 value={utilityName}
                 onChange={(e) => setUtilityName(e.target.value)}
                 placeholder={t("expenses.billDescPlaceholder")}
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-zinc-950/50 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-sans"
                 id="utility-name-input"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
                 {t("expenses.billAmountLabel")}
               </label>
               <input
@@ -356,7 +374,7 @@ export default function ExpensesTab({
                 onChange={(e) => setUtilityAmount(e.target.value)}
                 onClick={() => utilityAmount === "0" && setUtilityAmount("")}
                 placeholder="0"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-950/50 border border-zinc-800 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-100 dark:bg-zinc-950/50 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent font-mono text-right"
                 id="utility-amount-input"
               />
             </div>
@@ -365,7 +383,7 @@ export default function ExpensesTab({
           <button
             type="submit"
             disabled={!utilityName.trim() || parseFloat(utilityAmount) <= 0}
-            className="w-full py-2.5 text-xs font-semibold text-zinc-100 bg-zinc-800 hover:bg-zinc-700 hover:text-white active:bg-zinc-800 rounded-xl transition-all border border-zinc-700/60 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 text-xs font-semibold text-slate-900 dark:text-zinc-100 bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white active:bg-slate-100 dark:active:bg-zinc-800 rounded-xl transition-all border border-zinc-700/60 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
             id="btn-add-utility"
           >
             <LogIn className="w-4 h-4 rotate-90" />
@@ -376,14 +394,14 @@ export default function ExpensesTab({
 
       {/* Expense History List */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-200 flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
           <span>{t("expenses.bazaarHistoryTitle")} ({expenses.length})</span>
         </h3>
 
         {expenses.length === 0 ? (
-          <div className="bg-brand-card rounded-2xl border border-dashed border-zinc-800 p-8 text-center">
+          <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 p-8 text-center">
             <ShieldAlert className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-slate-600 dark:text-zinc-400">
               {t("expenses.noBazaarEntry")}
             </p>
           </div>
@@ -392,11 +410,11 @@ export default function ExpensesTab({
             {expenses.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between bg-brand-card border border-purple-950/20 p-3 rounded-xl shadow-sm"
+                className="flex items-center justify-between bg-white dark:bg-brand-card shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/20 p-3 rounded-xl shadow-sm"
               >
                 <div className="flex flex-col max-w-[70%]">
                   <div className="flex items-start flex-col gap-1">
-                    <span className="text-sm font-bold text-zinc-100 font-sans leading-tight">
+                    <span className="text-sm font-bold text-slate-900 dark:text-zinc-100 font-sans leading-tight">
                       {item.desc || t("expenses.defaultExpenseDesc")}
                     </span>
                     {item.memberId && (
@@ -413,13 +431,13 @@ export default function ExpensesTab({
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-zinc-500 font-mono mt-1">
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono mt-1">
                     {item.date}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-amber font-mono">
-                    ${currencySymbol} {item.amount}
+                    {currencySymbol} {item.amount}
                   </span>
                   <button
                     onClick={() => onRemoveExpense(item.id)}
@@ -439,26 +457,26 @@ export default function ExpensesTab({
       {/* Utility History List */}
       {utilities.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-zinc-200">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
             {t("expenses.utilityHistoryTitle")}
           </h3>
           <div className="space-y-2">
             {utilities.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between bg-brand-card border border-purple-950/20 p-3 rounded-xl shadow-sm"
+                className="flex items-center justify-between bg-white dark:bg-brand-card shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/20 p-3 rounded-xl shadow-sm"
               >
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-zinc-200 font-sans">
+                  <span className="text-sm font-bold text-slate-800 dark:text-zinc-200 font-sans">
                     {item.name}
                   </span>
-                  <span className="text-[10px] text-zinc-500 font-sans mt-0.5">
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-sans mt-0.5">
                     {t("expenses.utilityDefaultName")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-brand-accent font-mono">
-                    ${currencySymbol} {item.amount}
+                    {currencySymbol} {item.amount}
                   </span>
                   <button
                     onClick={() => onRemoveUtility(item.id)}
@@ -477,21 +495,21 @@ export default function ExpensesTab({
 
       {/* Voice Preview Modal */}
       {showVoicePreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-purple-500/30 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-5 animate-in zoom-in-95 duration-200">
-            <h3 className="font-bold text-white mb-4 text-lg">{t("expenses.voicePreviewTitle")}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-50 dark:bg-zinc-900 border border-purple-500/30 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden p-5 animate-in zoom-in-95 duration-200">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-lg">{t("expenses.voicePreviewTitle")}</h3>
             <div className="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
               {pendingVoiceItems.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-zinc-950 p-3 rounded-xl border border-zinc-800">
-                  <span className="text-sm text-zinc-200">{item.desc}</span>
-                  <span className="text-sm font-bold text-brand-amber font-mono">${currencySymbol} {item.amount}</span>
+                <div key={idx} className="flex justify-between items-center bg-slate-100 dark:bg-zinc-950 p-3 rounded-xl border border-slate-200 dark:border-zinc-800">
+                  <span className="text-sm text-slate-800 dark:text-zinc-200">{item.desc}</span>
+                  <span className="text-sm font-bold text-brand-amber font-mono">{currencySymbol} {item.amount}</span>
                 </div>
               ))}
             </div>
-            <div className="flex justify-between items-center p-3 bg-brand-card border border-brand-accent/20 rounded-xl mb-5">
-               <span className="text-sm font-bold text-zinc-300">{t("expenses.totalExpenseLabel")}</span>
+            <div className="flex justify-between items-center p-3 bg-white dark:bg-brand-card shadow-sm dark:shadow-none border border-brand-accent/20 rounded-xl mb-5">
+               <span className="text-sm font-bold text-slate-700 dark:text-zinc-300">{t("expenses.totalExpenseLabel")}</span>
                <span className="text-lg font-bold text-brand-accent font-mono">
-                 ${currencySymbol} {pendingVoiceItems.reduce((sum, item) => sum + item.amount, 0)}
+                 {currencySymbol} {pendingVoiceItems.reduce((sum, item) => sum + item.amount, 0)}
                </span>
             </div>
             <div className="flex gap-3">
@@ -500,7 +518,7 @@ export default function ExpensesTab({
                    setPendingVoiceItems([]);
                    setShowVoicePreview(false);
                  }}
-                 className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-bold rounded-xl transition-colors"
+                 className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-900 dark:text-white text-sm font-bold rounded-xl transition-colors"
                >
                  {t("expenses.cancelBtn")}
                </button>
@@ -513,7 +531,7 @@ export default function ExpensesTab({
                    setPendingVoiceItems([]);
                    setShowVoicePreview(false);
                  }}
-                 className="flex-1 py-2.5 bg-brand-accent hover:bg-purple-600 text-white text-sm font-bold rounded-xl transition-transform active:scale-95"
+                 className="flex-1 py-2.5 bg-brand-accent hover:bg-purple-600 text-slate-900 dark:text-white text-sm font-bold rounded-xl transition-transform active:scale-95"
                >
                  {t("expenses.confirmBtn")}
                </button>

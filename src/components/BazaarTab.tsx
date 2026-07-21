@@ -42,13 +42,13 @@ export default function BazaarTab({
       exit={{ opacity: 0, y: -10 }}
       className="p-4 space-y-6 pb-24"
     >
-      <div className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl shadow-xl space-y-4">
+      <div className="bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-brand-amber font-sans flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           {t("bazaar.weeklyDuty")}
         </h2>
         {dutyAssignments.length === 0 ? (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-slate-500 dark:text-zinc-500">
             {t("bazaar.noDuty")}
           </p>
         ) : (
@@ -56,12 +56,12 @@ export default function BazaarTab({
             {dutyAssignments.map((duty, idx) => (
               <div
                 key={idx}
-                className="bg-zinc-900/40 p-2 rounded-xl border border-purple-950/20 text-center"
+                className="bg-slate-50 dark:bg-zinc-900/40 p-2 rounded-xl border border-slate-200 dark:border-purple-950/20 text-center"
               >
-                <span className="block text-[10px] text-zinc-400 font-semibold">
+                <span className="block text-[10px] text-slate-600 dark:text-zinc-400 font-semibold">
                   {duty.day}
                 </span>
-                <span className="block text-xs font-bold text-zinc-200 mt-1">
+                <span className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1">
                   {getMemberName(duty.memberId)}
                 </span>
                 <span className="block text-[9px] text-brand-accent mt-0.5">
@@ -73,7 +73,7 @@ export default function BazaarTab({
         )}
       </div>
 
-      <div className="bg-[#120e20] p-4 border border-purple-950/25 rounded-2xl shadow-xl space-y-4">
+      <div className="bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-emerald-400 font-sans flex items-center gap-2">
           <ShoppingCart className="w-4 h-4" />
           {t("bazaar.sharedList")}
@@ -85,7 +85,7 @@ export default function BazaarTab({
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             placeholder={t("bazaar.newItem")}
-            className="flex-1 bg-zinc-900/80 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-brand-accent"
+            className="flex-1 bg-slate-50 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-brand-accent"
           />
           <button
             type="submit"
@@ -104,7 +104,7 @@ export default function BazaarTab({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, height: 0 }}
-                className={`flex items-center justify-between p-3 rounded-xl border ${item.isChecked ? "bg-emerald-950/10 border-emerald-900/30" : "bg-zinc-900/40 border-zinc-850"}`}
+                className={`flex items-center justify-between p-3 rounded-xl border ${item.isChecked ? "bg-emerald-950/10 border-emerald-900/30" : "bg-slate-50 dark:bg-zinc-900/40 border-zinc-850"}`}
               >
                 <div
                   className="flex items-center gap-3 cursor-pointer flex-1"
@@ -118,21 +118,21 @@ export default function BazaarTab({
                     )}
                   </div>
                   <span
-                    className={`text-sm ${item.isChecked ? "text-zinc-500 line-through" : "text-zinc-200"}`}
+                    className={`text-sm ${item.isChecked ? "text-slate-500 dark:text-zinc-500 line-through" : "text-slate-800 dark:text-zinc-200"}`}
                   >
                     {item.name}
                   </span>
                 </div>
                 <button
                   onClick={() => onDeleteBazaarItem(item.id)}
-                  className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-500 dark:text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </motion.div>
             ))}
             {bazaarList.length === 0 && (
-              <div className="text-center py-6 text-xs text-zinc-500">
+              <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500">
                 {t("bazaar.emptyList")}
               </div>
             )}

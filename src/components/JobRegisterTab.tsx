@@ -491,18 +491,18 @@ export default function JobRegisterTab({
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-200">
-      <div className="p-3 border-b border-purple-950/30 flex items-center justify-between bg-zinc-900/50">
-        <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-zinc-200 transition-colors mr-2 flex-shrink-0">
+    <div className="flex flex-col h-full bg-slate-100 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200">
+      <div className="p-3 border-b border-slate-200 dark:border-purple-950/30 flex items-center justify-between bg-slate-50 dark:bg-zinc-900/50">
+        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors mr-2 flex-shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex flex-1 max-w-[280px] mx-auto bg-zinc-900 rounded-lg p-1 border border-zinc-800">
+        <div className="flex flex-1 max-w-[280px] mx-auto bg-slate-50 dark:bg-zinc-900 rounded-lg p-1 border border-slate-200 dark:border-zinc-800">
           <button
             onClick={() => setViewMode("daily")}
             className={`flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
               viewMode === "daily"
                 ? "bg-purple-600/20 text-purple-300"
-                : "text-zinc-500 hover:text-zinc-300"
+                : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             Daily Register
@@ -512,7 +512,7 @@ export default function JobRegisterTab({
             className={`flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
               viewMode === "history"
                 ? "bg-purple-600/20 text-purple-300"
-                : "text-zinc-500 hover:text-zinc-300"
+                : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             Monthly History
@@ -526,21 +526,21 @@ export default function JobRegisterTab({
         {viewMode === "daily" && (
           <div className="space-y-4">
             {/* Compact Input Form */}
-            <div className="bg-zinc-900/40 border border-purple-950/20 rounded-xl p-3 shadow-lg">
-              <h3 className="text-[13px] font-bold text-zinc-100 mb-3 flex items-center gap-1.5">
+            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-purple-950/20 rounded-xl p-3 shadow-lg">
+              <h3 className="text-[13px] font-bold text-slate-900 dark:text-zinc-100 mb-3 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-brand-amber" />
                 Mark Your Status
               </h3>
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                    <label className="block text-[10px] uppercase font-bold text-slate-600 dark:text-zinc-400 mb-1">
                       Member
                     </label>
                     <select
                       value={selectedMemberName}
                       onChange={(e) => setSelectedMemberName(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
+                      className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
                       required
                     >
                       <option value="" disabled>Select Name</option>
@@ -553,14 +553,14 @@ export default function JobRegisterTab({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                    <label className="block text-[10px] uppercase font-bold text-slate-600 dark:text-zinc-400 mb-1">
                       Date
                     </label>
                     <input
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
+                      className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
                       required
                     />
                   </div>
@@ -568,7 +568,7 @@ export default function JobRegisterTab({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                    <label className="block text-[10px] uppercase font-bold text-slate-600 dark:text-zinc-400 mb-1">
                       Shift
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -578,7 +578,7 @@ export default function JobRegisterTab({
                         className={`py-1.5 rounded-lg border flex items-center justify-center gap-1 transition-all ${
                           status === "Duty"
                             ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-300 shadow-sm shadow-emerald-900/20"
-                            : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                            : "bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         <span className="font-semibold text-[11px]">Duty</span>
@@ -589,7 +589,7 @@ export default function JobRegisterTab({
                         className={`py-1.5 rounded-lg border flex items-center justify-center gap-1 transition-all ${
                           status === "Off Day"
                             ? "bg-rose-950/40 border-rose-500/50 text-rose-300 shadow-sm shadow-rose-900/20"
-                            : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                            : "bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         <span className="font-semibold text-[11px]">Off Day</span>
@@ -598,7 +598,7 @@ export default function JobRegisterTab({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                    <label className="block text-[10px] uppercase font-bold text-slate-600 dark:text-zinc-400 mb-1">
                       Status
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -608,7 +608,7 @@ export default function JobRegisterTab({
                         className={`py-1.5 rounded-lg border flex items-center justify-center gap-1 transition-all ${
                           isPresent
                             ? "bg-indigo-950/40 border-indigo-500/50 text-indigo-300 shadow-sm shadow-indigo-900/20"
-                            : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                            : "bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         <span className="font-semibold text-[11px]">Present</span>
@@ -619,7 +619,7 @@ export default function JobRegisterTab({
                         className={`py-1.5 rounded-lg border flex items-center justify-center gap-1 transition-all ${
                           !isPresent
                             ? "bg-orange-950/40 border-orange-500/50 text-orange-300 shadow-sm shadow-orange-900/20"
-                            : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                            : "bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                         }`}
                       >
                         <span className="font-semibold text-[11px]">Absent</span>
@@ -630,7 +630,7 @@ export default function JobRegisterTab({
 
                 <div className="grid grid-cols-2 gap-3 items-end">
                    <div>
-                      <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                      <label className="block text-[10px] uppercase font-bold text-slate-600 dark:text-zinc-400 mb-1">
                         Overtime (Hrs)
                       </label>
                       <input
@@ -640,7 +640,7 @@ export default function JobRegisterTab({
                         value={overtimeHours === 0 ? "" : overtimeHours}
                         onChange={(e) => setOvertimeHours(e.target.value ? parseFloat(e.target.value) : 0)}
                         placeholder="e.g. 2.5"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
+                        className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber transition-all"
                       />
                    </div>
                    <button
@@ -653,9 +653,9 @@ export default function JobRegisterTab({
                 </div>
 
                 <div className="relative flex items-center py-0.5">
-                  <div className="flex-grow border-t border-zinc-800/50"></div>
-                  <span className="flex-shrink-0 mx-3 text-zinc-500 text-[9px] font-bold">OR PUNCH NFC</span>
-                  <div className="flex-grow border-t border-zinc-800/50"></div>
+                  <div className="flex-grow border-t border-slate-200 dark:border-zinc-800/50"></div>
+                  <span className="flex-shrink-0 mx-3 text-slate-500 dark:text-zinc-500 text-[9px] font-bold">OR PUNCH NFC</span>
+                  <div className="flex-grow border-t border-slate-200 dark:border-zinc-800/50"></div>
                 </div>
 
                 <button
@@ -670,15 +670,15 @@ export default function JobRegisterTab({
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-zinc-300 border-b border-zinc-800 pb-2">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300 border-b border-slate-200 dark:border-zinc-800 pb-2">
                 Daily Register: {date}
               </h3>
-            <h3 className="text-sm font-bold text-zinc-300 border-b border-zinc-800 pb-2">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300 border-b border-slate-200 dark:border-zinc-800 pb-2">
               Daily Register: {date}
             </h3>
 
             {members.length === 0 ? (
-              <div className="text-center py-6 text-zinc-500 text-sm">
+              <div className="text-center py-6 text-slate-500 dark:text-zinc-500 text-sm">
                 No members found.
               </div>
             ) : (
@@ -691,9 +691,9 @@ export default function JobRegisterTab({
                   return (
                     <div
                       key={member.id}
-                      className="flex items-center justify-between bg-zinc-900/30 border border-zinc-800/50 p-3 rounded-xl"
+                      className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/50 p-3 rounded-xl"
                     >
-                      <div className="font-medium text-sm text-zinc-200">
+                      <div className="font-medium text-sm text-slate-800 dark:text-zinc-200">
                         {member.name}
                       </div>
                       <div className="flex gap-2 items-center">
@@ -726,7 +726,7 @@ export default function JobRegisterTab({
                             ) : null}
                           </>
                         ) : (
-                          <span className="px-2.5 py-1 text-[10px] font-semibold rounded-md uppercase tracking-wider bg-zinc-800/50 text-zinc-500">
+                          <span className="px-2.5 py-1 text-[10px] font-semibold rounded-md uppercase tracking-wider bg-slate-100 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-500">
                             Not Marked
                           </span>
                         )}
@@ -743,9 +743,9 @@ export default function JobRegisterTab({
         {/* History View */}
         {viewMode === "history" && (
           <div className="space-y-4">
-            <div className="flex flex-col gap-3 border-b border-zinc-800 pb-3">
+            <div className="flex flex-col gap-3 border-b border-slate-200 dark:border-zinc-800 pb-3">
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold text-zinc-300">
+                <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-300">
                   {cycleType === "20-20" ? "Job Cycle History" : "Monthly History"}
                 </h3>
                 <div className="flex gap-2">
@@ -759,7 +759,7 @@ export default function JobRegisterTab({
                   <select
                     value={historyMemberId}
                     onChange={(e) => setHistoryMemberId(e.target.value)}
-                    className="bg-zinc-900 border border-zinc-800 text-xs rounded-lg px-2 py-1 text-zinc-300 focus:outline-none focus:border-brand-amber"
+                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-lg px-2 py-1 text-slate-700 dark:text-zinc-300 focus:outline-none focus:border-brand-amber"
                   >
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -769,13 +769,13 @@ export default function JobRegisterTab({
                   </select>
                 </div>
               </div>
-              <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800 w-full">
+              <div className="flex bg-slate-50 dark:bg-zinc-900 rounded-lg p-1 border border-slate-200 dark:border-zinc-800 w-full">
                   <button
                     onClick={() => setCycleType("normal")}
                     className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-md transition-all ${
                       cycleType === "normal"
                         ? "bg-purple-600/20 text-purple-300"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
                     }`}
                   >
                     Normal Month (1st - End)
@@ -785,7 +785,7 @@ export default function JobRegisterTab({
                     className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded-md transition-all ${
                       cycleType === "20-20"
                         ? "bg-purple-600/20 text-purple-300"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        : "text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
                     }`}
                   >
                     Job Cycle (20th - 20th)
@@ -834,7 +834,7 @@ export default function JobRegisterTab({
 
                   <div className="space-y-2 mt-4">
                     {stats.records.length === 0 ? (
-                      <div className="text-center py-8 text-zinc-500 text-sm flex flex-col items-center">
+                      <div className="text-center py-8 text-slate-500 dark:text-zinc-500 text-sm flex flex-col items-center">
                         <History className="w-8 h-8 mb-2 opacity-20" />
                         No records found for this month
                       </div>
@@ -842,9 +842,9 @@ export default function JobRegisterTab({
                       stats.records.map((record) => (
                         <div
                           key={record.id}
-                          className="flex justify-between items-center p-3 bg-zinc-900/30 border border-zinc-800/50 rounded-xl"
+                          className="flex justify-between items-center p-3 bg-slate-50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/50 rounded-xl"
                         >
-                          <span className="font-mono text-sm text-zinc-400">
+                          <span className="font-mono text-sm text-slate-600 dark:text-zinc-400">
                             {record.date}
                           </span>
                           <div className="flex gap-2">
@@ -888,21 +888,21 @@ export default function JobRegisterTab({
       {/* NFC Action Modals */}
       <AnimatePresence>
         {nfcModalState !== 'hidden' && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-200 dark:bg-black/60 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl p-6"
+              className="relative w-full max-w-sm bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6"
             >
               {nfcModalState === 'scanning' && (
                 <div className="text-center space-y-4">
                   <div className="mx-auto w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center animate-pulse">
                     <Nfc className="w-8 h-8 text-indigo-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-zinc-100">Scanning NFC...</h3>
-                  <p className="text-zinc-400 text-sm">Please tap your NFC card to the back of your device.</p>
-                  <button onClick={() => setNfcModalState('hidden')} className="mt-4 text-xs text-zinc-500 hover:text-zinc-300">Cancel</button>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">Scanning NFC...</h3>
+                  <p className="text-slate-600 dark:text-zinc-400 text-sm">Please tap your NFC card to the back of your device.</p>
+                  <button onClick={() => setNfcModalState('hidden')} className="mt-4 text-xs text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300">Cancel</button>
                 </div>
               )}
 
@@ -912,7 +912,7 @@ export default function JobRegisterTab({
                     <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-emerald-400">Success!</h3>
-                  <p className="text-zinc-300 text-sm">{successMessage}</p>
+                  <p className="text-slate-700 dark:text-zinc-300 text-sm">{successMessage}</p>
                 </div>
               )}
 
@@ -923,19 +923,19 @@ export default function JobRegisterTab({
                       <AlertTriangle className="w-6 h-6 text-rose-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-rose-400">❌ Unknown Card / Non-User detected</h3>
-                    <p className="text-zinc-400 text-xs font-mono bg-zinc-900/50 py-1.5 px-3 rounded-lg inline-block">
+                    <p className="text-slate-600 dark:text-zinc-400 text-xs font-mono bg-slate-50 dark:bg-zinc-900/50 py-1.5 px-3 rounded-lg inline-block">
                       Tag ID: {scannedTagId}
                     </p>
                   </div>
 
-                  <div className="border-t border-zinc-800 pt-4">
-                    <label className="block text-xs font-medium text-zinc-400 mb-2">
+                  <div className="border-t border-slate-200 dark:border-zinc-800 pt-4">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-zinc-400 mb-2">
                       Assign Card to Member (Admin)
                     </label>
                     <select
                       value={nfcMemberIdToAssign}
                       onChange={(e) => setNfcMemberIdToAssign(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 mb-3"
+                      className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 mb-3"
                     >
                       <option value="">Select a member...</option>
                       {members.map((m) => (
@@ -948,14 +948,14 @@ export default function JobRegisterTab({
                     <div className="flex gap-2">
                       <button
                         onClick={() => setNfcModalState('hidden')}
-                        className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 text-sm font-semibold transition-colors"
+                        className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-900 hover:text-slate-800 dark:hover:text-zinc-200 text-sm font-semibold transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleAssignNfcCard}
                         disabled={!nfcMemberIdToAssign || loading}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex justify-center items-center gap-2"
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-slate-900 dark:text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex justify-center items-center gap-2"
                       >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Assign Card"}
                       </button>

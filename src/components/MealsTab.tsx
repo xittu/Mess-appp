@@ -53,7 +53,7 @@ export default function MealsTab({
             <h4 className="text-sm font-bold text-brand-amber font-sans">
               {t("meals.noMealsSet")}
             </h4>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+            <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-sans">
               {t("meals.noMealsDesc")}
             </p>
           </div>
@@ -67,7 +67,7 @@ export default function MealsTab({
             <h4 className="text-sm font-bold text-emerald-400 font-sans">
               {t("meals.configuredTitle")}
             </h4>
-            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+            <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed font-sans">
               {t("meals.configuredDesc1")}{" "}
               <b>{fixedMealCount} {t("meals.configuredDesc2")}</b>।
             </p>
@@ -76,24 +76,24 @@ export default function MealsTab({
       )}
 
       {/* Set Fixed Meal Box */}
-      <div className="bg-brand-card rounded-2xl border border-purple-950/40 p-5 shadow-lg relative overflow-hidden">
+      <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-slate-200 dark:border-purple-950/40 p-5 shadow-lg relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-28 h-28 bg-brand-accent/5 rounded-full blur-2xl pointer-events-none"></div>
 
         <div className="flex items-center gap-2 mb-3">
           <Settings className="w-4 h-4 text-brand-amber" />
-          <h3 className="text-sm font-bold text-white font-sans">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white font-sans">
             {t("meals.setMealsTitle")}
           </h3>
         </div>
 
-        <p className="text-xs text-zinc-400 mb-4 leading-relaxed font-sans">
+        <p className="text-xs text-slate-600 dark:text-zinc-400 mb-4 leading-relaxed font-sans">
           {t("meals.setMealsDesc")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 font-sans">
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1.5 font-sans">
                 {t("meals.mealRateLabel")}
               </label>
               <div className="relative">
@@ -105,20 +105,20 @@ export default function MealsTab({
                   value={mealInput}
                   onChange={(e) => setMealInput(e.target.value)}
                   onClick={() => mealInput === "0" && setMealInput("")}
-                  className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-100 font-mono text-center text-lg focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 font-mono text-center text-lg focus:outline-none focus:ring-1 focus:ring-brand-accent focus:border-brand-accent"
                   id="fixed-meals-input"
                 />
               </div>
             </div>
 
-            <div className="w-1/2 bg-black/20 border border-purple-950/20 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-zinc-500 font-semibold block uppercase">
+            <div className="w-1/2 bg-slate-200 dark:bg-black/20 border border-slate-200 dark:border-purple-950/20 rounded-xl p-3 text-center">
+              <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-semibold block uppercase">
                 {t("meals.totalMeals")}
               </span>
-              <span className="text-xl font-extrabold text-white font-mono block mt-1">
+              <span className="text-xl font-extrabold text-slate-900 dark:text-white font-mono block mt-1">
                 {totalMeals}
               </span>
-              <span className="text-[9px] text-zinc-400 font-sans block mt-0.5">
+              <span className="text-[9px] text-slate-600 dark:text-zinc-400 font-sans block mt-0.5">
                 ({members.length} {t("meals.activeCount")})
               </span>
             </div>
@@ -131,7 +131,7 @@ export default function MealsTab({
           >
             {saveSuccess ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-white" />
+                <CheckCircle2 className="w-4 h-4 text-slate-900 dark:text-white" />
                 {t("meals.mealSaved")}
               </>
             ) : (
@@ -147,7 +147,7 @@ export default function MealsTab({
       {/* Member Meals Overview */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-zinc-200">
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
             {t("meals.membersMealOverview")}
           </h4>
           <span className="text-xs text-brand-amber font-mono font-medium">
@@ -156,22 +156,22 @@ export default function MealsTab({
         </div>
 
         {members.length === 0 ? (
-          <div className="bg-brand-card/50 border border-zinc-800/80 rounded-xl p-6 text-center">
-            <p className="text-xs text-zinc-500">{t("meals.noMembers")}</p>
+          <div className="bg-white dark:bg-brand-card/50 shadow-sm dark:shadow-none border border-slate-200 dark:border-zinc-800/80 rounded-xl p-6 text-center">
+            <p className="text-xs text-slate-500 dark:text-zinc-500">{t("meals.noMembers")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between bg-brand-card/60 border border-purple-950/10 px-4 py-3 rounded-xl"
+                className="flex items-center justify-between bg-white dark:bg-brand-card/60 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/10 px-4 py-3 rounded-xl"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+                  <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400">
                     <User className="w-4 h-4 text-brand-accent" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-zinc-200 block font-sans">
+                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block font-sans">
                       {member.name}
                       {dueMemberIds?.includes(member.id) && (
                         <span
@@ -180,17 +180,17 @@ export default function MealsTab({
                         ></span>
                       )}
                     </span>
-                    <span className="text-[10px] text-zinc-500 block font-mono">
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 block font-mono">
                       ID: {member.id}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-zinc-400 font-sans">
+                  <span className="text-xs text-slate-600 dark:text-zinc-400 font-sans">
                     {t("meals.mealCount")}
                   </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-zinc-800 font-mono text-xs font-bold text-brand-amber">
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-black/30 border border-slate-200 dark:border-zinc-800 font-mono text-xs font-bold text-brand-amber">
                     {fixedMealCount} {t("meals.individualMeals")}
                   </span>
                 </div>
@@ -199,9 +199,9 @@ export default function MealsTab({
           </div>
         )}
 
-        <div className="bg-purple-950/10 border border-purple-950/25 rounded-xl p-3.5 flex items-start gap-2.5">
+        <div className="bg-purple-950/10 border border-slate-200 dark:border-purple-950/25 rounded-xl p-3.5 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
-          <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
+          <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed font-sans">
             {t("meals.mealCalcDesc")}
           </p>
         </div>
