@@ -102,7 +102,7 @@ export default function HistoryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0F0C15] w-full max-w-2xl rounded-2xl border border-purple-900/40 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-slate-50 dark:bg-[#0F0C15] w-full max-w-2xl rounded-2xl border border-purple-900/40 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-4 border-b border-purple-900/30 flex items-center justify-between bg-slate-100 dark:bg-zinc-950/80">
           <div className="flex items-center gap-2 text-brand-amber">
             <Activity className="w-5 h-5" />
@@ -110,7 +110,7 @@ export default function HistoryModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded bg-slate-50 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+            className="p-1 rounded bg-slate-50 dark:bg-zinc-900 text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -125,7 +125,7 @@ export default function HistoryModal({
                 <h3 className="text-slate-800 dark:text-zinc-200 font-bold font-sans">
                   লাস্ট ৩ মাসের রিপোর্ট
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-zinc-400 font-sans mt-1">
+                <p className="text-xs text-slate-700 dark:text-zinc-400 font-sans mt-1">
                   আলাদা আলাদা মাসের রিপোর্ট ডাউনলোড করুন
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function HistoryModal({
           {/* Hidden Detailed Report specifically targeted for PDF Export */}
           <div className="relative">
             <div className="bg-slate-100 dark:bg-zinc-950 rounded-xl p-4 border border-slate-200 dark:border-zinc-800 shadow-inner">
-              <p className="text-xs text-slate-600 dark:text-zinc-400 text-center mb-4 font-sans">
+              <p className="text-xs text-slate-700 dark:text-zinc-400 text-center mb-4 font-sans">
                 পিডিএফ রিপোর্টে বিস্তারিত ডাটা অন্তর্ভুক্ত করা হবে
               </p>
             </div>

@@ -1157,7 +1157,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#0F0C15] text-slate-900 dark:text-white flex flex-col items-center justify-center p-6 select-none font-sans">
         <Sparkles className="w-8 h-8 text-brand-amber animate-spin mb-3" />
-        <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400 tracking-widest uppercase">
+        <span className="text-xs font-semibold text-slate-700 dark:text-zinc-400 tracking-widest uppercase">
           মেস নেটওয়ার্ক সংযোগ হচ্ছে...
         </span>
       </div>
@@ -1206,7 +1206,7 @@ export default function App() {
       className="min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full overflow-x-hidden"
     >
       {/* Viewport alignment */}
-      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-slate-100 dark:bg-zinc-950/20 border-x border-slate-200 dark:border-purple-950/15 overflow-x-hidden">
+      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-slate-50 dark:bg-zinc-950/20 border-x border-slate-200 dark:border-purple-950/15 overflow-x-hidden">
         {/* Real-time floating Notification Toast Alert Banner */}
         <Toaster position="top-right" richColors />
 
@@ -1252,7 +1252,7 @@ export default function App() {
               </span>
               <button
                 onClick={() => setShowNotificationCenter(false)}
-                className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="text-[11px] font-bold text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               >
                 বন্ধ করুন
               </button>
@@ -1260,7 +1260,7 @@ export default function App() {
 
             <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
               {notifications.length === 0 ? (
-                <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500">
+                <div className="text-center py-6 text-xs text-slate-600 dark:text-zinc-500">
                   কোনো নোটিফিকেশন সতর্কতা নেই।
                 </div>
               ) : (
@@ -1281,7 +1281,7 @@ export default function App() {
                       <span className="font-bold text-[11px] block">
                         {log.title}
                       </span>
-                      <span className="text-[9px] text-slate-500 dark:text-zinc-500 font-mono">
+                      <span className="text-[9px] text-slate-600 dark:text-zinc-500 font-mono">
                         {new Date(log.timestamp).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -1366,7 +1366,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 0
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                  : "text-slate-700 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-members"
             >
@@ -1382,7 +1382,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 1
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                  : "text-slate-700 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-expenses"
             >
@@ -1398,7 +1398,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
                 activeTab === 2
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                  : "text-slate-700 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-meals"
             >
@@ -1417,7 +1417,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 3
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                  : "text-slate-700 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
               id="nav-tab-deposits"
             >
@@ -1434,7 +1434,7 @@ export default function App() {
               className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all relative cursor-pointer ${
                 activeTab === 4 && !isMenuOpen
                   ? "text-brand-amber font-semibold scale-105"
-                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                  : "text-slate-700 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
               }`}
             >
               {bazaarList.some((i) => !i.isChecked) && (

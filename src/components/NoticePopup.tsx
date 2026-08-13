@@ -39,7 +39,7 @@ export default function NoticePopup({ notices, onClose }: NoticePopupProps) {
           </div>
           <button 
             onClick={onClose}
-            className="p-1 text-slate-600 dark:text-zinc-400 hover:text-white bg-slate-200 dark:bg-black/20 hover:bg-slate-200 dark:hover:bg-black/40 rounded-lg transition-colors"
+            className="p-1 text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white bg-slate-200 dark:bg-black/20 hover:bg-slate-300 dark:hover:bg-black/40 rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
           </button>

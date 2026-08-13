@@ -160,7 +160,7 @@ export default function Header({
                     setTempName(messName);
                     setIsEditing(true);
                   }}
-                  className="p-1 text-slate-600 dark:text-zinc-400 hover:text-brand-amber transition-colors cursor-pointer"
+                  className="p-1 text-slate-700 dark:text-zinc-400 hover:text-brand-amber transition-colors cursor-pointer"
                   title={t("header.changeName")}
                 >
                   <Edit2 className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export default function Header({
                                 className={`relative group flex flex-col items-center justify-center p-2 rounded-xl border transition-all duration-200 cursor-pointer text-center overflow-hidden active:scale-95 ${
                                   isSelected
                                     ? "bg-gradient-to-br from-brand-accent to-purple-600 text-slate-900 dark:text-white font-medium shadow-[0_4px_12px_rgba(168,85,247,0.3)] border-brand-accent"
-                                    : "bg-slate-100 dark:bg-zinc-950/60 border-slate-300 dark:border-zinc-900 text-slate-700 dark:text-zinc-300 hover:text-white hover:border-brand-accent/30 hover:bg-slate-50 dark:hover:bg-zinc-900"
+                                    : "bg-slate-100 dark:bg-zinc-950/60 border-slate-300 dark:border-zinc-900 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-brand-accent/30 hover:bg-slate-50 dark:hover:bg-zinc-900"
                                 }`}
                               >
                                 {/* Visual hover color splash */}
@@ -247,7 +247,7 @@ export default function Header({
                         {/* Footer hint */}
                         <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-purple-950/20 text-center flex items-center justify-center gap-1 text-[9px] text-zinc-405">
                           <Sparkles className="w-2.5 h-2.5 text-brand-amber" />
-                          <span className="text-slate-600 dark:text-zinc-400">
+                          <span className="text-slate-700 dark:text-zinc-400">
                             {t("header.sessionInfo")}
                           </span>
                         </div>
@@ -259,7 +259,7 @@ export default function Header({
             )}
             
             <div className="flex flex-col gap-0.5 mt-0.5">
-              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-600 dark:text-zinc-400 font-mono">
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-700 dark:text-zinc-400 font-mono">
                 <span>ID: {messId}</span>
                 <button
                   onClick={handleCopy}
@@ -323,7 +323,7 @@ export default function Header({
                 {language === 'en' ? 'EN' : language === 'bn' ? 'BN' : language === 'ar' ? 'AR' : 'HI'}
               </span>
               <ChevronDown
-                className={`w-3 h-3 text-slate-600 dark:text-zinc-400 shrink-0 transition-transform duration-300 ${isLangOpen ? "rotate-180 text-brand-accent" : ""}`}
+                className={`w-3 h-3 text-slate-700 dark:text-zinc-400 shrink-0 transition-transform duration-300 ${isLangOpen ? "rotate-180 text-brand-accent" : ""}`}
               />
             </button>
             <AnimatePresence>

@@ -42,13 +42,13 @@ export default function BazaarTab({
       exit={{ opacity: 0, y: -10 }}
       className="p-4 space-y-6 pb-24"
     >
-      <div className="bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
+      <div className="bg-white dark:bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-brand-amber font-sans flex items-center gap-2">
           <CalendarDays className="w-4 h-4" />
           {t("bazaar.weeklyDuty")}
         </h2>
         {dutyAssignments.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-zinc-500">
+          <p className="text-xs text-slate-600 dark:text-zinc-500">
             {t("bazaar.noDuty")}
           </p>
         ) : (
@@ -58,7 +58,7 @@ export default function BazaarTab({
                 key={idx}
                 className="bg-slate-50 dark:bg-zinc-900/40 p-2 rounded-xl border border-slate-200 dark:border-purple-950/20 text-center"
               >
-                <span className="block text-[10px] text-slate-600 dark:text-zinc-400 font-semibold">
+                <span className="block text-[10px] text-slate-700 dark:text-zinc-400 font-semibold">
                   {duty.day}
                 </span>
                 <span className="block text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1">
@@ -73,7 +73,7 @@ export default function BazaarTab({
         )}
       </div>
 
-      <div className="bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
+      <div className="bg-white dark:bg-[#120e20] p-4 border border-slate-200 dark:border-purple-950/25 rounded-2xl shadow-xl space-y-4">
         <h2 className="text-sm font-bold text-emerald-400 font-sans flex items-center gap-2">
           <ShoppingCart className="w-4 h-4" />
           {t("bazaar.sharedList")}
@@ -118,21 +118,21 @@ export default function BazaarTab({
                     )}
                   </div>
                   <span
-                    className={`text-sm ${item.isChecked ? "text-slate-500 dark:text-zinc-500 line-through" : "text-slate-800 dark:text-zinc-200"}`}
+                    className={`text-sm ${item.isChecked ? "text-slate-600 dark:text-zinc-500 line-through" : "text-slate-800 dark:text-zinc-200"}`}
                   >
                     {item.name}
                   </span>
                 </div>
                 <button
                   onClick={() => onDeleteBazaarItem(item.id)}
-                  className="p-1.5 text-slate-500 dark:text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-600 dark:text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </motion.div>
             ))}
             {bazaarList.length === 0 && (
-              <div className="text-center py-6 text-xs text-slate-500 dark:text-zinc-500">
+              <div className="text-center py-6 text-xs text-slate-600 dark:text-zinc-500">
                 {t("bazaar.emptyList")}
               </div>
             )}

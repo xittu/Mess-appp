@@ -69,7 +69,7 @@ export default function MembersTab({
         <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">
           {t("members.memberListTitle")} ({members.length} {t("members.peopleCount")})
         </h3>
-        <span className="text-xs text-slate-600 dark:text-zinc-400 font-medium">
+        <span className="text-xs text-slate-700 dark:text-zinc-400 font-medium">
           {t("members.registeredUsers")}
         </span>
       </div>
@@ -81,7 +81,7 @@ export default function MembersTab({
           <p className="text-sm text-slate-700 dark:text-zinc-300 font-medium font-sans">
             {t("members.noMembersFound")}
           </p>
-          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1">
+          <p className="text-xs text-slate-600 dark:text-zinc-500 mt-1">
             {t("members.firstMemberPrompt")}
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function MembersTab({
                       ></span>
                     )}
                   </span>
-                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-zinc-500 mt-0.5">
                     <span className="font-mono">ID: {member.id}</span>
                     <button
                       onClick={() => handleCopyId(member.id)}

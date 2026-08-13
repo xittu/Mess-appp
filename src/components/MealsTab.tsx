@@ -86,14 +86,14 @@ export default function MealsTab({
           </h3>
         </div>
 
-        <p className="text-xs text-slate-600 dark:text-zinc-400 mb-4 leading-relaxed font-sans">
+        <p className="text-xs text-slate-700 dark:text-zinc-400 mb-4 leading-relaxed font-sans">
           {t("meals.setMealsDesc")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1.5 font-sans">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1.5 font-sans">
                 {t("meals.mealRateLabel")}
               </label>
               <div className="relative">
@@ -112,13 +112,13 @@ export default function MealsTab({
             </div>
 
             <div className="w-1/2 bg-slate-200 dark:bg-black/20 border border-slate-200 dark:border-purple-950/20 rounded-xl p-3 text-center">
-              <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-semibold block uppercase">
+              <span className="text-[10px] text-slate-600 dark:text-zinc-500 font-semibold block uppercase">
                 {t("meals.totalMeals")}
               </span>
               <span className="text-xl font-extrabold text-slate-900 dark:text-white font-mono block mt-1">
                 {totalMeals}
               </span>
-              <span className="text-[9px] text-slate-600 dark:text-zinc-400 font-sans block mt-0.5">
+              <span className="text-[9px] text-slate-700 dark:text-zinc-400 font-sans block mt-0.5">
                 ({members.length} {t("meals.activeCount")})
               </span>
             </div>
@@ -157,7 +157,7 @@ export default function MealsTab({
 
         {members.length === 0 ? (
           <div className="bg-white dark:bg-brand-card/50 shadow-sm dark:shadow-none border border-slate-200 dark:border-zinc-800/80 rounded-xl p-6 text-center">
-            <p className="text-xs text-slate-500 dark:text-zinc-500">{t("meals.noMembers")}</p>
+            <p className="text-xs text-slate-600 dark:text-zinc-500">{t("meals.noMembers")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2">
@@ -167,7 +167,7 @@ export default function MealsTab({
                 className="flex items-center justify-between bg-white dark:bg-brand-card/60 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/10 px-4 py-3 rounded-xl"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-400">
+                  <div className="w-7 h-7 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-400">
                     <User className="w-4 h-4 text-brand-accent" />
                   </div>
                   <div>
@@ -180,14 +180,14 @@ export default function MealsTab({
                         ></span>
                       )}
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-zinc-500 block font-mono">
+                    <span className="text-[10px] text-slate-600 dark:text-zinc-500 block font-mono">
                       ID: {member.id}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-slate-600 dark:text-zinc-400 font-sans">
+                  <span className="text-xs text-slate-700 dark:text-zinc-400 font-sans">
                     {t("meals.mealCount")}
                   </span>
                   <span className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-black/30 border border-slate-200 dark:border-zinc-800 font-mono text-xs font-bold text-brand-amber">
@@ -201,7 +201,7 @@ export default function MealsTab({
 
         <div className="bg-purple-950/10 border border-slate-200 dark:border-purple-950/25 rounded-xl p-3.5 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
-          <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed font-sans">
+          <p className="text-[11px] text-slate-700 dark:text-zinc-400 leading-relaxed font-sans">
             {t("meals.mealCalcDesc")}
           </p>
         </div>

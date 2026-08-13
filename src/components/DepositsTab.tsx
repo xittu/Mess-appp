@@ -79,9 +79,9 @@ export default function DepositsTab({
   return (
     <div className="space-y-4 px-4 pb-20">
       {/* Dynamic Summary Card */}
-      <div className="bg-gradient-to-tr from-[#1E1236] to-[#2B1B4A] border border-slate-200 dark:border-purple-950/45 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <div className="bg-gradient-to-tr from-white to-slate-50 dark:from-[#1E1236] dark:to-[#2B1B4A] border border-slate-200 dark:border-purple-950/45 rounded-2xl p-4 flex items-center justify-between shadow-lg">
         <div className="space-y-1">
-          <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-semibold tracking-wider uppercase block font-sans">
+          <span className="text-[11px] text-slate-700 dark:text-zinc-400 font-semibold tracking-wider uppercase block font-sans">
             {t("deposits.totalDepositsTitle")}
           </span>
           <span className="text-2xl font-extrabold text-brand-amber font-mono tracking-tight block">
@@ -102,7 +102,7 @@ export default function DepositsTab({
 
       {members.length === 0 ? (
         <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 p-8 text-center">
-          <p className="text-sm text-slate-600 dark:text-zinc-400">
+          <p className="text-sm text-slate-700 dark:text-zinc-400">
             {t("deposits.addMemberFirst")}
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function DepositsTab({
               >
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <div className="w-5 h-5 rounded bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center">
-                    <UserCheck className="w-3 h-3 text-slate-600 dark:text-zinc-400" />
+                    <UserCheck className="w-3 h-3 text-slate-700 dark:text-zinc-400" />
                   </div>
                   <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate font-sans">
                     {member.name}
@@ -154,7 +154,7 @@ export default function DepositsTab({
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-600 dark:text-zinc-400 font-semibold uppercase">
+                  <label className="text-[10px] text-slate-700 dark:text-zinc-400 font-semibold uppercase">
                     {t("deposits.depositEntryFor")}?
                   </label>
                   <select
@@ -175,11 +175,11 @@ export default function DepositsTab({
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-600 dark:text-zinc-400 font-semibold uppercase">
+                  <label className="text-[10px] text-slate-700 dark:text-zinc-400 font-semibold uppercase">
                     {t("deposits.depositDate")}
                   </label>
                   <div className="relative">
-                    <CalendarCheck className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <CalendarCheck className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="date"
                       value={depositDate}
@@ -192,7 +192,7 @@ export default function DepositsTab({
               </div>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-zinc-400 font-medium">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-700 dark:text-zinc-400 font-medium">
                     {currencySymbol}
                   </span>
                   <input
@@ -223,7 +223,7 @@ export default function DepositsTab({
             </h3>
             {safeDepositHistory.length === 0 ? (
               <div className="bg-slate-50 dark:bg-zinc-900/40 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center">
-                <p className="text-[11px] text-slate-500 dark:text-zinc-500">
+                <p className="text-[11px] text-slate-600 dark:text-zinc-500">
                   {t("deposits.noDepositRecords")}
                 </p>
               </div>
@@ -288,7 +288,7 @@ export default function DepositsTab({
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-zinc-500">
+                          <div className="flex items-center gap-3 text-[10px] text-slate-600 dark:text-zinc-500">
                             <span>
                               {new Date(entry.date).toLocaleDateString(
                                 "bn-BD",
@@ -338,7 +338,7 @@ export default function DepositsTab({
       {/* Security alert footer notice */}
       <div className="bg-slate-50 dark:bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex items-start gap-2.5 mt-8">
         <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-        <p className="text-[10px] text-slate-600 dark:text-zinc-400 leading-relaxed">
+        <p className="text-[10px] text-slate-700 dark:text-zinc-400 leading-relaxed">
           {t("deposits.sync1")}
           
         </p>

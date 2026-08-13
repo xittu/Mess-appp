@@ -239,9 +239,9 @@ export default function AuthScreen({
   };
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#0E0A16] text-[#FAF9FB] flex flex-col items-center justify-center p-3 font-sans select-none overflow-y-auto">
+    <div className="min-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-[#0E0A16] text-slate-900 dark:text-[#FAF9FB] flex flex-col items-center justify-center p-3 font-sans select-none overflow-y-auto">
       {/* Container holding the form card */}
-      <div className="w-full max-w-sm bg-[#130F22] border border-[#211A35] rounded-3xl p-5 md:p-6 shadow-2xl relative overflow-hidden">
+      <div className="w-full max-w-sm bg-white dark:bg-[#130F22] border border-slate-300 dark:border-[#211A35] rounded-3xl p-5 md:p-6 shadow-2xl relative overflow-hidden">
         {/* Glow ambient effects matching the screenshot theme */}
         <div className="absolute right-0 top-0 translate-x-1/2 -translate-y-1/2 w-36 h-36 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute left-0 bottom-0 -translate-x-1/2 translate-y-1/2 w-36 h-36 bg-purple-800/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -249,7 +249,7 @@ export default function AuthScreen({
         {/* Dynamic Headings matching screenshot */}
         <div className="text-center mb-4 relative z-10">
           <div className="mb-2">
-            <span className="inline-block text-[9px] uppercase tracking-widest font-semibold font-sans text-purple-400 bg-purple-950/40 border border-[#2B1F43]/80 px-2.5 py-0.5 rounded-full select-none">
+            <span className="inline-block text-[9px] uppercase tracking-widest font-semibold font-sans text-purple-400 bg-purple-950/40 border border-slate-300 dark:border-[#2B1F43]/80 px-2.5 py-0.5 rounded-full select-none">
               Developed by Zi Tu
             </span>
           </div>
@@ -260,7 +260,7 @@ export default function AuthScreen({
                 ? "Reset Password"
                 : isRegisterMode ? t("auth.signupTitle") : t("auth.loginTitle")}
           </h2>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1">
+          <p className="text-xs text-slate-700 dark:text-zinc-400 mt-1">
             {isUpdatePasswordMode
               ? "Enter your new password below"
               : isForgotPasswordMode
@@ -317,12 +317,12 @@ export default function AuthScreen({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -352,7 +352,7 @@ export default function AuthScreen({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. user@email.com"
-                className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
               />
             </div>
             <button
@@ -363,7 +363,7 @@ export default function AuthScreen({
               Send Reset Link
             </button>
             <div className="mt-3.5 text-center">
-              <p className="text-[11px] text-slate-600 dark:text-zinc-400">
+              <p className="text-[11px] text-slate-700 dark:text-zinc-400">
                 Remember your password?{" "}
                 <button
                   onClick={() => setIsForgotPasswordMode(false)}
@@ -388,7 +388,7 @@ export default function AuthScreen({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Zitu"
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
                   />
                 </div>
 
@@ -403,7 +403,7 @@ export default function AuthScreen({
                     value={messName}
                     onChange={(e) => setMessName(e.target.value)}
                     placeholder="e.g. Hall-1 Mess"
-                    className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-650 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
                   />
                 </div>
               </>
@@ -420,7 +420,7 @@ export default function AuthScreen({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. user@email.com"
-                className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
               />
             </div>
 
@@ -434,12 +434,12 @@ export default function AuthScreen({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-[#0D091B]/80 border border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
+                  className="w-full pl-3 pr-10 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B]/80 border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white placeholder-zinc-655 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 transition-all font-sans"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-zinc-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -474,11 +474,11 @@ export default function AuthScreen({
                   id="agree-checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="mt-0.5 w-3.5 h-3.5 rounded border-[#251D3A] bg-[#0D091B] text-purple-600 focus:ring-purple-500 focus:ring-opacity-25"
+                  className="mt-0.5 w-3.5 h-3.5 rounded border-slate-300 dark:border-[#251D3A] bg-slate-50 dark:bg-[#0D091B] text-purple-600 focus:ring-purple-500 focus:ring-opacity-25"
                 />
                 <label
                   htmlFor="agree-checkbox"
-                  className="text-[10px] text-slate-600 dark:text-zinc-400 select-none leading-normal"
+                  className="text-[10px] text-slate-700 dark:text-zinc-400 select-none leading-normal"
                 >
                   I agree to the{" "}
                   <span className="text-purple-400 underline cursor-pointer hover:text-purple-300">
@@ -522,7 +522,7 @@ export default function AuthScreen({
         {/* Footer switch state - Switch Mode */}
         {!isUpdatePasswordMode && !isForgotPasswordMode && (
           <div className="mt-3.5 text-center">
-            <p className="text-[11px] text-slate-600 dark:text-zinc-400">
+            <p className="text-[11px] text-slate-700 dark:text-zinc-400">
               {isRegisterMode
                 ? t("auth.hasAccount") + " "
                 : t("auth.noAccount") + " "}
@@ -544,7 +544,7 @@ export default function AuthScreen({
 
 
       {/* Facebook-style language switcher */}
-      <div className="mt-6 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[10px] md:text-[11px] text-slate-500 dark:text-zinc-500 max-w-sm px-4">
+      <div className="mt-6 flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[10px] md:text-[11px] text-slate-600 dark:text-zinc-500 max-w-sm px-4">
         {(['en', 'bn', 'ar', 'hi'] as LanguageType[]).map((lang, idx) => (
           <React.Fragment key={lang}>
             <button
@@ -553,7 +553,7 @@ export default function AuthScreen({
             >
               {lang === 'en' ? 'English' : lang === 'bn' ? 'বাংলা' : lang === 'ar' ? 'العربية' : 'हिन्दी'}
             </button>
-            {idx < 3 && <span className="text-zinc-700">•</span>}
+            {idx < 3 && <span className="text-slate-400 dark:text-zinc-700">•</span>}
           </React.Fragment>
         ))}
       </div>
@@ -564,7 +564,7 @@ export default function AuthScreen({
           onClick={() => {
             if (onBackToHome) onBackToHome();
           }}
-          className="text-[10px] text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-all font-semibold flex items-center gap-1 cursor-pointer bg-[#130F22]/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-purple-950/20 hover:scale-[1.02] duration-300"
+          className="text-[10px] text-slate-600 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-all font-semibold flex items-center gap-1 cursor-pointer bg-white dark:bg-[#130F22]/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-purple-950/20 hover:scale-[1.02] duration-300"
         >
           <span>←</span> Back to Home
         </button>
@@ -586,7 +586,7 @@ export default function AuthScreen({
       {/* Admin Portal Modal Dialog */}
       {showAdminPrompt && (
         <div className="fixed inset-0 bg-slate-200 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-[280px] bg-[#130F22] border border-[#2B1F43] rounded-2xl p-5 shadow-2xl relative">
+          <div className="w-full max-w-[280px] bg-white dark:bg-[#130F22] border border-slate-300 dark:border-[#2B1F43] rounded-2xl p-5 shadow-2xl relative">
             <h3 className="text-xs font-semibold text-brand-amber mb-2.5 text-center">
               অ্যাডমিন পোর্টাল লগইন
             </h3>
@@ -599,7 +599,7 @@ export default function AuthScreen({
 
             <form onSubmit={handleAdminSubmit} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-[9.5px] uppercase font-bold tracking-wider text-slate-600 dark:text-zinc-400">
+                <label className="text-[9.5px] uppercase font-bold tracking-wider text-slate-700 dark:text-zinc-400">
                   পাসওয়ার্ড লিখুন
                 </label>
                 <input
@@ -607,7 +607,7 @@ export default function AuthScreen({
                   value={adminPassInput}
                   onChange={(e) => setAdminPassInput(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-[#0D091B] border border-[#251D3A] text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500 font-sans text-center"
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-[#0D091B] border border-slate-300 dark:border-[#251D3A] text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500 font-sans text-center"
                   autoFocus
                 />
               </div>
@@ -620,7 +620,7 @@ export default function AuthScreen({
                     setAdminPassInput("");
                     setAdminError(null);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 cursor-pointer"
                 >
                   বাতিল
                 </button>

@@ -46,8 +46,8 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0C15] text-slate-900 dark:text-zinc-100 flex flex-col font-sans overflow-x-hidden pt-4 md:pt-0">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900/20 via-purple-900/5 to-[#0F0C15] pointer-events-none"></div>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0F0C15] text-slate-900 dark:text-zinc-100 flex flex-col font-sans overflow-x-hidden pt-4 md:pt-0">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-purple-500/5 to-transparent dark:from-amber-900/20 dark:via-purple-900/5 dark:to-[#0F0C15] pointer-events-none"></div>
 
       <header className="relative z-50 p-6 md:px-12 flex justify-between items-center bg-transparent">
         <motion.div
@@ -70,7 +70,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         >
           <button
             onClick={() => onGetStarted("login")}
-            className="px-5 py-2 text-sm font-semibold rounded-full border border-purple-500/30 text-white hover:bg-purple-500/10 transition-colors hidden sm:block"
+            className="px-5 py-2 text-sm font-semibold rounded-full border border-purple-500/30 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-purple-500/10 transition-colors hidden sm:block"
           >
             {t("landingPage.login")}
           </button>
@@ -146,7 +146,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-slate-600 dark:text-zinc-400 text-sm md:text-lg max-w-2xl mb-6 leading-relaxed px-2"
+            className="text-slate-700 dark:text-zinc-400 text-sm md:text-lg max-w-2xl mb-6 leading-relaxed px-2"
           >
             {t("landingPage.desc1")}
           </motion.p>
@@ -176,7 +176,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 1 }}
-            className="mt-6 flex flex-col items-center justify-center text-slate-500 dark:text-zinc-500 cursor-pointer hover:text-brand-amber transition-colors"
+            className="mt-6 flex flex-col items-center justify-center text-slate-600 dark:text-zinc-500 cursor-pointer hover:text-brand-amber transition-colors"
             onClick={scrollToDetails}
           >
             <span className="text-sm font-medium mb-2 uppercase tracking-widest text-xs">
@@ -202,7 +202,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="bg-slate-50 dark:bg-zinc-900/50 border border-purple-900/40 rounded-3xl p-8 md:p-12 mb-24 max-w-4xl mx-auto text-center md:text-left"
+          className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-purple-900/40 shadow-sm dark:shadow-none rounded-3xl p-8 md:p-12 mb-24 max-w-4xl mx-auto text-center md:text-left"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
             {t("landingPage.appDetailsTitle")}
@@ -258,7 +258,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         </motion.div>
       </main>
 
-      <footer className="border-t border-slate-200 dark:border-purple-950/30 py-10 flex flex-col items-center text-slate-500 dark:text-zinc-500 text-sm gap-4">
+      <footer className="border-t border-slate-200 dark:border-purple-950/30 py-10 flex flex-col items-center text-slate-600 dark:text-zinc-500 text-sm gap-4">
         <button
           onClick={scrollToDetails}
           className="flex items-center gap-2 hover:text-brand-amber transition-colors"
@@ -291,13 +291,13 @@ function FeatureCard({
           transition: { type: "spring", stiffness: 300, damping: 24 },
         },
       }}
-      className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-purple-950/30 rounded-3xl p-6 hover:bg-slate-50 dark:hover:bg-zinc-900/60 transition-colors"
+      className="bg-white dark:bg-zinc-900/40 border border-slate-200 dark:border-purple-950/30 rounded-3xl p-6 hover:bg-slate-50 shadow-sm dark:shadow-none dark:hover:bg-zinc-900/60 transition-colors"
     >
-      <div className="w-12 h-12 bg-[#0F0C15] rounded-2xl flex items-center justify-center border border-purple-900/20 shadow-inner mb-5">
+      <div className="w-12 h-12 bg-slate-50 dark:bg-[#0F0C15] rounded-2xl flex items-center justify-center border border-slate-200 dark:border-purple-900/20 shadow-inner mb-5">
         {icon}
       </div>
       <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100 mb-2">{title}</h3>
-      <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">{description}</p>
+      <p className="text-sm text-slate-700 dark:text-zinc-400 leading-relaxed">{description}</p>
     </motion.div>
   );
 }

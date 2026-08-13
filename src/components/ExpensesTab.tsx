@@ -53,6 +53,7 @@ export default function ExpensesTab({
   const [utilityName, setUtilityName] = useState("");
   const [utilityAmount, setUtilityAmount] = useState<string>("");
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceSuccessMessage, setVoiceSuccessMessage] = useState("");
   const [pendingVoiceItems, setPendingVoiceItems] = useState<{amount: number, desc: string}[]>([]);
   const [showVoicePreview, setShowVoicePreview] = useState(false);
@@ -71,26 +72,65 @@ export default function ExpensesTab({
 
     recognition.onstart = () => {
       setIsListening(true);
-      setVoiceSuccessMessage("");
+      setIsSpeaking(true); // Always animate on mobile since onsoundstart can be flaky
+      setVoiceSuccessMessage("বলুন, আমি শুনছি...");
+    };
+
+    recognition.onsoundstart = () => {
+      setIsSpeaking(true);
+    };
+
+    recognition.onspeechstart = () => {
+      setIsSpeaking(true);
+    };
+
+    recognition.onspeechend = () => {
+      setIsSpeaking(false);
+    };
+
+    recognition.onsoundend = () => {
+      setIsSpeaking(false);
     };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      parseTranscript(transcript);
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (interimTranscript) {
+        setIsSpeaking(true);
+        // We could show interim transcript in the UI if needed
+        setVoiceSuccessMessage(`শুনছি: ${interimTranscript}`);
+      }
+
+      if (finalTranscript) {
+        parseTranscript(finalTranscript);
+      }
     };
 
     recognition.onnomatch = () => {
       setIsListening(false);
+      setIsSpeaking(false);
       alert("No speech recognized. Please try again.");
     };
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
+      setIsSpeaking(false);
       if (event.error === 'not-allowed') {
         alert("মাইক্রোফোন পারমিশন ব্লক করা আছে!\n\n১. Address bar এর lock আইকনে ক্লিক করে মাইক্রোফোন Allow করুন।\n২. আপনি যদি Messenger বা Facebook অ্যাপের ভেতরে থাকেন, তবে 'Open in Chrome' করুন।\n৩. ফোনের 'Google' অ্যাপের মাইক্রোফোন পারমিশন Allow করা আছে কিনা চেক করুন।");
       } else if (event.error === 'no-speech') {
-        alert("কোনো কথা শোনা যায়নি। দয়া করে আবার চেষ্টা করুন। (No speech detected)");
+        // Silently ignore no-speech or show a small toast, because it often happens automatically
+        setVoiceSuccessMessage("কোনো কথা শোনা যায়নি।");
+        setTimeout(() => setVoiceSuccessMessage(""), 3000);
       } else {
         alert("Error recognizing speech: " + event.error);
       }
@@ -98,6 +138,9 @@ export default function ExpensesTab({
 
     recognition.onend = () => {
       setIsListening(false);
+      setIsSpeaking(false);
+      // Optional: clear "শুনছি..." message if no final transcript was processed
+      setVoiceSuccessMessage((prev) => prev.startsWith("শুনছি:") ? "" : prev);
     };
 
     recognition.start();
@@ -171,10 +214,25 @@ export default function ExpensesTab({
 
   return (
     <div className="space-y-5 px-4 pb-20">
+      <style>
+        {`
+          @keyframes voiceWave {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+          }
+          .voice-bar {
+            width: 2.5px;
+            height: 14px;
+            border-radius: 4px;
+            animation: voiceWave ease-in-out infinite;
+            transform-origin: center;
+          }
+        `}
+      </style>
       {/* Quick Visual Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white dark:bg-brand-card/75 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium">
+          <span className="text-[11px] text-slate-700 dark:text-zinc-400 font-medium">
             {t("expenses.totalBazaarExpense")}
           </span>
           <span className="text-lg font-bold text-brand-amber font-mono mt-1">
@@ -182,7 +240,7 @@ export default function ExpensesTab({
           </span>
         </div>
         <div className="bg-white dark:bg-brand-card/75 shadow-sm dark:shadow-none border border-slate-200 dark:border-purple-950/30 rounded-xl p-3 flex flex-col justify-between">
-          <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium">
+          <span className="text-[11px] text-slate-700 dark:text-zinc-400 font-medium">
             {t("expenses.otherUtilityBills")}
           </span>
           <span className="text-lg font-bold text-brand-accent font-mono mt-1">
@@ -201,10 +259,24 @@ export default function ExpensesTab({
           <button
             type="button"
             onClick={handleVoiceInput}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.3)]' : 'bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20'}`}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border overflow-hidden ${isListening ? 'bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/30' : 'bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/30 hover:bg-purple-100 dark:hover:bg-purple-500/20'}`}
           >
-            <Mic className="w-3.5 h-3.5" />
-            {isListening ? t("expenses.voiceListening") : t("expenses.voiceInput")}
+            {isListening && (
+              <span className={`absolute inset-0 bg-red-500/10 dark:bg-red-500/20 ${isSpeaking ? 'animate-pulse' : ''}`}></span>
+            )}
+            <div className="relative z-10 flex items-center gap-1.5">
+              {isListening ? (
+                <div className="flex items-center gap-[2px] h-3.5 w-3.5 justify-center">
+                  <div className={`voice-bar bg-red-600 dark:bg-red-400 ${!isSpeaking ? '!animate-none scale-y-[0.3]' : ''}`} style={{ animationDelay: '0ms', animationDuration: '0.8s' }}></div>
+                  <div className={`voice-bar bg-red-600 dark:bg-red-400 ${!isSpeaking ? '!animate-none scale-y-[0.3]' : ''}`} style={{ animationDelay: '200ms', animationDuration: '1.2s' }}></div>
+                  <div className={`voice-bar bg-red-600 dark:bg-red-400 ${!isSpeaking ? '!animate-none scale-y-[0.3]' : ''}`} style={{ animationDelay: '400ms', animationDuration: '0.9s' }}></div>
+                  <div className={`voice-bar bg-red-600 dark:bg-red-400 ${!isSpeaking ? '!animate-none scale-y-[0.3]' : ''}`} style={{ animationDelay: '150ms', animationDuration: '1.1s' }}></div>
+                </div>
+              ) : (
+                <Mic className="w-3.5 h-3.5" />
+              )}
+              {isListening ? t("expenses.voiceListening") : t("expenses.voiceInput")}
+            </div>
           </button>
         </div>
         
@@ -219,11 +291,11 @@ export default function ExpensesTab({
         <form onSubmit={handleBazaarSubmit} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
                 {t("expenses.selectDate")}
               </label>
               <div className="relative">
-                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-zinc-500" />
+                <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-zinc-500" />
                 <input
                   type="date"
                   value={bazaarDate}
@@ -234,7 +306,7 @@ export default function ExpensesTab({
               </div>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
                 {t("expenses.amountAmount")}
               </label>
               <input
@@ -253,13 +325,13 @@ export default function ExpensesTab({
 
           {/* Buyer Selector Custom Dropdown */}
           <div className="relative">
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+            <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
               {t("expenses.selectBuyer")}
             </label>
             <button
               type="button"
               onClick={() => setIsBuyerSelectOpen(!isBuyerSelectOpen)}
-              className="w-full flex items-center justify-between text-xs font-bold py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-zinc-900 hover:bg-zinc-850/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 transition-all text-left cursor-pointer"
+              className="w-full flex items-center justify-between text-xs font-bold py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-850/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 transition-all text-left cursor-pointer"
             >
               <span className="truncate">
                 {selectedBuyerId
@@ -268,12 +340,12 @@ export default function ExpensesTab({
                   : t("expensesTab.commonFund")}
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-slate-500 dark:text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
+                className={`w-4 h-4 text-slate-600 dark:text-zinc-500 transition-transform ${isBuyerSelectOpen ? "rotate-180 text-brand-accent" : ""}`}
               />
             </button>
 
             {isBuyerSelectOpen && (
-              <div className="absolute z-45 mt-1.5 w-full bg-[#18142c] border border-slate-200 dark:border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
+              <div className="absolute z-45 mt-1.5 w-full bg-white dark:bg-[#18142c] border border-slate-200 dark:border-purple-950/40 rounded-xl shadow-2xl py-1 max-h-48 overflow-y-auto divide-y divide-purple-950/10">
                 <button
                   type="button"
                   onClick={() => {
@@ -283,7 +355,7 @@ export default function ExpensesTab({
                   className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
                     selectedBuyerId === ""
                       ? "bg-brand-accent/25 text-brand-amber font-bold"
-                      : "text-slate-700 dark:text-zinc-300 hover:bg-zinc-850/50"
+                      : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850/50"
                   }`}
                 >
                   {t("expensesTab.commonFund")}
@@ -299,7 +371,7 @@ export default function ExpensesTab({
                     className={`w-full text-left px-3.5 py-2 text-xs font-semibold ${
                       selectedBuyerId === member.id
                         ? "bg-brand-accent/25 text-brand-amber font-bold"
-                        : "text-slate-700 dark:text-zinc-300 hover:bg-zinc-850/50"
+                        : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-850/50"
                     }`}
                   >
                     {member.name}
@@ -316,7 +388,7 @@ export default function ExpensesTab({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+            <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
               {t("expenses.bazaarDetailsOptional")}
             </label>
             <input
@@ -350,7 +422,7 @@ export default function ExpensesTab({
         <form onSubmit={handleUtilitySubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
                 {t("expenses.billDescLabel")}
               </label>
               <input
@@ -363,7 +435,7 @@ export default function ExpensesTab({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
+              <label className="block text-[11px] font-semibold text-slate-700 dark:text-zinc-400 mb-1">
                 {t("expenses.billAmountLabel")}
               </label>
               <input
@@ -383,7 +455,7 @@ export default function ExpensesTab({
           <button
             type="submit"
             disabled={!utilityName.trim() || parseFloat(utilityAmount) <= 0}
-            className="w-full py-2.5 text-xs font-semibold text-slate-900 dark:text-zinc-100 bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white active:bg-slate-100 dark:active:bg-zinc-800 rounded-xl transition-all border border-zinc-700/60 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-2.5 text-xs font-semibold text-slate-900 dark:text-zinc-100 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white active:bg-slate-100 dark:active:bg-zinc-800 rounded-xl transition-all border border-slate-300 dark:border-zinc-700/60 shadow-md active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2"
             id="btn-add-utility"
           >
             <LogIn className="w-4 h-4 rotate-90" />
@@ -400,8 +472,8 @@ export default function ExpensesTab({
 
         {expenses.length === 0 ? (
           <div className="bg-white dark:bg-brand-card shadow-sm dark:shadow-none rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 p-8 text-center">
-            <ShieldAlert className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-            <p className="text-xs text-slate-600 dark:text-zinc-400">
+            <ShieldAlert className="w-8 h-8 text-slate-400 dark:text-zinc-600 mx-auto mb-2" />
+            <p className="text-xs text-slate-700 dark:text-zinc-400">
               {t("expenses.noBazaarEntry")}
             </p>
           </div>
@@ -431,7 +503,7 @@ export default function ExpensesTab({
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono mt-1">
+                  <span className="text-[10px] text-slate-600 dark:text-zinc-500 font-mono mt-1">
                     {item.date}
                   </span>
                 </div>
@@ -470,7 +542,7 @@ export default function ExpensesTab({
                   <span className="text-sm font-bold text-slate-800 dark:text-zinc-200 font-sans">
                     {item.name}
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-sans mt-0.5">
+                  <span className="text-[10px] text-slate-600 dark:text-zinc-500 font-sans mt-0.5">
                     {t("expenses.utilityDefaultName")}
                   </span>
                 </div>
@@ -518,7 +590,7 @@ export default function ExpensesTab({
                    setPendingVoiceItems([]);
                    setShowVoicePreview(false);
                  }}
-                 className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-900 dark:text-white text-sm font-bold rounded-xl transition-colors"
+                 className="flex-1 py-2.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-900 dark:text-white text-sm font-bold rounded-xl transition-colors"
                >
                  {t("expenses.cancelBtn")}
                </button>
@@ -538,6 +610,7 @@ export default function ExpensesTab({
             </div>
           </div>
         </div>
-      )}\n    </div>
+      )}
+    </div>
   );
 }

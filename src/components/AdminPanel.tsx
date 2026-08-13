@@ -187,14 +187,14 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0F0C15] flex flex-col font-sans overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-slate-50 dark:bg-[#0F0C15] flex flex-col font-sans overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-purple-950/40 bg-slate-100 dark:bg-zinc-950/80">
         <div className="flex items-center gap-2">
           {selectedMess ? (
             <button
               onClick={() => setSelectedMess(null)}
-              className="p-1 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-700 dark:text-zinc-300"
+              className="p-1 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -209,7 +209,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -222,7 +222,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             className={`flex-1 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
               activeTab === "messes"
                 ? "border-brand-amber text-brand-amber bg-brand-amber/10"
-                : "border-transparent text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
+                : "border-transparent text-slate-600 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             All Messes
@@ -232,7 +232,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-t-lg border-b-2 transition-colors ${
               activeTab === "notices"
                 ? "border-purple-500 text-purple-400 bg-purple-500/10"
-                : "border-transparent text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
+                : "border-transparent text-slate-600 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300"
             }`}
           >
             <Bell className="w-4 h-4" />
@@ -249,17 +249,17 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto p-4 space-y-4 text-slate-800 dark:text-zinc-200">
           {/* Detailed View */}
           <div className="bg-slate-50 dark:bg-zinc-900 border border-purple-900/30 p-4 rounded-xl">
-            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Account Email</div>
+            <div className="text-xs text-slate-700 dark:text-zinc-400 mb-1">Account Email</div>
             <div className="text-sm font-bold text-slate-900 dark:text-white mb-3">
               {selectedMess.user_email}
             </div>
 
-            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Total Members</div>
+            <div className="text-xs text-slate-700 dark:text-zinc-400 mb-1">Total Members</div>
             <div className="text-sm font-bold text-slate-900 dark:text-white mb-3">
               {selectedMess.members?.length || 0} Members
             </div>
 
-            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">
+            <div className="text-xs text-slate-700 dark:text-zinc-400 mb-1">
               Total Market Expenses
             </div>
             <div className="text-sm font-bold text-emerald-400 mb-3">
@@ -270,7 +270,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               ) || 0}
             </div>
 
-            <div className="text-xs text-slate-600 dark:text-zinc-400 mb-1">Fixed Meal Count</div>
+            <div className="text-xs text-slate-700 dark:text-zinc-400 mb-1">Fixed Meal Count</div>
             <div className="text-sm font-bold text-brand-amber mb-3">
               {selectedMess.meals?.fixedMealCount || 0} Meals
             </div>
@@ -288,7 +288,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         <div className="flex-1 flex flex-col p-4">
           {/* Search */}
           <div className="relative mb-4">
-            <Search className="w-4 h-4 text-slate-500 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-600 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by email or mess name..."
@@ -312,10 +312,10 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
                       <Home className="w-3.5 h-3.5 text-brand-accent" />
                       {MName}
                     </div>
-                    <div className="text-[11px] text-slate-600 dark:text-zinc-400 mt-0.5">
+                    <div className="text-[11px] text-slate-700 dark:text-zinc-400 mt-0.5">
                       {d.user_email}
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-500 mt-1 flex items-center gap-2">
+                    <div className="text-[10px] text-slate-600 dark:text-zinc-500 mt-1 flex items-center gap-2">
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" /> {d.members?.length || 0}
                       </span>
@@ -335,7 +335,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               );
             })}
             {filteredData.length === 0 && (
-              <div className="text-center text-sm text-slate-500 dark:text-zinc-500 py-10">
+              <div className="text-center text-sm text-slate-600 dark:text-zinc-500 py-10">
                 No records found.
               </div>
             )}
@@ -368,12 +368,12 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          <h3 className="text-sm font-bold text-slate-600 dark:text-zinc-400 mb-3 px-1">All Notices</h3>
+          <h3 className="text-sm font-bold text-slate-700 dark:text-zinc-400 mb-3 px-1">All Notices</h3>
           <div className="space-y-3">
             {notices.map((notice) => (
               <div key={notice.id} className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] text-slate-500 dark:text-zinc-500">
+                  <span className="text-[10px] text-slate-600 dark:text-zinc-500">
                     {new Date(notice.created_at).toLocaleString()}
                   </span>
                   <div className="flex items-center gap-2">
@@ -382,14 +382,14 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
                       className={`px-2 py-1 text-[10px] font-bold rounded-full ${
                         notice.is_active 
                           ? "bg-emerald-500/20 text-emerald-400" 
-                          : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
+                          : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-400"
                       }`}
                     >
                       {notice.is_active ? "Active" : "Inactive"}
                     </button>
                     <button
                       onClick={() => handleDeleteNotice(notice.id)}
-                      className="p-1 text-slate-500 dark:text-zinc-500 hover:text-red-400 transition-colors"
+                      className="p-1 text-slate-600 dark:text-zinc-500 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -401,7 +401,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
               </div>
             ))}
             {notices.length === 0 && (
-              <div className="text-center text-sm text-slate-500 dark:text-zinc-500 py-10">
+              <div className="text-center text-sm text-slate-600 dark:text-zinc-500 py-10">
                 No notices published yet.
               </div>
             )}
