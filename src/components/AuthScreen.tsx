@@ -175,7 +175,7 @@ export default function AuthScreen({
         onAuthSuccess();
         return;
       } catch (err: any) {
-        console.error("Admin signin failure:", err);
+        console.warn("Admin signin failure:", err);
         setAdminError("অ্যাডমিন ভেরিফিকেশন ব্যর্থ হয়েছে: " + err.message);
       } finally {
         setAdminLoading(false);

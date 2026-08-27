@@ -122,7 +122,7 @@ export default function ExpensesTab({
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error", event.error);
+      console.warn("Speech recognition error", event.error);
       setIsListening(false);
       setIsSpeaking(false);
       if (event.error === 'not-allowed') {

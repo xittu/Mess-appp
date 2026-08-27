@@ -107,13 +107,13 @@ export default function JobRegisterTab({
 
       if (error) {
         if (error.code !== "42P01") {
-          console.error("Error fetching attendances:", error);
+          console.warn("Error fetching attendances:", error);
         }
         return;
       }
       setAttendances(data || []);
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -140,13 +140,13 @@ export default function JobRegisterTab({
 
       if (error) {
         if (error.code !== "42P01") {
-          console.error("Error fetching history:", error);
+          console.warn("Error fetching history:", error);
         }
         return;
       }
       setHistory(data || []);
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -236,7 +236,7 @@ export default function JobRegisterTab({
           }, 4000);
 
         } catch (err: any) {
-          console.error("NFC Submit Error:", err);
+          console.warn("NFC Submit Error:", err);
           alert("Failed to save NFC attendance: " + err.message);
           setNfcModalState('hidden');
         } finally {
@@ -249,7 +249,7 @@ export default function JobRegisterTab({
         setNfcModalState('hidden');
       };
     } catch (error: any) {
-      console.error("NFC Start Error:", error);
+      console.warn("NFC Start Error:", error);
       if (error.message && error.message.includes("top-level browsing context")) {
         alert("Web NFC cannot be used inside the preview iframe. Please open the application in a new tab to use NFC features.");
       } else {
@@ -341,7 +341,7 @@ export default function JobRegisterTab({
       }
       setOvertimeHours(0);
     } catch (err: any) {
-      console.error("Error submitting attendance:", err);
+      console.warn("Error submitting attendance:", err);
       alert("Failed to save attendance: " + err.message);
     } finally {
       setLoading(false);

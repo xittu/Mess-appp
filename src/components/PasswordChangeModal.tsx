@@ -70,7 +70,7 @@ export default function PasswordChangeModal({
         onClose();
       }, 2000);
     } catch (err: any) {
-      console.error("Password update error:", err);
+      console.warn("Password update error:", err);
       setError(err.message || t("passwordModal.errorTitle"));
     } finally {
       setLoading(false);

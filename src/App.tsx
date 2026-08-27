@@ -14,11 +14,18 @@ import {
   Info,
   CheckCircle2,
   ClipboardList,
+  Headset,
+  Mail,
+  Phone,
+  Headset,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { sendNotification, MessNotification } from "./lib/notifications";
 import Header from "./components/Header";
+import SupportWidget from "./components/SupportWidget";
 import { useLanguage } from "./contexts/LanguageContext";
 import MembersTab from "./components/MembersTab";
 import ExpensesTab from "./components/ExpensesTab";
@@ -87,7 +94,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showHistory, setShowHistory] = useState<boolean>(false);
-  const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
+    const [messId, setMessId] = useState<string>("MPPD7X"); // default fallback ID
   const [messName, setMessName] = useState<string>("মেস ড্যাশবোর্ড");
   const [showAdminPanel, setShowAdminPanel] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -118,7 +125,7 @@ export default function App() {
         .single();
 
       if (error && error.code !== "PGRST116") {
-        console.error("ডাটা লোড করতে সমস্যা:", error.message);
+        console.warn("ডাটা লোড করতে সমস্যা:", error.message);
         throw error;
       } else if (data) {
         // Cache to local storage for offline use
@@ -161,7 +168,7 @@ export default function App() {
         setLastCloudSync(new Date().toLocaleTimeString());
       }
     } catch (err) {
-      console.error("ডাটা লোড করতে সমস্যা, অফলাইন ডাটা লোড করা হচ্ছে...", err);
+      console.warn("ডাটা লোড করতে সমস্যা, অফলাইন ডাটা লোড করা হচ্ছে...", err);
       // Fallback to offline data
       const offlineData = localStorage.getItem(`messOfflineState_${userEmail}`);
       if (offlineData) {
@@ -211,7 +218,7 @@ export default function App() {
            }
         }
       } catch (err) {
-        console.error("Failed to load global notices", err);
+        console.warn("Failed to load global notices", err);
       }
       
       // Once loaded, setup is complete
@@ -232,7 +239,7 @@ export default function App() {
     bList: BazaarItem[],
   ) {
     if (!currentUser || !currentUser.email) {
-      console.error("ইউজার লগইন করা নেই! ডাটা সেভ করা যাবে না।");
+      console.warn("ইউজার লগইন করা নেই! ডাটা সেভ করা যাবে না।");
       return;
     }
 
@@ -263,7 +270,7 @@ export default function App() {
       .upsert(messPayload, { onConflict: "user_email" });
 
     if (error) {
-      console.error("সুপাবেজে ডাটা সেভ করতে এরর:", error.message);
+      console.warn("সুপাবেজে ডাটা সেভ করতে এরর:", error.message);
       toast.error("ডাটা সার্ভারে সেভ হয়নি", {
         description:
           "অফলাইনে সেভ করা হয়েছে, ইন্টারনেট কানেকশন ফিরে এলে আবার সেস্টা করুন।",
@@ -330,11 +337,11 @@ export default function App() {
     try {
       if ('Notification' in window) {
         if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-          Notification.requestPermission().catch(console.error);
+          Notification.requestPermission().catch(console.warn);
         }
       }
     } catch (e) {
-      console.error("Notification permission error:", e);
+      console.warn("Notification permission error:", e);
     }
 
     const checkTimeForNotification = () => {
@@ -358,13 +365,13 @@ export default function App() {
                 icon: "/pwa-192x192.png"
               });
             } catch (err) {
-              console.error("Error showing notification:", err);
+              console.warn("Error showing notification:", err);
             }
             localStorage.setItem("lastAttendanceNotify", timeKey);
           }
         }
       } catch (err) {
-        console.error("Notification check error:", err);
+        console.warn("Notification check error:", err);
       }
     };
 
@@ -462,6 +469,15 @@ export default function App() {
         setCurrentUser(null);
         setAuthLoading(false);
       }
+    }).catch((err) => {
+      console.warn("Failed to get session", err);
+      // Fallback
+      if (getMockUser()) {
+        setCurrentUser(getMockUser());
+        loadDataFromSupabase(getMockUser().email);
+        return;
+      }
+      setAuthLoading(false);
     });
 
     const {
@@ -573,7 +589,7 @@ export default function App() {
       toast.success("নতুন সেশন শুরু হয়েছে। সকল খরচ ও জমা রিসেট করা হয়েছে।");
       return true;
     } catch (err) {
-      console.error(err);
+      console.warn(err);
       toast.error("সেশন শুরু করতে সমস্যা হয়েছে।");
       return false;
     }
@@ -613,7 +629,7 @@ export default function App() {
       "নতুন সদস্য যুক্ত করা হয়েছে",
       `মেস তালিকায় নতুন সদস্য হিসাবে "${name}" কে রেজিস্টার করা হয়েছে।`,
       "success",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleAssignNfcTag = async (memberId: string, nfcTagId: string) => {
@@ -640,7 +656,7 @@ export default function App() {
       "NFC Card Assigned",
       `NFC Card has been successfully assigned to ${memberName}.`,
       "info",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleRemoveMember = async (id: string) => {
@@ -671,7 +687,7 @@ export default function App() {
       "মেম্বার রিমুভ করা হয়েছে",
       `সদস্য তালিকা থেকে "${targetName}" (ID: ${id}) কে সফলভাবে বাদ দেওয়া হয়েছে।`,
       "danger",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleAddExpense = async (
@@ -713,7 +729,7 @@ export default function App() {
       : `নতুন দৈনিক বাজার খরচ "${desc || "হিসাব সামগ্রী"}" মোট ${currencySymbol}${amount} টাকা যোগ করা হয়েছে।`;
 
     sendNotification(messId, "বাজার খরচ যোগ হয়েছে", msg, "info").catch(
-      console.error,
+      console.warn,
     );
   };
 
@@ -742,7 +758,7 @@ export default function App() {
         "বাজার খরচ বাদ দেওয়া হয়েছে",
         `বাজার খরচ তালিকা থেকে "${expItem.desc || "হিসাব সামগ্রী"}" এর ${currencySymbol}${expItem.amount} টাকার হিসাব মুছে ফেলা হয়েছে।`,
         "warning",
-      ).catch(console.error);
+      ).catch(console.warn);
     }
   };
 
@@ -771,7 +787,7 @@ export default function App() {
       "ইউটিলিটি ও অন্যান্য বিল",
       `একটি নতুন সাব-বিল "${name}" মূল্য ${currencySymbol}${amount} টাকা সর্বমোট মেম্বার হিসাবে যুক্ত হয়েছে।`,
       "info",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleRemoveUtility = async (id: string) => {
@@ -799,7 +815,7 @@ export default function App() {
         "ইউটিলিটি বিল বাদ দেওয়া হয়েছে",
         `বিলের বিবরণী থেকে "${utItem.name}" চার্জ ${currencySymbol}${utItem.amount} টাকা কেটে নেওয়া হয়েছে।`,
         "warning",
-      ).catch(console.error);
+      ).catch(console.warn);
     }
   };
 
@@ -842,7 +858,7 @@ export default function App() {
       "নতুন জমা কনফার্ম",
       `সদস্য "${memberName}" নতুন ${currencySymbol}${amount} টাকা ফান্ডে জমা দিয়েছেন।`,
       "success",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleEditDeposit = async (id: string, amount: number) => {
@@ -923,7 +939,7 @@ export default function App() {
       "নির্ধারিত মিল সেট পরিবর্তন",
       `এই মেস সেশনে চলমান মেম্বারদের জন্য নির্ধারিত মাসিক মিল রেট সংখ্যা "${count} টি" এ পরিবর্তন করা হয়েছে।`,
       "warning",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleUpdateMessName = async (newName: string) => {
@@ -948,7 +964,7 @@ export default function App() {
       "মেসের নাম পরিবর্তন",
       `মেসের নাম পরিবর্তন করে "${newName}" সেট করা হয়েছে।`,
       "info",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleAddDuty = async (assignment: DutyAssignment) => {
@@ -981,7 +997,7 @@ export default function App() {
       "মেস ডিউটি আপডেট",
       `সাপ্তাহিক রুটিনানুযায়ী "${assignment.day}" এর জন্য "${memberName}" কে "${assignment.role}" এ নিয়োজিত করা হয়েছে।`,
       "info",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleRemoveDuty = async (day: string, role: string) => {
@@ -1009,7 +1025,7 @@ export default function App() {
       "মেস ডিউটি বাতিল",
       `রুটিন থেকে "${day}" এর "${role}" এর দায়িত্ব সফলভাবে বাতিল করা হয়েছে।`,
       "warning",
-    ).catch(console.error);
+    ).catch(console.warn);
   };
 
   const handleAddBazaarItem = async (name: string) => {
@@ -1110,7 +1126,7 @@ export default function App() {
       setFixedMealCount(0);
       setMessName("মেস ড্যাশবোর্ড");
     } catch (err) {
-      console.error("Authentication signout failed:", err);
+      console.warn("Authentication signout failed:", err);
     }
   };
 
@@ -1155,10 +1171,15 @@ export default function App() {
   // --- Render Loading Interface ---
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#0F0C15] text-slate-900 dark:text-white flex flex-col items-center justify-center p-6 select-none font-sans">
-        <Sparkles className="w-8 h-8 text-brand-amber animate-spin mb-3" />
-        <span className="text-xs font-semibold text-slate-700 dark:text-zinc-400 tracking-widest uppercase">
-          মেস নেটওয়ার্ক সংযোগ হচ্ছে...
+      <div className="min-h-screen w-full bg-slate-50 dark:bg-[#0f0d17] text-slate-900 dark:text-white flex flex-col items-center justify-center p-6 select-none font-sans transition-colors duration-300">
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/10 rounded-full animate-ping blur-sm"></div>
+          <div className="relative bg-white dark:bg-zinc-900/80 p-4 rounded-full shadow-lg border border-slate-200 dark:border-zinc-800/80 backdrop-blur-sm">
+            <Sparkles className="w-8 h-8 text-amber-500 animate-spin" style={{ animationDuration: '3s' }} />
+          </div>
+        </div>
+        <span className="text-xs font-bold text-slate-600 dark:text-zinc-400 tracking-widest uppercase animate-pulse text-center max-w-[80%]">
+          {t("loading.network")}
         </span>
       </div>
     );
@@ -1515,6 +1536,10 @@ export default function App() {
         {showAdminPanel && (
           <AdminPanel onClose={() => setShowAdminPanel(false)} />
         )}
+
+        
+        {/* Customer Support Widget */}
+        <SupportWidget />
 
         {/* Floating Job Register Button */}
         <button

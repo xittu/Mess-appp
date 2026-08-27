@@ -57,7 +57,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
 
       if (error) {
         if (error.code !== "PGRST116") {
-          console.error("Failed to fetch admin data:", error);
+          console.warn("Failed to fetch admin data:", error);
         }
       } else if (records) {
         setData(records as MessData[]);
@@ -71,7 +71,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
         }
       }
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
       setNoticeText("");
     } catch (err: any) {
       alert("Submission error: " + err.message);
-      console.error(err);
+      console.warn(err);
     } finally {
       setSavingNotice(false);
     }
@@ -123,7 +123,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
       setNotices(notices.filter(n => n.id !== id));
     } catch (err: any) {
       alert("Error deleting notice: " + err.message);
-      console.error(err);
+      console.warn(err);
     }
   };
 
@@ -139,7 +139,7 @@ export default function AdminPanel({ onClose }: { onClose: () => void }) {
       }
       setNotices(notices.map(n => n.id === id ? { ...n, is_active: !notice.is_active } : n));
     } catch (err) {
-      console.error(err);
+      console.warn(err);
     }
   };
 

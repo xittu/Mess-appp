@@ -62,7 +62,7 @@ export default function HistoryModal({
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Mess_History_${messName}.pdf`);
     } catch (e) {
-      console.error("PDF generation failed:", e);
+      console.warn("PDF generation failed:", e);
     }
   };
 
