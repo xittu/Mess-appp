@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DORMZ</string>
+    <string name="title_activity_main">DORMZ</string>
+    <string name="package_name">mess.vercel.app</string>
+    <string name="custom_url_scheme">mess.vercel.app</string>
+</resources>
