@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // and using Step 2's provided keys as default fallbacks so it works immediately.
 const supabaseUrl =
   (import.meta as any).env.VITE_SUPABASE_URL ||
-  "https://jghhyktoncegclmwpvgy.supabase.co";
+  "https://plwqkwpzklexlxaatfjb.supabase.co";
 const supabaseAnonKey =
   (import.meta as any).env.VITE_SUPABASE_ANON_KEY ||
   "sb_publishable_5scwN36vjZsJ9Nx8iY6R7g_JNBs-ivO";
