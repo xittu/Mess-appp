@@ -209,29 +209,47 @@ export default function AuthScreen({
       return;
     }
     
+    
     setLoading(true);
     try {
       if (isRegisterMode) {
+        // Create Account Mode
         const generatedMessId = "M" + Math.random().toString(36).substr(2, 5).toUpperCase();
-        const MU = {
-          id: "user-" + Math.random().toString(36).substr(2, 9),
+        
+        const { error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
-          user_metadata: { displayName: name.trim() || "User", photoURL: generatedMessId, messName: messName.trim() },
-        };
-        (window as any).__MOCK_USER__ = MU;
-        try { localStorage.setItem("__MOCK_USER__", JSON.stringify(MU)); } catch(e) {}
+          password: password,
+          options: {
+            data: {
+              displayName: name.trim(),
+              photoURL: generatedMessId,
+              messName: messName.trim(),
+            },
+          },
+        });
+        if (signUpError) throw signUpError;
+        
+        // Remove mock user if it exists
+        delete (window as any).__MOCK_USER__;
+        try { localStorage.removeItem("__MOCK_USER__"); } catch(e) {}
+        
         onAuthSuccess();
       } else {
-        const MU = {
-          id: "user-" + Math.random().toString(36).substr(2, 9),
+        // Login Mode
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
-          user_metadata: { displayName: "Demo User", photoURL: "M12345", messName: "Demo Mess" },
-        };
-        (window as any).__MOCK_USER__ = MU;
-        try { localStorage.setItem("__MOCK_USER__", JSON.stringify(MU)); } catch(e) {}
+          password: password,
+        });
+        if (signInError) throw signInError;
+        
+        // Remove mock user if it exists
+        delete (window as any).__MOCK_USER__;
+        try { localStorage.removeItem("__MOCK_USER__"); } catch(e) {}
+        
         onAuthSuccess();
       }
     } catch(err: any) {
+
       setErrorMsg(err.message || "An error occurred");
     } finally {
       setLoading(false);

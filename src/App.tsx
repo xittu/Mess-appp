@@ -50,14 +50,7 @@ import {
 import NoticePopup from "./components/NoticePopup";
 
 export default function App() {
-  const getMockUser = () => {
-    if ((window as any).__MOCK_USER__) return (window as any).__MOCK_USER__;
-    try {
-      return JSON.parse(localStorage.getItem("__MOCK_USER__") || "null");
-    } catch (e) {
-      return null;
-    }
-  };
+  const getMockUser = () => { return null; };
 
   // --- Auth Session States ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -1224,15 +1217,15 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full overflow-x-hidden"
+      className="min-h-screen font-sans transition-colors duration-300 pb-16 flex flex-col w-full"
     >
       {/* Viewport alignment */}
-      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-slate-50 dark:bg-zinc-950/20 border-x border-slate-200 dark:border-purple-950/15 overflow-x-hidden">
+      <div className="w-full min-h-screen flex flex-col shadow-2xl relative bg-slate-50 dark:bg-zinc-950/20 border-x border-slate-200 dark:border-purple-950/15">
         {/* Real-time floating Notification Toast Alert Banner */}
         <Toaster position="top-right" richColors />
 
         {/* Dynamic App Header */}
-        <div className="relative">
+        <div className="fixed top-0 left-0 right-0 z-50 w-full bg-white dark:bg-brand-card/95 shadow-sm">
           <Header
             messName={messName}
             messId={messId}
@@ -1265,7 +1258,7 @@ export default function App() {
 
         {/* Real-time In-App Notification Center Alert Shelf */}
         {showNotificationCenter && (
-          <div className="bg-[#151020] border-b border-slate-200 dark:border-purple-950/50 p-4 relative z-30 shadow-lg">
+          <div className="bg-[#151020] border-b border-slate-200 dark:border-purple-950/50 p-4 fixed top-[56px] left-0 right-0 z-40 shadow-lg w-full">
             <div className="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-purple-950/20 pb-2">
               <span className="text-xs font-bold text-brand-amber flex items-center gap-1.5 font-sans">
                 <Bell className="w-4 h-4 animate-bounce" />
@@ -1320,7 +1313,7 @@ export default function App() {
         )}
 
         {/* Dynamic Tab Architecture */}
-        <main className="flex-1 mt-2">
+        <main className="flex-1 mt-[70px]">
           {activeTab === 0 && (
             <MembersTab
               members={safeMembers}

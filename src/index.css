@@ -21,7 +21,7 @@ body {
   text-rendering: optimizeLegibility;
   background-color: #FAFAFE;
   color: #1E293B;
-  overflow-x: hidden;
+  
   width: 100%;
   min-height: 100vh;
 }
