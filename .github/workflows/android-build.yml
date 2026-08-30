@@ -49,12 +49,14 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+          # Rename the output APK to include App Name and Version
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/DORMZ-v${{ github.run_number }}.apk
 
       - name: Upload to Artifacts (Backup)
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: DORMZ-v${{ github.run_number }}.apk
+          path: android/app/build/outputs/apk/debug/DORMZ-v${{ github.run_number }}.apk
 
       - name: Auto Upload to Releases 🚀
         uses: softprops/action-gh-release@v2
@@ -62,6 +64,6 @@ jobs:
           tag_name: v${{ github.run_number }}
           name: Mess App Update v${{ github.run_number }}
           body: "স্বয়ংক্রিয়ভাবে তৈরি করা নতুন আপডেট! 🎉"
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/debug/DORMZ-v${{ github.run_number }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
