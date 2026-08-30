@@ -268,7 +268,7 @@ export default function AuthScreen({
         <div className="text-center mb-4 relative z-10">
           <div className="mb-2">
             <span className="inline-block text-[9px] uppercase tracking-widest font-semibold font-sans text-purple-400 bg-purple-950/40 border border-slate-300 dark:border-[#2B1F43]/80 px-2.5 py-0.5 rounded-full select-none">
-              Developed by Zi Tu
+              Developed by <a href="https://www.facebook.com/share/19WMEFMciB/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-300 transition-colors underline decoration-purple-500/50 underline-offset-[3px]">Zi Tu</a>
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-wide">
