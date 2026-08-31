@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { App as CapacitorApp } from '@capacitor/app';
 import {
   Users,
   ReceiptText,
@@ -14,9 +15,6 @@ import {
   Info,
   CheckCircle2,
   ClipboardList,
-  Headset,
-  Mail,
-  Phone,
   Headset,
   Mail,
   Phone,
@@ -48,6 +46,8 @@ import {
   Notice,
 } from "./types";
 import NoticePopup from "./components/NoticePopup";
+import FindMessTab from "./components/FindMessTab";
+import ChatModal from "./components/ChatModal";
 
 export default function App() {
   const getMockUser = () => { return null; };
@@ -75,15 +75,29 @@ export default function App() {
 
   // --- UI/UX Flow States ---
   const [currentMonth, setCurrentMonth] = useState<string>("June 2026");
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  const [theme, setTheme] = useState<'light'|'dark'|'system'>(() => {
+    return (localStorage.getItem('app-theme') as 'light'|'dark'|'system') || 'system';
+  });
+  const [isSystemDark, setIsSystemDark] = useState(false);
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsSystemDark(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setIsSystemDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+  
+  const isDarkMode = theme === 'dark' || (theme === 'system' && isSystemDark);
 
   useEffect(() => {
-    if (darkMode) {
+    localStorage.setItem('app-theme', theme);
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+  }, [isDarkMode, theme]);
 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [showHistory, setShowHistory] = useState<boolean>(false);
@@ -93,9 +107,79 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const { t, currencySymbol } = useLanguage();
   const [isJobRegisterOpen, setIsJobRegisterOpen] = useState<boolean>(false);
+  const [isFindMessOpen, setIsFindMessOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatUserId, setChatUserId] = useState("");
+  const [chatUserName, setChatUserName] = useState("");
+
   const [globalNotices, setGlobalNotices] = useState<Notice[]>([]);
   const [showNoticePopup, setShowNoticePopup] = useState<boolean>(false);
   const [missingAttendance, setMissingAttendance] = useState<boolean>(false);
+  const backPressCountRef = useRef(0);
+
+    // --- Capacitor Back Button Logic ---
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    const backButtonListener = CapacitorApp.addListener('backButton', () => {
+      // 1. Close Modals first
+      if (isFindMessOpen) {
+        setIsFindMessOpen(false);
+        return;
+      }
+      if (isJobRegisterOpen) {
+        setIsJobRegisterOpen(false);
+        return;
+      }
+      if (isChatOpen) {
+        setIsChatOpen(false);
+        return;
+      }
+      if (showHistory) {
+        setShowHistory(false);
+        return;
+      }
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+        return;
+      }
+      if (showAdminPanel) {
+        setShowAdminPanel(false);
+        return;
+      }
+      
+      // 2. If not on Home tab (0), go to Home tab
+      if (activeTab !== 0) {
+        setActiveTab(0);
+        return;
+      }
+      
+      // 3. If on Home tab, double press to exit
+      if (backPressCountRef.current === 0) {
+        backPressCountRef.current = 1;
+        toast.info(t('sideMenu.pressBackExit') || "Press back again to exit");
+        timeout = setTimeout(() => {
+          backPressCountRef.current = 0;
+        }, 2000);
+      } else {
+        CapacitorApp.exitApp();
+      }
+    });
+
+    return () => {
+      backButtonListener.then(listener => listener.remove());
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [
+    isFindMessOpen, 
+    isJobRegisterOpen, 
+    isChatOpen, 
+    showHistory, 
+    isMenuOpen, 
+    showAdminPanel, 
+    activeTab, 
+    t
+  ]);
 
   // --- In-App Notifications Feed & Toasts ---
   const [notifications, setNotifications] = useState<MessNotification[]>([]);
@@ -1231,8 +1315,8 @@ export default function App() {
             messId={messId}
             currentMonth={currentMonth}
             onMonthChange={setCurrentMonth}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
+            darkMode={isDarkMode}
+            setDarkMode={() => {}}
             onUpdateMessName={handleUpdateMessName}
             isSyncing={isSyncing}
             lastCloudSync={lastCloudSync}
@@ -1511,6 +1595,9 @@ export default function App() {
             setIsMenuOpen(false);
             setShowAdminPanel(true);
           }}
+          onOpenFindMess={() => { toast.info("Opening Find Mess Modal"); setIsFindMessOpen(true); }}
+          theme={theme}
+          onThemeChange={setTheme}
         />
 
         {/* History Modal */}
@@ -1548,6 +1635,49 @@ export default function App() {
           )}
           <ClipboardList className="w-6 h-6 group-hover:scale-110 transition-transform" />
         </button>
+
+        
+        {/* Find Mess Modal */}
+        <AnimatePresence>
+          {isFindMessOpen && (
+            <div key="find-mess-modal" className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-200 dark:bg-black/60 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-4xl max-h-[90vh] bg-slate-100 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-2xl flex flex-col relative overflow-hidden"
+              >
+                <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-200 dark:border-zinc-800 shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white">{t("sideMenu.globalMessNetwork") || "Global Mess Network"}</h2>
+                  <button onClick={() => setIsFindMessOpen(false)} className="p-2 bg-rose-500/10 dark:bg-rose-500/20 rounded-full text-rose-500 hover:bg-rose-500 hover:text-white transition-colors flex items-center gap-2 px-4">
+                    <span className="font-semibold text-sm">Close</span>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="p-4 sm:p-6 overflow-y-auto">
+                  <FindMessTab 
+                    currentUser={currentUser} 
+                    onOpenChat={(id, name) => {
+                      setChatUserId(id);
+                      setChatUserName(name);
+                      setIsChatOpen(true);
+                    }} 
+                  />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Chat Modal */}
+        {isChatOpen && currentUser && chatUserId && (
+          <ChatModal 
+            currentUser={currentUser}
+            otherUserId={chatUserId}
+            otherUserName={chatUserName}
+            onClose={() => setIsChatOpen(false)}
+          />
+        )}
 
         {/* Job Register Modal */}
         <AnimatePresence>

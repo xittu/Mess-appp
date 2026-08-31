@@ -56,3 +56,28 @@ export interface Notice {
   created_at: string;
   is_active: boolean;
 }
+
+export interface UserLocation {
+  id: string;
+  user_id: string;
+  latitude: number;
+  longitude: number;
+  updated_at: string;
+  user_name?: string; // We might join this in the UI
+}
+
+export interface MessRequest {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+}
+
+export interface EphemeralChat {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  message: string;
+  created_at: string;
+}

@@ -1,0 +1,40 @@
+--- src/components/SideMenu.tsx
++++ src/components/SideMenu.tsx
+@@ -51,6 +51,7 @@
+   onOpenAdminPanel?: () => void;
+   onNewSession?: (password: string) => Promise<boolean>;
+   archives?: any[];
++  onOpenFindMess?: () => void;
+ }
+ 
+ export default function SideMenu({
+@@ -77,6 +78,7 @@
+   onOpenAdminPanel,
+   onNewSession,
+   archives = [],
++  onOpenFindMess,
+ }: SideMenuProps) {
+   const { t, setLanguage, language } = useLanguage();
+ 
+@@ -825,6 +827,21 @@
+               </div>
+             </div>
+ 
++            {/* Find Mess Near You */}
++            <div className="px-4 py-2">
++              <button
++                onClick={() => {
++                  onClose();
++                  onOpenFindMess?.();
++                }}
++                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-brand-amber/10 border border-brand-amber/20 text-brand-amber hover:bg-brand-amber/20 transition-all group"
++              >
++                <MapPin className="w-6 h-6 group-hover:scale-110 transition-transform" />
++                <span className="font-semibold text-[15px]">Find Mess Near You</span>
++                <Sparkles className="w-4 h-4 ml-auto" />
++              </button>
++            </div>
++
+             {/* Data Export (PDF) */}
+             <div className="px-4 py-2">
+               <button

@@ -5,6 +5,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { LanguageType } from "../i18n/translations";
 import { Globe } from "lucide-react";
 import {
+  Sun, Moon, Monitor, ArrowLeft, CheckCircle2,
   History, X,
   Calculator,
   CalendarDays,
@@ -50,6 +51,9 @@ interface SideMenuProps {
   onOpenAdminPanel?: () => void;
   onNewSession?: (password: string) => Promise<boolean>;
   archives?: any[];
+  onOpenFindMess?: () => void;
+  theme?: 'light' | 'dark' | 'system';
+  onThemeChange?: (theme: 'light' | 'dark' | 'system') => void;
 }
 
 export default function SideMenu({
@@ -77,9 +81,12 @@ export default function SideMenu({
   onOpenAdminPanel,
   onNewSession,
   archives = [],
+  onOpenFindMess,
+  theme = 'system',
+  onThemeChange,
 }: SideMenuProps) {
   const [activeModal, setActiveModal] = useState<
-    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | "new_session" | "old_sessions" | "language" | null
+    "ledger" | "duty" | "fixed_meal_info" | "job_register" | "export_pdf" | "new_session" | "old_sessions" | "language" | "theme" | null
   >(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -842,6 +849,32 @@ export default function SideMenu({
                 </div>
               </button>
 
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onClose();
+                  if (onOpenFindMess) onOpenFindMess();
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 hover:border-purple-500/50 transition-all text-left cursor-pointer group mb-2"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-purple-300 block font-sans">
+                      Find Mess Near You
+                    </span>
+                    <span className="text-[11px] text-slate-700 dark:text-zinc-400 block mt-0.5 leading-relaxed">
+                      Connect with messes around you
+                    </span>
+                  </div>
+                </div>
+              </button>
+
               {isAdmin && (
                 <button
                   onClick={onOpenAdminPanel}
@@ -866,7 +899,14 @@ export default function SideMenu({
             </div>
 
             <div className="space-y-2 border-t border-zinc-900/40 pt-3">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setActiveModal("theme")}
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  {t("sideMenu.theme") || "Theme"}
+                </button>
                 <button
                   onClick={() => setActiveModal("language")}
                   className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-brand-amber transition-colors cursor-pointer"
@@ -882,7 +922,7 @@ export default function SideMenu({
                       alert(t("sideMenuFixed.emailNotFound"));
                     }
                   }}
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-zinc-850 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer text-center leading-tight"
                 >
                   {t("sideMenu.changePassword")}
                 </button>
@@ -1441,6 +1481,51 @@ export default function SideMenu({
               </div>
             )}
 
+            {activeModal === "theme" && (
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="flex items-center gap-3 text-slate-900 dark:text-zinc-100 mb-2">
+                  <button
+                    onClick={() => setActiveModal(null)}
+                    className="p-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <h3 className="font-bold text-[15px] font-sans">{t("sideMenu.theme") || "App Theme"}</h3>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { id: 'light', label: t("sideMenu.light") || 'Light', icon: Sun },
+                    { id: 'dark', label: t("sideMenu.dark") || 'Dark', icon: Moon },
+                    { id: 'system', label: t("sideMenu.systemDefault") || 'System Default', icon: Monitor }
+                  ].map((tOpt) => {
+                    const Icon = tOpt.icon;
+                    return (
+                      <button
+                        key={tOpt.id}
+                        onClick={() => onThemeChange?.(tOpt.id as 'light' | 'dark' | 'system')}
+                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+                          theme === tOpt.id
+                            ? "bg-brand-accent/10 border-brand-accent/30 text-brand-accent shadow-sm"
+                            : "bg-slate-50 dark:bg-zinc-900/40 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-5 h-5" />
+                          <span className="font-semibold text-sm">{tOpt.label}</span>
+                        </div>
+                        {theme === tOpt.id && (
+                          <div className="w-5 h-5 rounded-full bg-brand-accent flex items-center justify-center">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
             {activeModal === "language" && (
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
                 <div className="flex items-center gap-3 text-slate-900 dark:text-zinc-100 mb-2">

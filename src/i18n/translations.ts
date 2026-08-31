@@ -460,7 +460,14 @@ export const translations: Record<LanguageType, any> = {
       "confirm": "Confirm",
       "oldSessionsList": "Previous Sessions",
       "exportReport": "Export Report",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "findMess": "Find Mess Near You",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "systemDefault": "System Default",
+      "pressBackExit": "Press back again to exit",
+      "globalMessNetwork": "Global Mess Network"
     },
     "auth": {
       "loginTitle": "Login to your account",
